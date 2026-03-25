@@ -101,6 +101,7 @@ import AgentCard from '../../components/AgentCard.vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { API_BASE } from '../../utils/api'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -132,7 +133,7 @@ const goChat = (id: number) => {
 
 const loadCategories = async () => {
   try {
-    const res = await fetch('http://localhost:3000/category/list')
+    const res = await fetch(`${API_BASE}/category/list`)
     const data = await res.json()
     if (res.ok && data.success) {
       categories.value = data.data
@@ -143,7 +144,7 @@ const loadCategories = async () => {
 const loadAgents = async () => {
   loading.value = true
   try {
-    let url = 'http://localhost:3000/agent/discover'
+    let url = `${API_BASE}/agent/discover`
     if (activeCategoryId.value) {
       url += `?categoryId=${activeCategoryId.value}`
     }
@@ -163,7 +164,7 @@ const loadAgents = async () => {
 
 const loadFeatured = async () => {
   try {
-    const res = await fetch('http://localhost:3000/agent/featured', {
+    const res = await fetch(`${API_BASE}/agent/categories`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()

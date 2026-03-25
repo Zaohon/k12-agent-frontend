@@ -90,6 +90,7 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { API_BASE } from '../../utils/api'
 import { Check, MagicStick, Select, CloseBold, Lock, StarFilled } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
@@ -108,7 +109,7 @@ const reviewForm = ref({
 const fetchPending = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:3000/approval/pending', {
+    const res = await fetch(`${API_BASE}/approval/pending`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()

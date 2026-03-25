@@ -170,6 +170,7 @@ import { Plus, Search, MagicStick, Lock, Document, DataAnalysis, ChatDotRound, D
 import { useUserStore } from '../../store/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { API_BASE } from '../../utils/api'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -202,7 +203,7 @@ const getStatusTag = (agent: any) => {
 const fetchMyAgents = async () => {
   loadingList.value = true
   try {
-    const res = await fetch('http://localhost:3000/agent/my', {
+    const res = await fetch(`${API_BASE}/agent/my`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()
@@ -272,7 +273,7 @@ const cancelPublish = () => {
 const confirmPublish = async () => {
   publishing.value = true
   try {
-     const res = await fetch(`http://localhost:3000/agent/update/${currentAgent.value.id}`, {
+     const res = await fetch(`${API_BASE}/agent/update/${currentAgent.value.id}`, {
        method: 'POST',
        headers: {
          'Content-Type': 'application/json',
@@ -307,8 +308,8 @@ const saveAgent = async () => {
   try {
     const isEditing = !!payload.id
     const url = isEditing 
-        ? `http://localhost:3000/agent/update/${payload.id}`
-        : `http://localhost:3000/agent/create`
+        ? `${API_BASE}/agent/update/${payload.id}`
+        : `${API_BASE}/agent/create`
         
     const res = await fetch(url, {
       method: 'POST',

@@ -102,6 +102,7 @@ import { ref, onMounted, computed } from 'vue'
 import { Cpu, Setting } from '@element-plus/icons-vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
+import { API_BASE } from '../../utils/api'
 
 const userStore = useUserStore()
 const userProfile = ref<any>(null)
@@ -126,7 +127,7 @@ const formatDate = (date: string) => {
 
 const fetchProfile = async () => {
   try {
-    const res = await fetch('http://localhost:3000/auth/profile', {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()
@@ -146,7 +147,7 @@ const handleUpdatePwd = async () => {
 
   updatingPwd.value = true
   try {
-    const res = await fetch('http://localhost:3000/auth/update-password', {
+    const res = await fetch(`${API_BASE}/auth/update-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

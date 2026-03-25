@@ -155,6 +155,7 @@ import { useRoute } from 'vue-router'
 import { Plus, Search, ChatDotRound, Delete, MagicStick, Cpu, User, Monitor, Promotion, Setting, ChatDotSquare } from '@element-plus/icons-vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
+import { API_BASE } from '../../utils/api'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -191,7 +192,7 @@ const formatDate = (date: string) => {
 
 const loadAgent = async (id: string) => {
   try {
-    const res = await fetch(`http://localhost:3000/agent/${id}`)
+    const res = await fetch(`${API_BASE}/agent/${id}`)
     const data = await res.json()
     if (res.ok && data.success) {
       agentInfo.value = data.data
@@ -203,7 +204,7 @@ const loadAgent = async (id: string) => {
 const fetchSessions = async () => {
   loadingSessions.value = true
   try {
-    const res = await fetch('http://localhost:3000/session/list', {
+    const res = await fetch(`${API_BASE}/session/list`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()
@@ -216,7 +217,7 @@ const fetchSessions = async () => {
 
 const createNewSession = async () => {
   try {
-    const res = await fetch('http://localhost:3000/session/create', {
+    const res = await fetch(`${API_BASE}/session/create`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
@@ -233,7 +234,7 @@ const selectSession = async (id: number) => {
   activeSessionId.value = id
   messages.value = []
   try {
-    const res = await fetch(`http://localhost:3000/session/history/${id}`, {
+    const res = await fetch(`${API_BASE}/session/history/${id}`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()
@@ -246,7 +247,7 @@ const selectSession = async (id: number) => {
 
 const deleteSession = async (id: number) => {
   try {
-    const res = await fetch(`http://localhost:3000/session/${id}`, {
+    const res = await fetch(`${API_BASE}/session/`+id, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
@@ -282,8 +283,8 @@ const handleSend = async () => {
 
   try {
     const url = agentId.value 
-        ? `http://localhost:3000/chat/stream/${agentId.value}`
-        : `http://localhost:3000/chat/stream-session/${activeSessionId.value}`
+        ? `${API_BASE}/chat/stream/${agentId.value}`
+        : `${API_BASE}/chat/stream-session/${activeSessionId.value}`
     
     const res = await fetch(url, {
       method: 'POST',

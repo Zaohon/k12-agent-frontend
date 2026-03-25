@@ -71,6 +71,7 @@ import { User, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../../store/user'
+import { API_BASE } from '../../utils/api'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -88,7 +89,7 @@ const handleLogin = async () => {
   }
   loading.value = true
   try {
-    const res = await fetch('http://localhost:3000/auth/login', {
+    const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)
@@ -115,7 +116,7 @@ const handleLooseRegister = async () => {
   }
   loading.value = true
   try {
-    const res = await fetch('http://localhost:3000/auth/register', {
+    const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)
