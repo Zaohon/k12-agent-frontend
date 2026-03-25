@@ -46,6 +46,12 @@ const routes: Array<RouteRecordRaw> = [
         name: 'ApprovalCenter',
         component: () => import('../views/workspace/ApprovalCenter.vue'),
         meta: { title: '审批中心' }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('../views/workspace/Profile.vue'),
+        meta: { title: '个人中心' }
       }
     ]
   }

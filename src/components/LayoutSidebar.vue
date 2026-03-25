@@ -62,11 +62,13 @@
       </router-link>
     </nav>
 
-    <!-- Bottom User Profile -->
     <div class="px-6 w-full mt-6 absolute bottom-6">
-      <div class="p-4 border border-gray-100 rounded-2xl bg-gray-50 flex items-center justify-between shadow-sm cursor-pointer hover:shadow transition-shadow" @click="logout">
+      <div 
+        class="p-4 border border-gray-100 rounded-2xl bg-gray-50 flex items-center justify-between shadow-sm cursor-pointer hover:shadow transition-shadow group" 
+        @click="router.push('/workspace/profile')"
+      >
         <div class="flex items-center">
-          <el-avatar :size="36" class="bg-indigo-100 text-indigo-600 font-bold mr-3 shrink-0">
+          <el-avatar :size="36" class="bg-indigo-100 text-indigo-600 font-bold mr-3 shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
             {{ userStore.userInfo?.username?.charAt(0).toUpperCase() || 'U' }}
           </el-avatar>
           <div class="overflow-hidden">
@@ -77,7 +79,7 @@
             </div>
           </div>
         </div>
-        <el-icon class="text-gray-400 shrink-0 ml-2" title="退出登录"><SwitchButton /></el-icon>
+        <el-icon class="text-gray-400 shrink-0 ml-2 hover:text-red-500" title="退出登录" @click.stop="logout"><SwitchButton /></el-icon>
       </div>
     </div>
   </aside>
