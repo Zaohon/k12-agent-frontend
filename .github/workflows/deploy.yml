@@ -42,7 +42,6 @@ jobs:
           timeout: 5m
           command_timeout: 5m
           script: |
-            docker pull ghcr.io/zaohon/k12-agent-frontend:latest
             cd /root/K12AgentWeb
-            docker compose down frontend || true
-            docker compose up -d frontend
+            docker compose pull frontend
+            docker compose up -d
