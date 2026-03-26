@@ -7,7 +7,9 @@
     <div class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Top navbar placeholder -->
       <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
-        <div class="font-bold text-gray-700">K12教育智能体平台</div>
+        <div class="font-bold text-gray-700">
+          {{ userStore.userInfo?.organization?.orgName || '幻境助教' }} - 系统工作台
+        </div>
         <div class="flex items-center space-x-4">
           <span class="text-sm text-gray-500">额度剩余: 50,000 Tokens</span>
           <el-avatar :size="32" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
@@ -23,5 +25,8 @@
 </template>
 
 <script setup lang="ts">
+import { useUserStore } from '../../store/user'
 import LayoutSidebar from '../../components/LayoutSidebar.vue'
+
+const userStore = useUserStore()
 </script>
