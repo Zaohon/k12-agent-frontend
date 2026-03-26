@@ -26,7 +26,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner | toLower }}/k12-agent-frontend:latest
+          tags: ghcr.io/zaohon/k12-agent-frontend:latest
 
   # ─── Step 2: SSH to server → pull pre-built image → restart (no build!) ───
   deploy:
@@ -42,8 +42,7 @@ jobs:
           timeout: 5m
           command_timeout: 5m
           script: |
-            docker pull ghcr.io/${{ github.repository_owner | toLower }}/k12-agent-frontend:latest
+            docker pull ghcr.io/zaohon/k12-agent-frontend:latest
             cd /root/K12AgentWeb
             docker compose down frontend || true
             docker compose up -d frontend
-
