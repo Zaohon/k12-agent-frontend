@@ -18,17 +18,13 @@ jobs:
       with:
         node-version: 20.x
         cache: 'npm'
-        cache-dependency-path: k12-agent-frontend/package-lock.json
 
     - name: Install dependencies
       run: npm install
-      working-directory: k12-agent-frontend
 
     - name: Type Check
       run: npm run type-check
-      working-directory: k12-agent-frontend
       continue-on-error: true
 
     - name: Run Build
       run: npm run build
-      working-directory: k12-agent-frontend
