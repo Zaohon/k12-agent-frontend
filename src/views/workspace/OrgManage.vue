@@ -184,7 +184,7 @@ const adminForm = ref({ username: '', password: '' })
 const fetchOrgs = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:3000/org/list', {
+    const res = await fetch(`${API_BASE}/org/list`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()
@@ -204,7 +204,7 @@ const fetchOrgs = async () => {
 const fetchOrgUsers = async (orgId: number) => {
   loadingUsers.value = true
   try {
-    const res = await fetch(`http://localhost:3000/org/${orgId}/users`, {
+    const res = await fetch(`${API_BASE}/org/${orgId}/users`, {
       headers: { 'Authorization': `Bearer ${userStore.token}` }
     })
     const data = await res.json()
@@ -254,7 +254,7 @@ const createOrganization = async () => {
   if (!newOrgName.value) return ElMessage.warning('组织名称不能为空')
   saving.value = true
   try {
-    const res = await fetch('http://localhost:3000/org/create', {
+    const res = await fetch(`${API_BASE}/org/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -282,7 +282,7 @@ const createAdmin = async () => {
   if (!adminForm.value.username || !adminForm.value.password) return ElMessage.warning('账号与密码必填')
   saving.value = true
   try {
-    const res = await fetch('http://localhost:3000/org/admin', {
+    const res = await fetch(`${API_BASE}/org/admin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -346,7 +346,7 @@ const handleUpload = (file: any) => {
 
     batchProcessing.value = true
     try {
-      const res = await fetch(`http://localhost:3000/org/${selectedOrg.value.id}/users/batch`, {
+      const res = await fetch(`${API_BASE}/org/${selectedOrg.value.id}/users/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -125,7 +125,7 @@ const fetchPending = async () => {
 
 const fetchCategories = async () => {
   try {
-    const res = await fetch('http://localhost:3000/category/list')
+    const res = await fetch(`${API_BASE}/category/list`)
     const data = await res.json()
     if (res.ok && data.success) {
       categories.value = data.data
@@ -145,7 +145,7 @@ const openReview = (agent: any) => {
 const submitApproval = async () => {
   reviewing.value = true
   try {
-    const res = await fetch(`http://localhost:3000/approval/review/${currentAgent.value.id}`, {
+    const res = await fetch(`${API_BASE}/approval/review/${currentAgent.value.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -183,7 +183,7 @@ const handleReview = (id: number, status: 'APPROVED' | 'REJECTED') => {
   ).then(async () => {
     loading.value = true
     try {
-      const res = await fetch(`http://localhost:3000/approval/review/${id}`, {
+      const res = await fetch(`${API_BASE}/approval/review/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
