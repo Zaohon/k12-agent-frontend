@@ -11,7 +11,7 @@
           {{ userStore.userInfo?.organization?.orgName || '幻境助教' }} - 系统工作台
         </div>
         <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-500">额度剩余: 50,000 Tokens</span>
+          <span class="text-sm text-gray-500">额度剩余: {{ ((userStore.userInfo?.tokenLimit || 0) - (userStore.userInfo?.consumedToken || 0)).toLocaleString() }} Tokens</span>
           <el-avatar :size="32" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
         </div>
       </header>

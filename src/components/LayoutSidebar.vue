@@ -60,6 +60,16 @@
         <el-icon :size="20"><OfficeBuilding /></el-icon>
         <span>网点组织管理</span>
       </router-link>
+
+      <router-link
+        v-if="userStore.userInfo?.role === 'SUPER_ADMIN'"
+        to="/workspace/category"
+        class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors text-teal-600 hover:bg-teal-50"
+        active-class="bg-teal-100 text-teal-700 font-medium"
+      >
+        <el-icon :size="20"><Collection /></el-icon>
+        <span>分类目录管理</span>
+      </router-link>
     </nav>
 
     <div class="px-6 w-full mt-6 absolute bottom-6">
@@ -88,7 +98,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Menu, ChatDotSquare, Cpu, Check, OfficeBuilding, CircleCheckFilled, SwitchButton } from '@element-plus/icons-vue'
+import { Menu, ChatDotSquare, Cpu, Check, OfficeBuilding, CircleCheckFilled, SwitchButton, Collection } from '@element-plus/icons-vue'
 import { useUserStore } from '../store/user'
 
 const router = useRouter()

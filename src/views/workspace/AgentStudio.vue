@@ -111,6 +111,26 @@
             </div>
           </el-form-item>
 
+          <div class="grid grid-cols-2 gap-8">
+            <el-form-item label="分发分类" required>
+              <el-select v-model="currentAgent.categoryId" placeholder="选择所属领域/分类" size="large" style="width: 100%">
+                <el-option v-for="c in availableCategories" :key="c.id" :label="c.name" :value="c.id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="图标标识">
+              <div class="flex flex-wrap gap-2">
+                 <div 
+                   v-for="icon in iconOptions" :key="icon"
+                   @click="currentAgent.iconUrl = icon"
+                   class="w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer border-2 transition-all"
+                   :class="currentAgent.iconUrl === icon ? 'border-primary bg-blue-50 text-primary' : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-gray-200'"
+                 >
+                   <el-icon><component :is="icon" /></el-icon>
+                 </div>
+              </div>
+            </el-form-item>
+          </div>
+
           <el-form-item label="开场欢迎语 (Welcome Message)">
             <el-input size="large" placeholder="打开应用时的开场白..." v-model="currentAgent.welcomeMsg" />
           </el-form-item>
@@ -182,9 +202,25 @@ const publishing = ref(false)
 
 const currentAgent = ref<any>(null)
 const currentFormConfig = ref<any[]>([])
+const availableCategories = ref<any[]>([])
 
 const showPublishDialog = ref(false)
 const publishVisibility = ref('ORG_VISIBLE')
+
+const iconOptions = [
+  'MagicStick', 'Document', 'DataAnalysis', 'ChatDotRound', 'Opportunity', 
+  'Collection', 'Reading', 'EditPen', 'TrendCharts', 'Compass'
+]
+
+const fetchCategories = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/category/list`)
+    const data = await res.json()
+    if (res.ok && data.success) {
+      availableCategories.value = data.data
+    }
+  } catch (e) {}
+}
 
 const getStatusText = (agent: any) => {
   if (agent.visibility === 'PRIVATE') return '未发布'
@@ -223,6 +259,10 @@ const fetchMyAgents = async () => {
 
 const selectAgent = (agent: any) => {
   currentAgent.value = JSON.parse(JSON.stringify(agent))
+  // Extract categoryId from categories relation if exists
+  if (agent.categories && agent.categories.length > 0) {
+    currentAgent.value.categoryId = agent.categories[0].categoryId
+  }
   try {
     currentFormConfig.value = agent.formConfig ? JSON.parse(agent.formConfig) : []
   } catch(e) {
@@ -340,6 +380,7 @@ const saveAgent = async () => {
 
 onMounted(() => {
   fetchMyAgents()
+  fetchCategories()
 })
 </script>
 

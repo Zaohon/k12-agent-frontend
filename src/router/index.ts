@@ -48,6 +48,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '审批中心' }
       },
       {
+        path: 'category',
+        name: 'CategoryManage',
+        component: () => import('../views/workspace/CategoryManage.vue'),
+        meta: { title: '分类管理' }
+      },
+      {
         path: 'profile',
         name: 'Profile',
         component: () => import('../views/workspace/Profile.vue'),
