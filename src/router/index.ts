@@ -4,7 +4,8 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/workspace/square'
+    name: 'Home',
+    component: () => import('../views/home/index.vue')
   },
   {
     path: '/login',
@@ -70,7 +71,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('k12_token');
-  if (to.path !== '/login' && !token) {
+  if (to.path !== '/login' && to.path !== '/' && !token) {
     next('/login');
   } else if (to.path === '/login' && token) {
     next('/workspace');
