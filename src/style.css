@@ -24,3 +24,19 @@ body, html, #app {
 ::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
 }
+
+/* 登录弹窗下拉框样式 */
+.custom-select .el-input__wrapper {
+  background-color: #F5F7FA !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  padding: 0 16px !important;
+}
+
+.custom-select .el-input__inner {
+  height: 48px !important;
+}
+
+.custom-select.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 2px #314DE2 !important;
+}

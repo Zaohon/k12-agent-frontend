@@ -1,90 +1,290 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 border-b-2 border-primary pb-2 w-max mx-auto">
-        幻境助教 工作台
-      </h2>
-      <p class="mt-2 text-center text-sm text-gray-600">
-        汇聚全球顶尖教育 AI 理念
-      </p>
-    </div>
+  <!-- 登录弹窗 -->
+  <Transition name="modal">
+    <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="closeModal">
+      <div class="bg-white rounded-[24px] p-8 max-w-md w-full mx-4 relative modal-content" style="box-shadow: 0 20px 60px rgba(0,0,0,0.15);" @click.stop>
+        <!-- 关闭按钮 -->
+        <button @click="closeModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+          <img src="/images/close.png" alt="关闭" class="h-3 w-3"  />
+        </button>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
-        <el-form class="space-y-6" @submit.prevent="handleLogin">
-          <el-form-item>
+        <!-- 标题区域 -->
+        <div class="flex items-center mb-8">
+          <div class="w-12 h-12 rounded-[12px] bg-gradient-to-tl from-[#6144D3] to-[#314DE2] flex items-center justify-center mr-4 overflow-hidden" style="box-shadow: 0px 4px 6px -4px #314DE233, 0px 10px 15px -3px #314DE233;">
+            <img src="/images/logo-white.png" alt="logo" class="max-w-[80%] max-h-[80%] object-contain" />
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold" style="color: #2E3339">登录</h2>
+            <p class="text-sm" style="color: #5A6066">探索个性化 AI 教学新体验</p>
+          </div>
+        </div>
+
+        <!-- 表单 -->
+        <form @submit.prevent="handleLogin" class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-[#314DE2] mb-2">姓名</label>
             <el-input 
-              v-model="form.username"
-              size="large"
-              placeholder="请输入首发系统账号" 
-              prefix-icon="User"
+              v-model="loginForm.name"
+              placeholder="请输入您的真实姓名"
+              class="custom-input"
             />
-          </el-form-item>
-          <el-form-item>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#314DE2] mb-2">手机号</label>
             <el-input 
-              v-model="form.password"
-              size="large"
-              type="password"
-              placeholder="请输入密码"
-              prefix-icon="Lock"
-              show-password
-              @keyup.enter="handleLogin"
+              v-model="loginForm.phone"
+              type="tel"
+              placeholder="请输入 11 位手机号"
+              class="custom-input"
             />
-          </el-form-item>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <el-checkbox>保持登录状态</el-checkbox>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#314DE2] mb-2">验证码</label>
+            <div class="flex space-x-3">
+              <el-input 
+                v-model="loginForm.code"
+                type="text"
+                maxlength="6"
+                placeholder="6 位数字"
+                class="custom-input flex-1"
+              />
+              <el-button 
+                type="primary"
+                class="whitespace-nowrap"
+                style="background-color: #E6E5FF; color: #314DE2; border: none; border-radius: 12px; padding: 0 24px; height: 48px;"
+              >
+                获取验证码
+              </el-button>
             </div>
           </div>
-          <el-form-item>
-            <el-button 
-              @click="handleLogin" 
-              type="primary" 
-              size="large" 
-              class="w-full text-lg shadow-md hover:shadow-lg transition"
-              :loading="loading"
-            >
-              登录系统
-            </el-button>
-          </el-form-item>
-          
-          <el-button 
-            @click="handleLooseRegister" 
-            type="info" plain size="large" class="w-full mt-2"
-            :loading="loading"
-          >
-            新网点免密一键注册
-          </el-button>
 
-        </el-form>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[#314DE2] mb-2">学段</label>
+              <CustomSelect 
+                v-model="loginForm.education"
+                :options="educationOptions"
+                placeholder="请选择"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[#314DE2] mb-2">学科</label>
+              <CustomSelect 
+                v-model="loginForm.subject"
+                :options="subjectOptions"
+                placeholder="请选择"
+              />
+            </div>
+          </div>
+
+          <el-button 
+            type="primary"
+            native-type="submit"
+            class="w-full"
+            style="margin-top: 30px; height: 56px; border-radius: 12px; background: linear-gradient(90deg, #314DE2 0%, #6144D3 100%); border: none; opacity: 1;"
+          >
+            确定
+          </el-button>
+        </form>
+
+        <!-- 底部协议 -->
+        <div class="mt-6 text-center">
+          <p class="mb-1" style="font-family: Noto Sans SC; font-weight: 500; font-style: Medium; font-size: 10px; line-height: 15px; letter-spacing: 1px; text-align: center; vertical-align: middle; text-transform: uppercase; color: #5A6066CC;">继续操作即表示您同意</p>
+          <p style="font-family: Noto Sans SC; font-weight: 500; font-style: Medium; font-size: 11px; line-height: 16.5px; letter-spacing: 0px; text-align: center; vertical-align: middle; color: #5A6066CC;">
+            <a href="#" class="text-[#5A6066] hover:underline">隐私政策</a>
+            <img src="/images/point.png" alt="分隔符" class="mx-2 inline-block" style="height: 4px; width: 4px; margin: 0 15px 0 15px;" />
+            <a href="#" class="text-[#5A6066] hover:underline">服务条款</a>
+          </p>
+        </div>
       </div>
-      <p class="mt-4 text-center text-xs text-gray-400">
-        * 若您为机构教师，请使用学校下发的账号密码直接登录。
-      </p>
     </div>
-  </div>
+  </Transition>
 </template>
 
+
+<style scoped>
+/* 登录弹窗样式 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  opacity: 0;
+  transform: translateY(-50px);
+}
+
+/* 自定义输入框样式 */
+:deep(.custom-input .el-input__wrapper) {
+  background-color: #F2F4F8;
+  border-radius: 12px;
+  box-shadow: none;
+  padding: 0 16px;
+  transition: box-shadow 0.3s ease;
+}
+
+:deep(.custom-input .el-input__inner) {
+  height: 48px;
+}
+
+:deep(.custom-input .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 2px #314DE2;
+}
+
+/* 底部协议文字样式 */
+.text-xs {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+
+.text-gray-500 {
+  color: #9CA3AF !important;
+}
+
+
+/* 自定义 el-select 样式 */
+.el-select {
+  width: 184px !important;
+  height: 48px !important;
+  position: relative;
+}
+
+.el-select .el-input__wrapper {
+  background-color: #F2F4F8 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  padding: 0 16px !important;
+  height: 48px !important;
+}
+
+.el-select .el-input__inner {
+  height: 48px !important;
+  line-height: 48px !important;
+}
+
+.el-select.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 2px #314DE2 !important;
+}
+
+/* 隐藏默认箭头 */
+.el-select .el-input__suffix-inner .el-select__caret {
+  display: none !important;
+}
+
+/* 添加自定义箭头 */
+.el-select .el-input__suffix-inner {
+  position: relative !important;
+}
+
+.el-select .el-input__suffix-inner::after {
+  content: '' !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 12px !important;
+  height: 12px !important;
+  background-image: url('/images/vector.png') !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  transition: transform 0.3s ease !important;
+}
+
+/* 下拉菜单打开时旋转箭头 */
+.el-select.open .el-input__suffix-inner::after {
+  transform: translateY(-50%) rotate(90deg) !important;
+}
+
+/* 自定义 el-select 下拉选项样式 */
+.el-select-dropdown {
+  border-radius: 12px !important;
+  box-shadow: 0px 4px 6px -4px #314DE233, 0px 10px 15px -3px #314DE233 !important;
+}
+
+.el-select-dropdown__item {
+  padding: 8px 16px !important;
+  font-family: 'Noto Sans SC', sans-serif !important;
+  font-size: 14px !important;
+  color: #000000 !important;
+}
+
+.el-select-dropdown__item:hover {
+  background-color: #B4BDFF66 !important;
+  color: #000000 !important;
+}
+
+.el-select-dropdown__item.selected {
+  background-color: #F2F4F8 !important;
+  color: #000000 !important;
+}
+
+</style>
+
 <script setup lang="ts">
-import { ref } from 'vue'
-import { User, Lock } from '@element-plus/icons-vue'
+import { ref, reactive } from 'vue'
+import CustomSelect from '@/components/CustomSelect.vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '../../store/user'
 import { API_BASE } from '../../utils/api'
 
-const router = useRouter()
-const userStore = useUserStore()
-const loading = ref(false)
-
-const form = ref({
-  username: '',
-  password: ''
+const props = defineProps({
+  visible: {
+    type: Boolean,
+    default: false
+  }
 })
 
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'login', data: { name: string; phone: string; code: string; education: string; subject: string }): void
+}>()
+
+const router = useRouter()
+const loading = ref(false)
+
+const loginForm = reactive({
+  name: '',
+  phone: '',
+  code: '',
+  education: '',
+  subject: ''
+})
+
+// 定义选项数组
+const educationOptions = [
+  { label: '小学', value: 'elementary' },
+  { label: '初中', value: 'middle' },
+  { label: '高中', value: 'high' }
+]
+
+const subjectOptions = [
+  { label: '语文', value: 'chinese' },
+  { label: '数学', value: 'math' },
+  { label: '英语', value: 'english' },
+  { label: '物理', value: 'physics' }
+]
+
+const closeModal = () => {
+  emit('close')
+}
+
 const handleLogin = async () => {
-  if (!form.value.username || !form.value.password) {
-    ElMessage.warning('请输入账号和密码！')
+  if (!loginForm.name || !loginForm.phone || !loginForm.code) {
+    ElMessage.warning('请填写完整的登录信息！')
     return
   }
   loading.value = true
@@ -92,15 +292,23 @@ const handleLogin = async () => {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
+      body: JSON.stringify(loginForm)
     })
     const data = await res.json()
     if (res.ok && data.access_token) {
-      userStore.setLoginData(data)
       ElMessage.success('登录成功！')
       router.push('/workspace')
+      emit('close')
+      // 重置表单
+      Object.assign(loginForm, {
+        name: '',
+        phone: '',
+        code: '',
+        education: '',
+        subject: ''
+      })
     } else {
-      ElMessage.error(data.message || '登录失败，请检查账号密码')
+      ElMessage.error(data.message || '登录失败，请检查信息')
     }
   } catch (err) {
     ElMessage.error('无法连接到服务器，请确保后端服务和数据库已启动')
@@ -110,8 +318,8 @@ const handleLogin = async () => {
 }
 
 const handleLooseRegister = async () => {
-  if (!form.value.username || !form.value.password) {
-    ElMessage.warning('请输入所需的账号和密码供注册！')
+  if (!loginForm.name || !loginForm.phone) {
+    ElMessage.warning('请填写姓名和手机号供注册！')
     return
   }
   loading.value = true
@@ -119,13 +327,21 @@ const handleLooseRegister = async () => {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
+      body: JSON.stringify(loginForm)
     })
     const data = await res.json()
     if (res.ok && data.access_token) {
-      userStore.setLoginData(data)
       ElMessage.success('快捷注册并登录成功！')
       router.push('/workspace')
+      emit('close')
+      // 重置表单
+      Object.assign(loginForm, {
+        name: '',
+        phone: '',
+        code: '',
+        education: '',
+        subject: ''
+      })
     } else {
       ElMessage.error(data.message || '注册失败')
     }

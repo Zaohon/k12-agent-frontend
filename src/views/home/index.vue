@@ -1,5 +1,12 @@
 <template>
   <div class="min-h-screen">
+    <!-- 登录弹窗 -->
+    <LoginModal 
+      :visible="showLoginModal" 
+      @close="closeLoginModal"
+      @login="handleLogin"
+    />
+
     <!-- 导航栏 -->
     <nav class="bg-white" style="box-shadow: 0 12px 20px 0 #314DE20F;">
       <div class="w-full px-4 py-3 flex justify-between items-center">
@@ -11,7 +18,7 @@
           </div>
         </div>
         <div class="flex items-center space-x-6" style="margin-right: 20px;">
-          <a href="/login" class="text-white px-5 py-2 rounded-[12px] bg-gradient-to-tl from-[#6144D3] to-[#314DE2] hover:opacity-90 transition-opacity ml-auto">登录</a>
+          <button @click="openLoginModal" class="text-white px-5 py-2 rounded-[12px] bg-gradient-to-tl from-[#6144D3] to-[#314DE2] hover:opacity-90 transition-opacity ml-auto">登录</button>
         </div>
       </div>
     </nav>
@@ -27,12 +34,12 @@
               专为教师打造的AI辅助教研平台，通过智能算法将繁琐的备课流程缩短至分钟级，让教学回归本质。
             </div>
             <div class="text-center mt-[50px]">
-              <a 
-              href="/login" 
+              <button 
+              @click="openLoginModal"
               class="inline-block text-white px-8 py-3 rounded-[12px] text-lg font-medium bg-gradient-to-tl from-[#6144D3] to-[#314DE2] hover:opacity-90 transition-opacity" 
               style="box-shadow: 0px 8px 10px -6px #314DE240;box-shadow: 0px 20px 25px -5px #314DE240;">
                 立即体验
-              </a>
+              </button>
             </div>
       </div>
     </section>
@@ -96,10 +103,10 @@
               <div class="flex-1">
                 <h3 class="text-2xl font-bold text-gray-900 mb-3">学术资源库</h3>
                 <p class="text-gray-600 text-sm mb-4" style="font-family: 'Noto Sans SC'; font-weight: 400; font-size: 18px; line-height: 28px; letter-spacing: 0px; max-width: 60%;padding-top: 10px;">连接全球海量教育资源，实时更新。您可以随时调取权威教材、期刊论文与教学视频素材。</p>
-                <a href="#" class="inline-flex items-center hover:underline" style="font-family: 'Noto Sans SC'; font-weight: 700; font-size: 16px; line-height: 24px; letter-spacing: 0px; color: #314DE2;padding-top: 10px;">
+                <router-link to="#" class="inline-flex items-center hover:underline" style="font-family: 'Noto Sans SC'; font-weight: 700; font-size: 16px; line-height: 24px; letter-spacing: 0px; color: #314DE2;padding-top: 10px;">
                   探索资源库
                   <img src="/images/arrow.png" alt="" style="width: 16px; height: 16px; margin-left: 4px;" />
-                </a>
+                </router-link>
               </div>
               <div class="flex items-end" style="width: 240px; height: 220px; margin-right: 20px;">
                 <img src="/images/database.png" alt="" style="width: 240px; height: 220px; object-fit: contain;" />
@@ -163,10 +170,10 @@
 
           <!-- 中间：导航链接 -->
           <div class="flex items-center space-x-8">
-            <a href="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">隐私政策</a>
-            <a href="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">服务条款</a>
-            <a href="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">联系我们</a>
-            <a href="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">帮助中心</a>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">隐私政策</router-link>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">服务条款</router-link>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">联系我们</router-link>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">帮助中心</router-link>
           </div>
 
           <!-- 右侧：分享和语言切换 -->
@@ -185,7 +192,25 @@
 </template>
 
 <script setup lang="ts">
-// 首页组件逻辑
+import { ref } from 'vue'
+import LoginModal from '../login/index.vue'
+
+// 登录弹窗控制
+const showLoginModal = ref(false)
+
+const openLoginModal = () => {
+  showLoginModal.value = true
+}
+
+const closeLoginModal = () => {
+  showLoginModal.value = false
+}
+
+const handleLogin = (data: { name: string; phone: string; code: string; education: string; subject: string }) => {
+  console.log('登录信息:', data)
+  // 这里添加登录逻辑
+  closeLoginModal()
+}
 </script>
 
 <style scoped>
