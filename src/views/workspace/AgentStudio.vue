@@ -1,6 +1,6 @@
 <template>
   <div class="h-full w-full bg-gray-50 flex overflow-hidden">
-    <!-- Studio Sidebar (List of custom agents) -->
+    <!-- Studio Sidebar (List of custom agents)  test-->
     <aside class="w-72 bg-white border-r border-gray-200 h-full flex flex-col pt-6 shrink-0">
       <div class="px-6 mb-4 flex justify-between items-center">
         <span class="font-bold text-lg text-gray-800">创作中心</span>
