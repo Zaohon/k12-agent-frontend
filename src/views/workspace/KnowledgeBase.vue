@@ -479,6 +479,7 @@ onMounted(() => {
   padding: 0;
   position: relative;
   top: 1px;
+  float: left;
 }
 
 .action-btn img {
