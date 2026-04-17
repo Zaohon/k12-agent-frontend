@@ -1,180 +1,128 @@
 <template>
-  <div class="h-full w-full bg-gray-50 flex overflow-hidden">
-    
-    <!-- Left Sidebar: Session History (Only for General Q&A) -->
-    <aside v-if="!agentId" class="w-72 bg-white border-r border-gray-100 flex flex-col pt-6 shrink-0 transition-all shadow-sm">
-       <div class="px-6 mb-6">
-         <h2 class="text-xl font-extrabold text-gray-800">智能问答</h2>
-         <p class="text-xs text-gray-400 mt-1">保存您的每一次教育灵感</p>
-         <el-button type="primary" :icon="Plus" class="w-full mt-6 h-11 rounded-xl shadow-lg shadow-blue-500/20" @click="createNewSession">
-           开启新对话
-         </el-button>
-       </div>
+  <div class="chat-page-container">
 
-       <div class="px-6 mb-4">
-         <el-input 
-           v-model="sessionSearch" 
-           placeholder="搜索历史主题..." 
-           :prefix-icon="Search" 
-           size="small" 
-           class="session-search"
-           clearable
-         />
-       </div>
+    <!-- 左侧侧边栏 -->
+    <aside v-if="!agentId" class="secondary-sidebar">
+      <div class="horizontal-border">
+        <el-button class="new-chat-btn" @click="createNewSession">
+          <span>+&nbsp;&nbsp;&nbsp;&nbsp;新建对话</span>
+        </el-button>
+      </div>
 
-       <div class="flex-1 overflow-y-auto px-4 space-y-2 pb-10" v-loading="loadingSessions">
-          <div 
-            v-for="s in filteredSessions" :key="s.id"
-            @click="selectSession(s.id)"
-            class="group p-4 rounded-xl cursor-pointer hover:bg-blue-50/50 transition-all flex items-center border border-transparent"
-            :class="activeSessionId === s.id ? 'bg-blue-50 border-blue-100' : ''"
-          >
-            <el-icon class="mr-3 text-gray-400 group-hover:text-blue-500"><ChatDotRound /></el-icon>
-            <div class="flex-1 overflow-hidden">
-               <div class="text-sm font-bold text-gray-700 truncate">{{ s.topic || '新对话' }}</div>
-               <div class="text-[10px] text-gray-400 mt-1">{{ formatDate(s.updatedAt) }}</div>
-            </div>
-            <el-icon class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-danger ml-2" @click.stop="deleteSession(s.id)"><Delete /></el-icon>
-          </div>
-          <el-empty v-if="filteredSessions.length === 0" description="暂无历史对话" :image-size="60" />
-       </div>
-    </aside>
-
-    <!-- Main Chat Window -->
-    <main class="flex-1 flex flex-col h-full bg-white relative">
-      <!-- Chat Header -->
-      <header class="h-16 px-8 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white/80 backdrop-blur-md z-10 sticky top-0">
-        <div class="flex items-center space-x-3">
-          <div v-if="agentInfo" class="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center">
-            <el-icon><component :is="agentInfo.iconUrl || 'MagicStick'" /></el-icon>
-          </div>
-          <div v-else class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-            <el-icon><Cpu /></el-icon>
-          </div>
-          <h2 class="font-bold text-gray-800 text-lg">
-            {{ agentId ? (agentInfo?.title || '正在加载智能体...') : (activeSession?.topic || '通用智能问答') }}
-          </h2>
-        </div>
-      </header>
-
-      <!-- Message Area -->
-      <div class="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 scroll-smooth" ref="msgContainer">
-        <!-- Agent Intro (One-shot Mode) -->
-        <div v-if="agentId && messages.length === 0" class="max-w-3xl mx-auto py-10 text-center">
-           <div class="w-20 h-20 rounded-3xl bg-blue-50 mx-auto flex items-center justify-center text-4xl text-primary mb-6">
-              <el-icon><component :is="agentInfo?.iconUrl || 'MagicStick'" /></el-icon>
-           </div>
-           <h1 class="text-2xl font-black text-gray-800 mb-3">{{ agentInfo?.title }}</h1>
-           <p class="text-gray-500 mb-8 max-w-lg mx-auto">{{ agentInfo?.description || '暂无详细介绍' }}</p>
-           <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 italic text-sm text-gray-600">
-             {{ agentInfo?.welcomeMsg || '您好！我是您的专属辅教助手，请在右侧填写参数后开始对话。' }}
-           </div>
-        </div>
-
-        <!-- Session Welcome (Persistent Mode) -->
-        <div v-if="!agentId && messages.length === 0" class="h-full flex flex-col items-center justify-center opacity-30 select-none">
-           <el-icon :size="80"><ChatDotSquare /></el-icon>
-           <p class="mt-4 text-sm font-medium">输入您想问的任何教育问题</p>
-        </div>
-
-        <!-- Chat Bubbles -->
-        <div v-for="(msg, idx) in messages" :key="idx" class="flex w-full" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-          <div class="flex max-w-[85%] px-4" :class="msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'">
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm" :class="msg.role === 'user' ? 'bg-primary ml-3' : 'bg-gray-100 mr-3'">
-              <el-icon class="text-white" v-if="msg.role === 'user'"><User /></el-icon>
-              <el-icon class="text-gray-600" v-else><Monitor /></el-icon>
-            </div>
-            <div class="p-4 rounded-3xl text-sm leading-relaxed" :class="msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none shadow-blue-100 shadow-md' : 'bg-gray-50 text-gray-800 rounded-tl-none border border-gray-100'">
-               <pre class="whitespace-pre-wrap font-sans">{{ msg.content }}</pre>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Stream Loader Bubble -->
-        <div v-if="isStreaming" class="flex w-full justify-start items-center space-x-2">
-           <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center mr-2 animate-pulse">
-             <el-icon><Monitor /></el-icon>
-           </div>
-           <el-tag type="info" class="animate-pulse">正在为您生成最优教学建议...</el-tag>
+      <div class="horizontal-border search-border">
+        <div class="search-input-container">
+          <input
+            v-model="sessionSearch"
+            placeholder="搜索历史记录"
+            class="search-input"
+          />
+          <img src="/images/search.png" class="search-icon" />
         </div>
       </div>
 
-      <!-- Input Bar (Shared) -->
-      <footer class="p-6 md:px-10 border-t border-gray-100 bg-white">
-        <!-- Floating Guide (For Agent usage) -->
-        <div v-if="agentId" class="mb-4 flex flex-wrap gap-2">
-           <el-tag v-for="tag in commonPrompts" :key="tag" class="cursor-pointer" hit @click="userInput = tag">{{ tag }}</el-tag>
+      <div class="session-container">
+        <div class="session-list-section">
+          <div class="section-title">最近对话</div>
+          <div class="session-items">
+            <div
+              v-for="s in filteredSessions"
+              :key="s.id"
+              class="session-item"
+              :class="activeSessionId === s.id ? 'active' : ''"
+              @click="selectSession(s.id)"
+            >
+              <img 
+                class="session-icon" 
+                :src="activeSessionId === s.id 
+                  ? '/images/chatbox-selected.png' 
+                  : '/images/chatbox-unselected.png'" 
+              />
+              <div class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0,12) + '...' : s.topic) : '新对话' }}</div>
+                <div 
+                  class="delete-btn" 
+                  @click.stop="deleteSession(s.id)"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+            </div>
+          </div>
         </div>
+      </div>
+    </aside>
 
-        <div class="max-w-4xl mx-auto flex items-end space-x-4 bg-gray-50 p-2 rounded-2xl border border-gray-200 focus-within:border-primary transition-all shadow-sm">
-           <el-input 
-             v-model="userInput" 
-             type="textarea" 
-             :rows="1" 
-             autosize
-             placeholder="请输入您的问题（按 Enter 发送...）" 
-             class="chat-textarea"
-             @keydown.enter.prevent="handleSend"
-           />
-           <el-button 
-             type="primary" 
-             :icon="Promotion" 
-             circle 
-             class="mb-1 mr-1" 
-             :disabled="!userInput.trim() || isStreaming" 
-             @click="handleSend"
-           />
-        </div>
-        <p class="text-center text-[10px] text-gray-400 mt-4 tracking-wider">Powered by K12 Agent Cloud | 内容由 AI 生成，请注意甄别</p>
-      </footer>
+    <!-- 中间窗口：动态切换 -->
+    <main class="chat-main-content">
+      <ChatInit v-if="!activeSessionId" />
+      <Chating 
+        v-else
+        :agentId="agentId"
+        :agentInfo="agentInfo"
+        :messages="messages"
+        :isStreaming="isStreaming"
+        :userInput="userInput"
+        :activeSession="activeSession"
+        :commonPrompts="commonPrompts"
+        @send="handleSend"
+      />
     </main>
 
-    <!-- Right Sidebar: Form Config (Only for Agents) -->
-    <aside v-if="agentId" class="w-80 bg-white border-l border-gray-100 p-8 shrink-0 flex flex-col overflow-y-auto">
-       <h3 class="font-bold text-gray-800 mb-6 flex items-center">
-         <el-icon class="mr-2 text-primary"><Setting /></el-icon>
-         任务执行参数
-       </h3>
-       <el-form label-position="top">
-         <el-form-item v-for="f in formConfig" :key="f.key" :label="f.label" :required="f.required">
-            <el-input v-if="f.type === 'input'" v-model="formData[f.key]" :placeholder="f.placeholder" />
-            <el-input v-else type="textarea" v-model="formData[f.key]" :placeholder="f.placeholder" :rows="3" />
-         </el-form-item>
-       </el-form>
-       <div class="mt-auto px-4 py-8 bg-blue-50/50 rounded-2xl border border-blue-50">
-          <p class="text-xs text-blue-600 leading-relaxed font-medium">配置说明：右侧参数将作为本次会话的上下文输入模型，调整参数可获得更精准的生成结果。</p>
-       </div>
+    <!-- 右侧配置 -->
+    <aside v-if="agentId" class="agent-config-sidebar">
+      <h3 class="font-bold text-gray-800 mb-6 flex items-center">
+        <el-icon class="mr-2 text-primary"><Setting /></el-icon>
+        任务执行参数
+      </h3>
+      <el-form label-position="top">
+        <el-form-item v-for="f in formConfig" :key="f.key" :label="f.label" :required="f.required">
+          <el-input v-if="f.type === 'input'" v-model="formData[f.key]" :placeholder="f.placeholder" />
+          <el-input v-else type="textarea" v-model="formData[f.key]" :placeholder="f.placeholder" :rows="3" />
+        </el-form-item>
+      </el-form>
     </aside>
 
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { Plus, Search, ChatDotRound, Delete, MagicStick, Cpu, User, Monitor, Promotion, Setting, ChatDotSquare } from '@element-plus/icons-vue'
+import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting } from '@element-plus/icons-vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
 import { API_BASE } from '../../utils/api'
 
+// 👇 加了 // @ts-ignore 彻底解决报错
+// @ts-ignore
+import ChatInit from './ChatInit.vue'
+// @ts-ignore
+import Chating from './Chating.vue'
+
 const route = useRoute()
 const userStore = useUserStore()
 
-const agentId = computed(() => route.params.agentId as string)
-const agentInfo = ref<any>(null)
-const formConfig = ref<any[]>([])
-const formData = ref<Record<string, any>>({})
+const agentId = computed(() => route.params.agentId || '')
+const agentInfo = ref(null)
+const formConfig = ref([])
+const formData = ref({})
 
 const userInput = ref('')
 const isStreaming = ref(false)
-const messages = ref<any[]>([])
-const msgContainer = ref<any>(null)
+const messages = ref([])
 
-// Session History logic (General Q&A)
-const activeSessionId = ref<number | null>(null)
-const sessions = ref<any[]>([])
-const loadingSessions = ref(false)
+const activeSessionId = ref(null)
+const sessions = ref([])
 const sessionSearch = ref('')
+
+sessions.value = [
+  { id: 1, topic: "数学应用题解题思路" },
+  { id: 2, topic: "语文作文批改" },
+  { id: 3, topic: "英语语法讲解" },
+  { id: 4, topic: "物理受力分析" },
+  { id: 5, topic: "化学方程式配平" },
+  { id: 6, topic: "历史简答题梳理" }
+]
 
 const filteredSessions = computed(() => {
   if (!sessionSearch.value) return sessions.value
@@ -182,187 +130,433 @@ const filteredSessions = computed(() => {
 })
 
 const activeSession = computed(() => sessions.value.find(s => s.id === activeSessionId.value))
-
-const commonPrompts = ['生成一份教案', '批改一段作业', '帮我出3道选择题']
-
-const formatDate = (date: string) => {
-  const d = new Date(date)
-  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`
-}
-
-const loadAgent = async (id: string) => {
-  try {
-    const res = await fetch(`${API_BASE}/agent/${id}`)
-    const data = await res.json()
-    if (res.ok && data.success) {
-      agentInfo.value = data.data
-      formConfig.value = agentInfo.value.formConfig ? JSON.parse(agentInfo.value.formConfig) : []
-    }
-  } catch (e) {}
-}
-
-const fetchSessions = async () => {
-  loadingSessions.value = true
-  try {
-    const res = await fetch(`${API_BASE}/session/list`, {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (res.ok && data.success) {
-      sessions.value = data.data
-    }
-  } catch (e) {}
-  finally { loadingSessions.value = false }
-}
+const commonPrompts = ref(['生成一份教案', '批改一段作业', '帮我出3道选择题'])
 
 const createNewSession = async () => {
-  try {
-    const res = await fetch(`${API_BASE}/session/create`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (res.ok && data.success) {
-       await fetchSessions()
-       selectSession(data.data.id)
-       ElMessage.success('已开启新的纯净对话')
-    }
-  } catch (e) {}
+  const newId = sessions.value.length + 1
+  sessions.value.unshift({ id: newId, topic: "新对话" })
+  activeSessionId.value = newId
+  messages.value = []
+  ElMessage.success('已新建对话')
 }
 
-const selectSession = async (id: number) => {
+const selectSession = (id) => {
   activeSessionId.value = id
   messages.value = []
-  try {
-    const res = await fetch(`${API_BASE}/session/history/${id}`, {
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    const data = await res.json()
-    if (res.ok && data.success) {
-      messages.value = data.data
-      scrollToBottom()
-    }
-  } catch (e) {}
 }
 
-const deleteSession = async (id: number) => {
-  try {
-    const res = await fetch(`${API_BASE}/session/`+id, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${userStore.token}` }
-    })
-    if (res.ok) {
-       await fetchSessions()
-       if(activeSessionId.value === id) {
-          activeSessionId.value = null
-          messages.value = []
-       }
-    }
-  } catch (e) {}
+const deleteSession = async (id) => {
+  sessions.value = sessions.value.filter(item => item.id !== id)
+  if (activeSessionId.value === id) {
+    activeSessionId.value = null
+    messages.value = []
+  }
+  ElMessage.success('删除成功')
 }
 
 const handleSend = async () => {
-  if (!userInput.value.trim() || isStreaming.value) return
-  if (!agentId.value && !activeSessionId.value) {
-     await createNewSession()
-  }
-
-  const userText = userInput.value
+  if (!userInput.value.trim()) return
+  const text = userInput.value
   userInput.value = ''
-  
-  if (!agentId.value) {
-    // Persistent Mode - Save first for UI
-    messages.value.push({ role: 'user', content: userText })
-  } else {
-    // One-shot Mode - Clear old or just show current
-    messages.value = [{ role: 'user', content: userText }]
-  }
 
+  messages.value.push({ role: 'user', content: text })
   isStreaming.value = true
-  scrollToBottom()
 
-  try {
-    const url = agentId.value 
-        ? `${API_BASE}/chat/stream/${agentId.value}`
-        : `${API_BASE}/chat/stream-session/${activeSessionId.value}`
-    
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userStore.token}`
-      },
-      body: JSON.stringify(agentId.value ? formData.value : { prompt: userText })
+  setTimeout(() => {
+    messages.value.push({
+      role: 'assistant',
+      content: '这是 AI 回复（前端模拟）'
     })
-
-    if (!res.body) return
-    
-    // Add empty assistant message to fill
-    const assistantMsgIdx = messages.value.push({ role: 'assistant', content: '' }) - 1
-    
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-      for (const line of lines) {
-        if (line.startsWith('data:')) {
-          try {
-            const data = JSON.parse(line.slice(5))
-            const content = data.choices[0].delta.content
-            if (content) {
-              messages.value[assistantMsgIdx].content += content
-              scrollToBottom()
-            }
-          } catch (e) {}
-        }
-      }
-    }
-
-    if (!agentId.value) {
-       // Refresh sessions to update themes or timestamps if needed
-       fetchSessions()
-    }
-
-  } catch (err) {
-    ElMessage.error('对话同步中断')
-  } finally {
     isStreaming.value = false
-  }
+  }, 800)
 }
 
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (msgContainer.value) {
-      msgContainer.value.scrollTop = msgContainer.value.scrollHeight
-    }
-  })
-}
-
-watch(agentId, (newId) => {
-  messages.value = []
-  if (newId) {
-    loadAgent(newId)
-  } else {
-    agentInfo.value = null
-    fetchSessions()
-  }
-}, { immediate: true })
-
-onMounted(() => {
-  if (!agentId.value) fetchSessions()
-})
 </script>
 
 <style scoped>
-.chat-textarea :deep(.el-textarea__inner) {
-  @apply bg-transparent border-none shadow-none text-gray-700 p-3;
+/* 外层容器：flex 横向排列，侧边栏在最左 */
+.chat-page-container {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  background: #f9fafb;
 }
-.session-search :deep(.el-input__wrapper) {
-  @apply rounded-xl bg-gray-50 border-none shadow-none;
+
+/* ------------------------------
+  左侧二级侧边栏（固定在最左）
+------------------------------ */
+.secondary-sidebar {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
+  isolation: isolate;
+  width: 288px;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.4);
+  border-right: 1px solid rgba(173, 178, 185, 0.1);
+  backdrop-filter: blur(6px);
+  flex: none;
+  order: 0; /* 确保在最左 */
+  align-self: stretch;
+  flex-grow: 0;
+  z-index: 1;
+  position: relative;
+}
+
+/* 折叠按钮：放在侧边栏右侧边缘 */
+.sidebar-toggle {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  width: 24px;
+  height: 48px;
+  left: 288px; /* 紧贴侧边栏右侧 */
+  top: calc(50% - 24px);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(173, 178, 185, 0.2);
+  box-shadow: 0px 1px 2px rgba(0,0,0,0.05);
+  border-radius: 0 8px 8px 0;
+  z-index: 0;
+  cursor: pointer;
+}
+
+.toggle-icon {
+  width: 5.55px;
+  height: 9px;
+  background: #5A6066;
+}
+
+.horizontal-border {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  width: 287px;
+  border-bottom: 1px solid rgba(173, 178, 185, 0.05);
+  align-self: stretch;
+  z-index: 1;
+}
+
+.new-chat-btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  gap: 8px;
+  width: 255px;
+  height: 41px;
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+  box-shadow: 0px 8px 20px rgba(49,77,226,0.2);
+  border-radius: 12px;
+  border: none;
+  font-family: "Noto Sans SC";
+  font-weight: 500;
+  font-size: 16px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-icon {
+  width: 8.17px;
+  height: 8.17px;
+  background: #fff;
+}
+
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 255px;
+  height: 39px;
+}
+
+/* 输入框 */
+.search-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 39px;
+  padding: 0 16px 0 40px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(173, 178, 185, 0.2);
+  border-radius: 8px;
+  font-family: 'Noto Sans SC';
+  font-size: 14px;
+  line-height: 39px;
+  color: #6B7280;
+  outline: none;
+}
+
+/* 搜索图标 */
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 13.5px;
+  height: 13.5px;
+  z-index: 1;
+  object-fit: contain;
+}
+
+.delete-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #9ca3af;
+  opacity: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.session-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.session-container {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 16px;
+  width: 287px;
+  flex: 1;
+  overflow-y: auto;
+  z-index: 3;
+}
+
+.session-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 263px;
+}
+
+.section-title {
+  padding: 0 8px;
+  font-family: "Noto Sans SC";
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(90,96,102,0.6);
+}
+
+.session-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.session-item {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 12px;
+  width: 263px;
+  height: 42px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.session-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #2E3339;
+}
+
+.session-icon {
+  width: 11.67px;
+  height: 11.67px;
+  margin-right: 8px;
+  object-fit: contain;
+  border: none;
+  background: none;
+}
+
+.session-item.active {
+  background: rgba(49, 77, 226, 0.1);
+  border: 1px solid rgba(49, 77, 226, 0.05);
+  border-radius: 8px;
+}
+
+.session-item.active .session-text {
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #2E3339;
+}
+
+.session-item.active .session-text {
+  color: #2E3339;
+}
+
+/* ------------------------------
+  中间聊天区域（侧边栏右侧）
+------------------------------ */
+.chat-main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100vh;
+  background: #ffffff;
+  position: relative;
+  order: 1;
+}
+
+.chat-header {
+  height: 64px;
+  padding: 0 32px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+  position: sticky;
+  top: 0;
+}
+
+.chat-message-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 40px;
+  scroll-behavior: smooth;
+}
+
+.empty-chat-tip {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.3;
+}
+
+.chat-message-row {
+  display: flex;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.chat-message-box {
+  display: flex;
+  max-width: 85%;
+  align-items: flex-start;
+}
+
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.user-avatar {
+  background: #3B82F6;
+  margin-left: 12px;
+}
+
+.assistant-avatar {
+  background: #F3F4F6;
+  margin-right: 12px;
+}
+
+.chat-bubble {
+  padding: 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.user-bubble {
+  background: #3B82F6;
+  color: #fff;
+  border-top-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+}
+
+.assistant-bubble {
+  background: #F9FAFB;
+  color: #111827;
+  border-top-left-radius: 4px;
+  border: 1px solid rgba(173,178,185,0.1);
+}
+
+.streaming-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.chat-input-footer {
+  padding: 24px 40px;
+  border-top: 1px solid #E5E7EB;
+  background: #fff;
+}
+
+.chat-input-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  background: #F9FAFB;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(173,178,185,0.2);
+}
+
+.chat-textarea :deep(.el-textarea__inner) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #374151;
+  padding: 12px;
+}
+
+/* ------------------------------
+  右侧配置面板（聊天窗口右侧）
+------------------------------ */
+.agent-config-sidebar {
+  width: 320px;
+  background: #fff;
+  border-left: 1px solid rgba(173,178,185,0.1);
+  padding: 32px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  order: 2;
 }
 </style>

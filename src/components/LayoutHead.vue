@@ -102,13 +102,11 @@
 
 /* 邀请活动按钮 */
 .action-btn {
-  box-sizing: border-box;
   display: flex;
-  flex-direction: row;
   align-items: center;
+  white-space: nowrap;
   padding: 6px 16px;
   gap: 8px;
-  width: 109.67px;
   height: 34px;
   background: rgba(49, 77, 226, 0.05);
   border: 1px solid rgba(49, 77, 226, 0.1);

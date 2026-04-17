@@ -4,22 +4,22 @@
       <!-- 导航菜单 -->
       <nav class="sidebar-nav">
         <router-link to="/workspace/chat" active-class="active">
-          <el-icon :size="20"><ChatDotSquare /></el-icon>
+          <img src="/images/sidebar-chat.png" class="sidebar-icon" />
           <span>小龙问答</span>
         </router-link>
 
         <router-link to="/workspace/square" active-class="active">
-          <el-icon :size="20"><Menu /></el-icon>
+          <img src="/images/sidebar-eduagent.png" class="sidebar-icon" />
           <span>教育智能体</span>
         </router-link>
 
         <router-link to="/workspace/studio" active-class="active">
-          <el-icon :size="20"><Cpu /></el-icon>
+          <img src="/images/sidebar-myagent.png" class="sidebar-icon" />
           <span>我的智能体</span>
         </router-link>
 
         <router-link to="/workspace/studio" active-class="active">
-          <el-icon :size="20"><Cpu /></el-icon>
+          <img src="/images/sidebar-db.png" class="sidebar-icon" />
           <span>知识库</span>
         </router-link>
 
@@ -198,6 +198,15 @@ const goHelp = () => {
   background: rgba(49, 77, 226, 0.1);
   color: #314de2;
   font-weight: 500;
+}
+
+.sidebar-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+  /* 保证图片和文字垂直居中 */
+  display: block;
 }
 
 .admin-title {
