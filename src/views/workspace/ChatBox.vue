@@ -320,6 +320,10 @@ const handleSend = async () => {
   flex-shrink: 0;
 }
 
+.session-item:hover {
+  background: rgba(49, 77, 226, 0.03);
+}
+
 .session-item:hover .delete-btn {
   opacity: 1;
 }
@@ -374,6 +378,7 @@ const handleSend = async () => {
   height: 42px;
   border-radius: 8px;
   cursor: pointer;
+  transition: background 0.5s ease;
 }
 
 .session-text {
