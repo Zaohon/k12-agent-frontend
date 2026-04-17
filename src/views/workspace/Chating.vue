@@ -66,13 +66,13 @@
           <!-- 左侧功能按钮 -->
           <div class="action-left">
             <button class="icon-btn">
-              <img src="/images/chatinit-img.png" alt="图片" />
+              <img src="@/images/chatinit-img.png" alt="图片" />
             </button>
             <button class="icon-btn">
-              <img src="/images/chatinit-link.png" alt="链接" />
+              <img src="@/images/chatinit-link.png" alt="链接" />
             </button>
             <button class="icon-btn">
-              <img src="/images/chatinit-vedio.png" alt="音频" />
+              <img src="@/images/chatinit-vedio.png" alt="音频" />
             </button>
           </div>
 

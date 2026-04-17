@@ -16,7 +16,7 @@
             placeholder="搜索历史记录"
             class="search-input"
           />
-          <img src="/images/search.png" class="search-icon" />
+          <img src="@/images/search.png" class="search-icon" />
         </div>
       </div>
 
@@ -34,8 +34,8 @@
               <img 
                 class="session-icon" 
                 :src="activeSessionId === s.id 
-                  ? '/images/chatbox-selected.png' 
-                  : '/images/chatbox-unselected.png'" 
+                  ? '@/images/chatbox-selected.png' 
+                  : '@/images/chatbox-unselected.png'" 
               />
               <div class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0,12) + '...' : s.topic) : '新对话' }}</div>
                 <div 

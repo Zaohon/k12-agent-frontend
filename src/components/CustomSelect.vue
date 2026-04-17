@@ -14,7 +14,7 @@
       </span>
       <span v-else style="color: #9CA3AF;">{{ props.placeholder }}</span>
       <div class="select-arrow" :class="{ 'rotate': isOpen }">
-        <img src="/images/vector.png" alt="下拉箭头" style="width: 10px; height: auto; transition: transform 0.3s ease;" />
+        <img src="@/images/vector.png" alt="下拉箭头" style="width: 10px; height: auto; transition: transform 0.3s ease;" />
       </div>
     </div>
     <div 

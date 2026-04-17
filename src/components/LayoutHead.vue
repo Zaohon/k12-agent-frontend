@@ -2,7 +2,7 @@
   <header class="layout-head">
     <!-- 左侧 Logo + 标题 -->
     <div class="head-left">
-      <img src="/images/longqi-logo.png" alt="龙启云" class="logo-img" />
+      <img src="@/images/longqi-logo.png" alt="龙启云" class="logo-img" />
       <div class="title-wrap">
         <div class="main-title">龙启云</div>
         <div class="sub-title">你的数字引航者</div>
@@ -12,7 +12,7 @@
     <div class="head-right">
       <!-- 邀请活动按钮 -->
       <button class="action-btn">
-        <img src="/images/invite-gift.png" class="btn-icon" />
+        <img src="@/images/invite-gift.png" class="btn-icon" />
         <span>邀请活动</span>
       </button>
 

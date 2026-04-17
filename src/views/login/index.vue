@@ -5,13 +5,13 @@
       <div class="bg-white rounded-[24px] p-8 max-w-md w-full mx-4 relative modal-content" style="box-shadow: 0 20px 60px rgba(0,0,0,0.15);" @click.stop>
         <!-- 关闭按钮 -->
         <button @click="closeModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-          <img src="/images/close.png" alt="关闭" class="h-3 w-3"  />
+          <img src="@/images/close.png" alt="关闭" class="h-3 w-3"  />
         </button>
 
         <!-- 标题区域 -->
         <div class="flex items-center mb-8">
           <div class="w-12 h-12 rounded-[12px] bg-gradient-to-tl from-[#6144D3] to-[#314DE2] flex items-center justify-center mr-4 overflow-hidden" style="box-shadow: 0px 4px 6px -4px #314DE233, 0px 10px 15px -3px #314DE233;">
-            <img src="/images/logo-white.png" alt="logo" class="max-w-[80%] max-h-[80%] object-contain" />
+            <img src="@/images/logo-white.png" alt="logo" class="max-w-[80%] max-h-[80%] object-contain" />
           </div>
           <div>
             <h2 class="text-2xl font-bold" style="color: #2E3339">登录</h2>
@@ -94,7 +94,7 @@
           <p class="mb-1" style="font-family: Noto Sans SC; font-weight: 500; font-style: Medium; font-size: 10px; line-height: 15px; letter-spacing: 1px; text-align: center; vertical-align: middle; text-transform: uppercase; color: #5A6066CC;">继续操作即表示您同意</p>
           <p style="font-family: Noto Sans SC; font-weight: 500; font-style: Medium; font-size: 11px; line-height: 16.5px; letter-spacing: 0px; text-align: center; vertical-align: middle; color: #5A6066CC;">
             <a href="#" class="text-[#5A6066] hover:underline">隐私政策</a>
-            <img src="/images/point.png" alt="分隔符" class="mx-2 inline-block" style="height: 4px; width: 4px; margin: 0 15px 0 15px;" />
+            <img src="@/images/point.png" alt="分隔符" class="mx-2 inline-block" style="height: 4px; width: 4px; margin: 0 15px 0 15px;" />
             <a href="#" class="text-[#5A6066] hover:underline">服务条款</a>
           </p>
         </div>
@@ -197,7 +197,7 @@
   transform: translateY(-50%) !important;
   width: 12px !important;
   height: 12px !important;
-  background-image: url('/images/vector.png') !important;
+  background-image: url('@/images/vector.png') !important;
   background-size: contain !important;
   background-repeat: no-repeat !important;
   background-position: center !important;

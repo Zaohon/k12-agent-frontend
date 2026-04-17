@@ -4,22 +4,22 @@
       <!-- 导航菜单 -->
       <nav class="sidebar-nav">
         <router-link to="/workspace/chat" active-class="active">
-          <img src="/images/sidebar-chat.png" class="sidebar-icon" />
+          <img src="@/images/sidebar-chat.png" class="sidebar-icon" />
           <span>小龙问答</span>
         </router-link>
 
         <router-link to="/workspace/square" active-class="active">
-          <img src="/images/sidebar-eduagent.png" class="sidebar-icon" />
+          <img src="@/images/sidebar-eduagent.png" class="sidebar-icon" />
           <span>教育智能体</span>
         </router-link>
 
         <router-link to="/workspace/studio" active-class="active">
-          <img src="/images/sidebar-myagent.png" class="sidebar-icon" />
+          <img src="@/images/sidebar-myagent.png" class="sidebar-icon" />
           <span>我的智能体</span>
         </router-link>
 
         <router-link to="/workspace/studio" active-class="active">
-          <img src="/images/sidebar-db.png" class="sidebar-icon" />
+          <img src="@/images/sidebar-db.png" class="sidebar-icon" />
           <span>知识库</span>
         </router-link>
 

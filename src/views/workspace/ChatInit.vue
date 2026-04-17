@@ -23,13 +23,13 @@
           <div class="input-bar">
             <div class="left-icons">
               <button class="icon-btn">
-                <img src="/images/chatinit-link.png" alt="超链接" />
+                <img src="@/images/chatinit-link.png" alt="超链接" />
               </button>
               <button class="icon-btn">
-                <img src="/images/chatinit-vedio.png" alt="音频" />
+                <img src="@/images/chatinit-vedio.png" alt="音频" />
               </button>
               <button class="icon-btn">
-                <img src="/images/chatinit-img.png" alt="图片" />
+                <img src="@/images/chatinit-img.png" alt="图片" />
               </button>
             </div>
             <button class="send-btn">发送</button>
@@ -62,25 +62,25 @@ const cards = [
     title: '教案生成',
     desc: '快速生成符合大纲要求的详细教学方案。',
     color: 'blue',
-    icon: '/images/chatinit-1.png',
+    icon: '@/images/chatinit-1.png',
   },
   {
     title: '课件生成',
     desc: '智能排版与内容生成，一键导出精品课件。',
     color: 'purple',
-    icon: '/images/chatinit-2.png',
+    icon: '@/images/chatinit-2.png',
   },
   {
     title: 'AI 出题',
     desc: '根据知识点自动生成多难度等级试题。',
     color: 'blue',
-    icon: '/images/chatinit-3.png',
+    icon: '@/images/chatinit-3.png',
   },
   {
     title: '演讲稿',
     desc: '适用于开学典礼、家长会等多种教育场景。',
     color: 'purple',
-    icon: '/images/chatinit-4.png',
+    icon: '@/images/chatinit-4.png',
   },
 ];
 </script>

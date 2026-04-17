@@ -11,7 +11,7 @@
     <nav class="bg-white" style="box-shadow: 0 12px 20px 0 #314DE20F;">
       <div class="w-full px-4 py-3 flex justify-between items-center">
         <div class="flex items-center space-x-2" style="margin-left: 20px;">
-          <img src="/images/longqi-logo.png" alt="Logo" class="h-8 w-auto object-contain">
+          <img src="@/images/longqi-logo.png" alt="Logo" class="h-8 w-auto object-contain">
           <div class="flex flex-col">
             <span class="text-2xl font-bold tracking-wider bg-gradient-to-tl from-[#314DE2] to-[#6144D3] bg-clip-text text-transparent">龙启云</span>
             <span class="text-[12px] text-gray-500 tracking-wide">你的数字引航者</span>
@@ -51,7 +51,7 @@
           <!-- 智能教案生成 - 第一行第一列，占 2 列 -->
           <div class="col-span-2 row-span-1 relative rounded-[24px] overflow-hidden" style="background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%); min-height: 400px;">
             <div class="absolute top-2/4 right-10 transform -translate-y-1/2 w-80 h-80 opacity-50">
-              <img src="/images/book.png" alt="" class="w-full h-full object-contain" />
+              <img src="@/images/book.png" alt="" class="w-full h-full object-contain" />
             </div>
             <div class="relative z-10 p-10 h-full flex flex-col justify-end pb-16">
               <span class="inline-block px-4 py-1.5 rounded-full bg-white/20 text-white text-xs mb-4 w-fit">热门推荐</span>
@@ -67,7 +67,7 @@
           <div class="col-span-1 row-span-1 rounded-[24px] p-8" style="background: #E6DEFF80; border: 1px solid #6144D31A;">
             <div class="mb-6">
               <div class="w-14 h-14 rounded-[16px] flex items-center justify-center" style="background: #E9E5FF;">
-                <img src="/images/upload.png" alt="" class="w-6 h-6 object-contain" />
+                <img src="@/images/upload.png" alt="" class="w-6 h-6 object-contain" />
               </div>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-4">PPT 课件转换</h3>
@@ -75,7 +75,7 @@
             <div class="rounded-[16px] p-4 bg-white" style="margin-top: 80px;">
               <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-[12px] flex items-center justify-center" style="background: #6144D3;">
-                  <img src="/images/pen.png" alt="" style="width: 12.25px; height: 12.25px;" />
+                  <img src="@/images/pen.png" alt="" style="width: 12.25px; height: 12.25px;" />
                 </div>
                 <div style="background: #6144D333; width: 96px; height: 8px; border-radius: 9999px;"></div>
               </div>
@@ -86,7 +86,7 @@
           <div class="col-span-1 row-span-1 rounded-[24px] p-8" style="background: #DEE5FD80; height: 300px; border: 1px solid #575F731A;">
             <div class="mb-6">
               <div class="w-14 h-14 rounded-[16px] flex items-center justify-center" style="background: #575F731A;">
-                <img src="/images/papers.png" alt="" class="w-6 h-6 object-contain" />
+                <img src="@/images/papers.png" alt="" class="w-6 h-6 object-contain" />
               </div>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-3">AI 随堂练习</h3>
@@ -105,11 +105,11 @@
                 <p class="text-gray-600 text-sm mb-4" style="font-family: 'Noto Sans SC'; font-weight: 400; font-size: 18px; line-height: 28px; letter-spacing: 0px; max-width: 60%;padding-top: 10px;">连接全球海量教育资源，实时更新。您可以随时调取权威教材、期刊论文与教学视频素材。</p>
                 <router-link to="#" class="inline-flex items-center hover:underline" style="font-family: 'Noto Sans SC'; font-weight: 700; font-size: 16px; line-height: 24px; letter-spacing: 0px; color: #314DE2;padding-top: 10px;">
                   探索资源库
-                  <img src="/images/arrow.png" alt="" style="width: 16px; height: 16px; margin-left: 4px;" />
+                  <img src="@/images/arrow.png" alt="" style="width: 16px; height: 16px; margin-left: 4px;" />
                 </router-link>
               </div>
               <div class="flex items-end" style="width: 240px; height: 220px; margin-right: 20px;">
-                <img src="/images/database.png" alt="" style="width: 240px; height: 220px; object-fit: contain;" />
+                <img src="@/images/database.png" alt="" style="width: 240px; height: 220px; object-fit: contain;" />
               </div>
             </div>
           </div>
@@ -179,10 +179,10 @@
           <!-- 右侧：分享和语言切换 -->
           <div class="flex items-center space-x-3">
             <button class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors">
-              <img src="/images/share.png" alt="分享" class="w-5 h-5" />
+              <img src="@/images/share.png" alt="分享" class="w-5 h-5" />
             </button>
             <button class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors">
-              <img src="/images/internal.png" alt="全球" class="w-5 h-5" />
+              <img src="@/images/internal.png" alt="全球" class="w-5 h-5" />
             </button>
           </div>
         </div>
