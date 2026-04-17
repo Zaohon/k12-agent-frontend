@@ -22,15 +22,6 @@
         <!-- 表单 -->
         <form @submit.prevent="handleLogin" class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-[#314DE2] mb-2">姓名</label>
-            <el-input 
-              v-model="loginForm.name"
-              placeholder="请输入您的真实姓名"
-              class="custom-input"
-            />
-          </div>
-
-          <div>
             <label class="block text-sm font-medium text-[#314DE2] mb-2">手机号</label>
             <el-input 
               v-model="loginForm.phone"
@@ -54,28 +45,11 @@
                 type="primary"
                 class="whitespace-nowrap"
                 style="background-color: #E6E5FF; color: #314DE2; border: none; border-radius: 12px; padding: 0 24px; height: 48px;"
+                @click="sendSmsCode"
+                :disabled="countdown > 0"
               >
-                获取验证码
+                {{ countdown > 0 ? `${countdown}s后重发` : '获取验证码' }}
               </el-button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-[#314DE2] mb-2">学段</label>
-              <CustomSelect 
-                v-model="loginForm.education"
-                :options="educationOptions"
-                placeholder="请选择"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-[#314DE2] mb-2">学科</label>
-              <CustomSelect 
-                v-model="loginForm.subject"
-                :options="subjectOptions"
-                placeholder="请选择"
-              />
             </div>
           </div>
 
@@ -84,6 +58,7 @@
             native-type="submit"
             class="w-full"
             style="margin-top: 30px; height: 56px; border-radius: 12px; background: linear-gradient(90deg, #314DE2 0%, #6144D3 100%); border: none; opacity: 1;"
+            :loading="loading"
           >
             确定
           </el-button>
@@ -255,13 +230,11 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const loading = ref(false)
+const countdown = ref(0)
 
 const loginForm = reactive({
-  name: '',
   phone: '',
-  code: '',
-  education: '',
-  subject: ''
+  code: ''
 })
 
 // 定义选项数组
@@ -282,9 +255,39 @@ const closeModal = () => {
   emit('close')
 }
 
+const sendSmsCode = async () => {
+  if (!loginForm.phone) {
+    ElMessage.warning('请输入手机号！')
+    return
+  }
+  try {
+    const res = await fetch(`${API_BASE}/auth/sms_send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: loginForm.phone })
+    })
+    const data = await res.json()
+    if (res.ok) {
+      ElMessage.success(data.message || '验证码已发送')
+      // 开始倒计时
+      countdown.value = 60
+      const timer = setInterval(() => {
+        countdown.value--
+        if (countdown.value <= 0) {
+          clearInterval(timer)
+        }
+      }, 1000)
+    } else {
+      ElMessage.error(data.message || '发送验证码失败')
+    }
+  } catch (err) {
+    ElMessage.error('无法连接到服务器，请确保后端服务和数据库已启动')
+  }
+}
+
 const handleLogin = async () => {
-  if (!loginForm.name || !loginForm.phone || !loginForm.code) {
-    ElMessage.warning('请填写完整的登录信息！')
+  if (!loginForm.phone || !loginForm.code) {
+    ElMessage.warning('请填写手机号和验证码！')
     return
   }
   loading.value = true
@@ -292,7 +295,7 @@ const handleLogin = async () => {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(loginForm)
+      body: JSON.stringify({ phone: loginForm.phone, code: loginForm.code })
     })
     const data = await res.json()
     if (res.ok && data.access_token) {
@@ -301,12 +304,11 @@ const handleLogin = async () => {
       emit('close')
       // 重置表单
       Object.assign(loginForm, {
-        name: '',
         phone: '',
-        code: '',
-        education: '',
-        subject: ''
+        code: ''
       })
+      // 重置倒计时
+      countdown.value = 0
     } else {
       ElMessage.error(data.message || '登录失败，请检查信息')
     }
@@ -317,38 +319,5 @@ const handleLogin = async () => {
   }
 }
 
-const handleLooseRegister = async () => {
-  if (!loginForm.name || !loginForm.phone) {
-    ElMessage.warning('请填写姓名和手机号供注册！')
-    return
-  }
-  loading.value = true
-  try {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(loginForm)
-    })
-    const data = await res.json()
-    if (res.ok && data.access_token) {
-      ElMessage.success('快捷注册并登录成功！')
-      router.push('/workspace')
-      emit('close')
-      // 重置表单
-      Object.assign(loginForm, {
-        name: '',
-        phone: '',
-        code: '',
-        education: '',
-        subject: ''
-      })
-    } else {
-      ElMessage.error(data.message || '注册失败')
-    }
-  } catch (err) {
-    ElMessage.error('无法连接到服务器，请确保后端服务和数据库已启动')
-  } finally {
-    loading.value = false
-  }
-}
+
 </script>
