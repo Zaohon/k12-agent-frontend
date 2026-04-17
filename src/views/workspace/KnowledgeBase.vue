@@ -11,13 +11,8 @@
         </div>
 
         <div class="search-box">
-          <div class="search-icon"></div>
-          <input
-            v-model="searchKey"
-            type="text"
-            placeholder="搜索资源..."
-            class="search-input"
-          />
+          <img src="@/images/search.png" alt="搜索" class="search-icon" />
+          <input v-model="searchKey" type="text" placeholder="搜索资源..." class="search-input" />
         </div>
       </div>
 
@@ -30,11 +25,11 @@
 
         <div class="btn-group">
           <button class="btn-outline">
-            <div class="btn-icon folder"></div>
+            <img src="@/images/new-folder.png" alt="" />
             新建文件夹
           </button>
           <button class="btn-primary">
-            <div class="btn-icon upload"></div>
+            <img src="@/images/upLoad2.png" alt="" />
             上传文件
           </button>
         </div>
@@ -42,24 +37,20 @@
 
       <!-- 文件夹卡片（响应式网格） -->
       <div class="folder-grid">
-        <div
-          class="folder-card"
-          v-for="item in folderList"
-          :key="item.id"
-        >
+        <div class="folder-card" v-for="item in folderList" :key="item.id">
           <div class="card-header">
             <div class="icon-wrap" :style="{ background: item.iconBg }">
-              <div class="icon-shape" :style="{ background: item.iconColor }"></div>
+              <img src="@/images/chatinit-1.png" alt="" class="folder-img" />
             </div>
-            <div class="more-icon"></div>
+            <img src="@/images/more.png" alt="更多" class="more-icon" />
           </div>
 
           <h3 class="card-title">{{ item.name }}</h3>
-          <div class="card-tag">系统文件</div>
+          <div class="card-tag">{{ item.name }}</div>
 
           <div class="card-footer">
             <span>{{ item.itemCount }} 个项目</span>
-            <div class="arrow-icon"></div>
+            <img src="@/images/vector2.png" alt="展开" class="arrow-icon" />
           </div>
         </div>
       </div>
@@ -86,7 +77,7 @@
               <tr v-for="file in recentFiles" :key="file.id">
                 <td>
                   <div class="file-name">
-                    <div class="file-icon" :style="{ background: file.icon }"></div>
+                    <img src="@/images/chatinit-1.png" class="file-icon" alt="" />
                     <span>{{ file.name }}</span>
                   </div>
                 </td>
@@ -95,7 +86,7 @@
                 <td>{{ file.size }}</td>
                 <td class="align-right">
                   <button class="action-btn">
-                    <div class="dot-icon"></div>
+                    <img src="@/images/download.png" alt="下载" />
                   </button>
                 </td>
               </tr>
@@ -104,14 +95,13 @@
         </div>
       </div>
 
-      <!-- AI 卡片 + 存储卡片（响应式） -->
       <div class="ai-storage-row">
         <div class="ai-card">
           <div class="ai-blur"></div>
-          <div class="ai-bg-icon"></div>
+          <img src="@/images/database2.png" class="ai-bg-icon" alt="" />
           <div class="ai-content">
             <div class="ai-tag">
-              <div class="ai-dot"></div>
+              <img src="@/images/star.png" class="ai-dot" alt="" />
               <span>AI 智能洞察</span>
             </div>
             <h3 class="ai-title">正在“题库”中寻找特定内容？</h3>
@@ -166,26 +156,19 @@ const storage = ref({
   usedPercent: 65
 })
 
-// ==============================================
-// 模拟接口请求（你可以直接替换成真实 axios 请求）
-// ==============================================
 const fetchData = async () => {
   try {
-    // 真实项目用法：
-    // const { data } = await axios.get('/api/knowledge/base')
-
-    // 模拟接口返回
     const mockData = {
       folders: [
-        { id: 1, name: '教案', itemCount: 128, iconBg: 'rgba(180, 189, 255, 0.3)', iconColor: '#314DE2' },
-        { id: 2, name: '课件', itemCount: 84, iconBg: 'rgba(230, 222, 255, 0.3)', iconColor: '#6144D3' },
-        { id: 3, name: '卷库', itemCount: 42, iconBg: 'rgba(222, 229, 253, 0.3)', iconColor: '#575F73' },
-        { id: 4, name: '题库', itemCount: 512, iconBg: 'rgba(83, 52, 197, 0.1)', iconColor: '#5334C5' },
-        { id: 5, name: '工作事务', itemCount: 16, iconBg: 'rgba(247, 106, 128, 0.2)', iconColor: '#AC3149' },
+        { id: 1, name: '教案', itemCount: 128, iconBg: 'rgba(180, 189, 255, 0.3)' },
+        { id: 2, name: '课件', itemCount: 84, iconBg: 'rgba(230, 222, 255, 0.3)' },
+        { id: 3, name: '卷库', itemCount: 42, iconBg: 'rgba(222, 229, 253, 0.3)' },
+        { id: 4, name: '题库', itemCount: 512, iconBg: 'rgba(83, 52, 197, 0.1)' },
+        { id: 5, name: '工作事务', itemCount: 16, iconBg: 'rgba(247, 106, 128, 0.2)' },
       ],
       files: [
-        { id: 1, name: '2024秋季数学教案_V2.pdf', type: 'PDF 文档', updateTime: '2 小时前', size: '4.2 MB', icon: '#314DE2' },
-        { id: 2, name: '微积分入门课件_互动版.pptx', type: '演示文稿', updateTime: '昨天', size: '28.5 MB', icon: '#6144D3' },
+        { id: 1, name: '2024秋季数学教案_V2.pdf', type: 'PDF 文档', updateTime: '2 小时前', size: '4.2 MB' },
+        { id: 2, name: '微积分入门课件_互动版.pptx', type: '演示文稿', updateTime: '昨天', size: '28.5 MB' },
       ]
     }
 
@@ -196,7 +179,6 @@ const fetchData = async () => {
   }
 }
 
-// 进入页面加载
 onMounted(() => {
   fetchData()
 })
@@ -254,31 +236,29 @@ onMounted(() => {
 
 /* 搜索框 */
 .search-box {
-  position: relative;
-  width: 100%;
-  max-width: 260px;
-  height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  width: 240px;
+  background: #fff;
 }
 
 .search-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  background: #5a6066;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .search-input {
-  width: 100%;
-  height: 100%;
-  padding-left: 44px;
-  border-radius: 999px;
   border: none;
-  background: #f2f4f8;
-  font-size: 14px;
   outline: none;
+  flex: 1;
+  font-size: 14px;
+  background: transparent;
 }
 
 /* 头部操作 */
@@ -304,45 +284,39 @@ onMounted(() => {
 
 .btn-group {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .btn-outline,
 .btn-primary {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
   cursor: pointer;
-  white-space: nowrap;
+  font-size: 14px;
 }
 
+/* 边框按钮 */
 .btn-outline {
+  border: 1px solid #ccc;
   background: #fff;
-  color: #314de2;
-  box-shadow: 0 4px 12px rgba(49, 77, 226, 0.06);
 }
 
+/* 主按钮 */
 .btn-primary {
-  background: linear-gradient(135deg, #314de2, #6144d3);
+  background: #007bff;
   color: #fff;
+  border: none;
 }
 
-.btn-icon {
+/* 按钮里的图片大小 */
+.btn-group img {
   width: 16px;
   height: 16px;
-}
-
-.folder {
-  background: #314de2;
-}
-
-.upload {
-  background: #fff;
+  object-fit: contain;
 }
 
 /* 文件夹卡片（响应式网格） */
@@ -377,15 +351,17 @@ onMounted(() => {
   justify-content: center;
 }
 
-.icon-shape {
-  width: 20px;
+.folder-img {
+  width: 24px;
   height: 24px;
+  object-fit: contain;
 }
 
 .more-icon {
-  width: 4px;
+  width: 16px;
   height: 16px;
-  background: #adb2b9;
+  object-fit: contain;
+  cursor: pointer;
 }
 
 .card-title {
@@ -414,9 +390,10 @@ onMounted(() => {
 }
 
 .arrow-icon {
-  width: 4px;
-  height: 7px;
-  background: rgba(90, 96, 102, 0.4);
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 /* 最近文件 */
@@ -459,6 +436,8 @@ onMounted(() => {
   letter-spacing: 1px;
   color: #5a6066;
   background: rgba(235, 238, 244, 0.6);
+  vertical-align: middle;
+  line-height: 1.2;
 }
 
 .file-table td {
@@ -466,6 +445,7 @@ onMounted(() => {
   font-size: 14px;
   color: #2e3339;
   border-top: 1px solid rgba(222, 227, 234, 0.2);
+  vertical-align: middle;
 }
 
 .file-name {
@@ -477,10 +457,13 @@ onMounted(() => {
 .file-icon {
   width: 18px;
   height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .align-right {
   text-align: right;
+  vertical-align: middle;
 }
 
 .action-btn {
@@ -493,12 +476,15 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  padding: 0;
+  position: relative;
+  top: 1px;
 }
 
-.dot-icon {
+.action-btn img {
   width: 16px;
   height: 16px;
-  background: #314de2;
+  object-fit: contain;
 }
 
 /* AI + 存储 响应式行 */
@@ -536,7 +522,7 @@ onMounted(() => {
   top: 15%;
   width: 180px;
   height: 180px;
-  background: #fff;
+  object-fit: contain;
   opacity: 0.2;
 }
 
@@ -551,19 +537,20 @@ onMounted(() => {
 .ai-tag {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
+  gap: 6px;
+  padding: 3px 8px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 999px;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  font-size: 12px;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 .ai-dot {
-  width: 12px;
-  height: 12px;
-  background: #fff;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .ai-title {
@@ -672,9 +659,11 @@ onMounted(() => {
   .ai-card {
     min-width: 100%;
   }
+
   .storage-card {
     max-width: 100%;
   }
+
   .folder-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
