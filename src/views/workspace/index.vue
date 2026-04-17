@@ -1,25 +1,15 @@
 <template>
-  <div class="h-screen w-full flex bg-gray-50">
-    <!-- Sidebar -->
-    <LayoutSidebar />
-    
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden">
-      <!-- Top navbar placeholder -->
-      <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
-        <div class="font-bold text-gray-700">
-          {{ userStore.userInfo?.organization?.orgName || '幻境助教' }} - 系统工作台
-        </div>
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-500">额度剩余: {{ ((userStore.userInfo?.tokenLimit || 0) - (userStore.userInfo?.consumedToken || 0)).toLocaleString() }} Tokens</span>
-          <el-avatar :size="32" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
-        </div>
-      </header>
-      
-      <!-- Workspace child views -->
-      <main class="flex-1 overflow-auto p-0 m-0 bg-transparent flex">
-        <router-view />
-      </main>
+  <div class="workspace-root">
+    <!-- 顶部 -->
+    <LayoutHead />
+    <div class="workspace-body">
+      <LayoutSidebar />
+      <div class="content-container">
+        <!-- 子页面 -->
+        <main class="page-content">
+          <router-view />
+        </main>
+      </div>
     </div>
   </div>
 </template>
@@ -27,6 +17,66 @@
 <script setup lang="ts">
 import { useUserStore } from '../../store/user'
 import LayoutSidebar from '../../components/LayoutSidebar.vue'
+import LayoutHead from '../../components/LayoutHead.vue'
 
 const userStore = useUserStore()
 </script>
+
+<style scoped>
+.workspace-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(0deg, #f8f9fd, #f8f9fd), #f2f4f8;
+  overflow: hidden;
+}
+
+.workspace-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 页面顶部栏 */
+.page-header {
+  height: 56px;
+  background: white;
+  border-bottom: 1px solid rgba(173, 178, 185, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2e3339;
+}
+
+.extra {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.token {
+  font-size: 14px;
+  color: #5a6066;
+}
+
+.page-content {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+</style>
