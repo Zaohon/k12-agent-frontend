@@ -18,7 +18,7 @@
           <span>我的智能体</span>
         </router-link>
 
-        <router-link to="/workspace/studio" active-class="active">
+        <router-link to="/workspace/knowledge" active-class="active">
           <img src="@/images/sidebar-db.png" class="sidebar-icon" />
           <span>知识库</span>
         </router-link>

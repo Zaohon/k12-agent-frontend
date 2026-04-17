@@ -37,6 +37,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '我的智能体' }
       },
       {
+        path: 'knowledge',
+        name: 'KnowledgeBase',
+        component: () => import('@/views/workspace/KnowledgeBase.vue'),
+        meta: { title: '知识库' }
+      },
+      {
         path: 'org',
         name: 'OrgManage',
         component: () => import('@/views/workspace/OrgManage.vue'),
