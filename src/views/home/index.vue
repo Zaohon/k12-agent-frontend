@@ -1,30 +1,30 @@
 <template>
   <div class="min-h-screen">
     <!-- 登录弹窗 -->
-    <LoginModal 
-      :visible="showLoginModal" 
+    <LoginModal
+      :visible="showLoginModal"
       @close="closeLoginModal"
       @login="handleLogin"
     />
 
     <!-- 导航栏 -->
-    <nav class="bg-white" style="box-shadow: 0 12px 20px 0 #314DE20F;">
+    <nav class="bg-white nav-bar">
       <div class="w-full px-4 py-3 flex justify-between items-center">
-        <div class="flex items-center space-x-2" style="margin-left: 20px;">
+        <div class="flex items-center space-x-2 nav-logo">
           <img src="@/images/longqi-logo.png" alt="Logo" class="h-8 w-auto object-contain">
           <div class="flex flex-col">
             <span class="text-2xl font-bold tracking-wider bg-gradient-to-tl from-[#314DE2] to-[#6144D3] bg-clip-text text-transparent">龙启云</span>
             <span class="text-[12px] text-gray-500 tracking-wide">你的数字引航者</span>
           </div>
         </div>
-        <div class="flex items-center space-x-6" style="margin-right: 20px;">
+        <div class="flex items-center space-x-6 nav-actions">
           <button @click="openLoginModal" class="text-white px-5 py-2 rounded-[12px] bg-gradient-to-tl from-[#6144D3] to-[#314DE2] hover:opacity-90 transition-opacity ml-auto">登录</button>
         </div>
       </div>
     </nav>
 
     <!-- 英雄区域 -->
-    <section class="min-h-screen flex items-center py-20 px-10" style="background: radial-gradient(circle at center, #314DE233 10%, #314DE200 40%);">
+    <section class="min-h-screen flex items-center py-20 px-10 hero-section">
       <div class="container mx-auto max-w-6xl">
             <div class="text-[96px] leading-[96px] font-bold text-gray-900 mb-6 text-center">
               <span>龙启云</span>
@@ -34,10 +34,10 @@
               专为教师打造的AI辅助教研平台，通过智能算法将繁琐的备课流程缩短至分钟级，让教学回归本质。
             </div>
             <div class="text-center mt-[50px]">
-              <button 
+              <button
               @click="openLoginModal"
-              class="inline-block text-white px-8 py-3 rounded-[12px] text-lg font-medium bg-gradient-to-tl from-[#6144D3] to-[#314DE2] hover:opacity-90 transition-opacity" 
-              style="box-shadow: 0px 8px 10px -6px #314DE240;box-shadow: 0px 20px 25px -5px #314DE240;">
+              class="inline-block text-white px-8 py-3 rounded-[12px] text-lg font-medium bg-gradient-to-tl from-[#6144D3] to-[#314DE2] hover:opacity-90 transition-opacity experience-button"
+              >
                 立即体验
               </button>
             </div>
@@ -49,67 +49,67 @@
       <div class="container mx-auto max-w-7xl">
         <div class="grid grid-cols-3 grid-rows-2 gap-6">
           <!-- 智能教案生成 - 第一行第一列，占 2 列 -->
-          <div class="col-span-2 row-span-1 relative rounded-[24px] overflow-hidden" style="background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%); min-height: 400px;">
+          <div class="col-span-2 row-span-1 relative rounded-[24px] overflow-hidden hero-card">
             <div class="absolute top-2/4 right-10 transform -translate-y-1/2 w-80 h-80 opacity-50">
               <img src="@/images/book.png" alt="" class="w-full h-full object-contain" />
             </div>
             <div class="relative z-10 p-10 h-full flex flex-col justify-end pb-16">
               <span class="inline-block px-4 py-1.5 rounded-full bg-white/20 text-white text-xs mb-4 w-fit">热门推荐</span>
               <h3 class="text-2xl font-bold text-white mb-3">智能教案生成</h3>
-              <p class="text-white/80 text-sm mb-6" style="max-width: 280px;">基于新课标深度学习，秒级生成符合学情、逻辑严密的教学方案。</p>
-              <button class="hover:opacity-90 transition-opacity" style="width: 104px; height: 40px; padding: 10px 24px; border-radius: 12px; background: white; box-shadow: 0px 8px 10px -6px #0000001A, 0px 20px 25px -5px #0000001A; font-family: 'Noto Sans SC'; font-weight: 500; font-size: 14px; line-height: 20px; letter-spacing: 0px; text-align: center; color: #314DE2;">
+              <p class="text-white/80 text-sm mb-6 hero-card-text">基于新课标深度学习，秒级生成符合学情、逻辑严密的教学方案。</p>
+              <button class="hover:opacity-90 transition-opacity card-button">
                 立即开始
               </button>
             </div>
           </div>
 
           <!-- PPT 课件转换 - 第一行第二列，占 1 列 -->
-          <div class="col-span-1 row-span-1 rounded-[24px] p-8" style="background: #E6DEFF80; border: 1px solid #6144D31A;">
+          <div class="col-span-1 row-span-1 rounded-[24px] p-8 ppt-card">
             <div class="mb-6">
-              <div class="w-14 h-14 rounded-[16px] flex items-center justify-center" style="background: #E9E5FF;">
+              <div class="w-14 h-14 rounded-[16px] flex items-center justify-center icon-container">
                 <img src="@/images/upload.png" alt="" class="w-6 h-6 object-contain" />
               </div>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-4">PPT 课件转换</h3>
             <p class="text-gray-600 text-sm mb-8">一键将教案转化为精美的课件。支持多种教育模板，自动配图与排版。</p>
-            <div class="rounded-[16px] p-4 bg-white" style="margin-top: 80px;">
+            <div class="rounded-[16px] p-4 bg-white progress-card">
               <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-[12px] flex items-center justify-center" style="background: #6144D3;">
-                  <img src="@/images/pen.png" alt="" style="width: 12.25px; height: 12.25px;" />
+                <div class="w-10 h-10 rounded-[12px] flex items-center justify-center purple-icon">
+                  <img src="@/images/pen.png" alt="" class="pen-icon" />
                 </div>
-                <div style="background: #6144D333; width: 96px; height: 8px; border-radius: 9999px;"></div>
+                <div class="progress-bar"></div>
               </div>
             </div>
           </div>
 
           <!-- AI 随堂练习 - 第二行第一列，占 1 列 -->
-          <div class="col-span-1 row-span-1 rounded-[24px] p-8" style="background: #DEE5FD80; height: 300px; border: 1px solid #575F731A;">
+          <div class="col-span-1 row-span-1 rounded-[24px] p-8 ai-card">
             <div class="mb-6">
-              <div class="w-14 h-14 rounded-[16px] flex items-center justify-center" style="background: #575F731A;">
+              <div class="w-14 h-14 rounded-[16px] flex items-center justify-center icon-bg">
                 <img src="@/images/papers.png" alt="" class="w-6 h-6 object-contain" />
               </div>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-3">AI 随堂练习</h3>
-            <p class="text-gray-600 text-sm mb-6" style="font-family: 'Noto Sans SC'; font-weight: 400; font-size: 16px; line-height: 24px; letter-spacing: 0px;">根据教学内容即时生成多维度练习题，包括选择题、简答题及思维导图式作业。</p>
+            <p class="text-gray-600 text-sm mb-6 ai-card-text">根据教学内容即时生成多维度练习题，包括选择题、简答题及思维导图式作业。</p>
             <div class="flex items-center space-x-3">
-              <span class="px-3 py-1.5 rounded-full bg-white text-gray-700" style="font-family: 'Noto Sans SC'; font-weight: 600; font-size: 12px; line-height: 16px; letter-spacing: 0px; background-color: #FFFFFF66;">难易度调节</span>
-              <span class="px-3 py-1.5 rounded-full bg-white text-gray-700" style="font-family: 'Noto Sans SC'; font-weight: 600; font-size: 12px; line-height: 16px; letter-spacing: 0px; background-color: #FFFFFF66;">自动批改</span>
+              <span class="px-3 py-1.5 rounded-full bg-white text-gray-700 tag-style">难易度调节</span>
+              <span class="px-3 py-1.5 rounded-full bg-white text-gray-700 tag-style">自动批改</span>
             </div>
           </div>
 
           <!-- 学术资源库 - 第二行第二列，占 2 列 -->
-          <div class="col-span-2 row-span-1 rounded-[24px] p-8 bg-white border border-gray-100" style="height: 300px; border: 1px solid #ADB2B91A;">
+          <div class="col-span-2 row-span-1 rounded-[24px] p-8 bg-white border border-gray-100 resource-card">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <h3 class="text-2xl font-bold text-gray-900 mb-3">学术资源库</h3>
-                <p class="text-gray-600 text-sm mb-4" style="font-family: 'Noto Sans SC'; font-weight: 400; font-size: 18px; line-height: 28px; letter-spacing: 0px; max-width: 60%;padding-top: 10px;">连接全球海量教育资源，实时更新。您可以随时调取权威教材、期刊论文与教学视频素材。</p>
-                <router-link to="#" class="inline-flex items-center hover:underline" style="font-family: 'Noto Sans SC'; font-weight: 700; font-size: 16px; line-height: 24px; letter-spacing: 0px; color: #314DE2;padding-top: 10px;">
+                <p class="text-gray-600 text-sm mb-4 resource-description">连接全球海量教育资源，实时更新。您可以随时调取权威教材、期刊论文与教学视频素材。</p>
+                <router-link to="#" class="inline-flex items-center hover:underline resource-link">
                   探索资源库
-                  <img src="@/images/arrow.png" alt="" style="width: 16px; height: 16px; margin-left: 4px;" />
+                  <img src="@/images/arrow.png" alt="" class="arrow-icon" />
                 </router-link>
               </div>
-              <div class="flex items-end" style="width: 240px; height: 220px; margin-right: 20px;">
-                <img src="@/images/database.png" alt="" style="width: 240px; height: 220px; object-fit: contain;" />
+              <div class="flex items-end resource-image">
+                <img src="@/images/database.png" alt="" class="database-image" />
               </div>
             </div>
           </div>
@@ -129,28 +129,28 @@
         <!-- 三个特性 -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <!-- 极速响应 -->
-          <div class="text-center" style="position: relative; padding-top: 60px;">
-            <div class="text-6xl font-bold absolute left-1/2 transform -translate-x-1/2" style="color: #314DE21A; top: 25px;">01</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-3" style="color: #2E3339;">极速响应</h3>
-            <p style="font-family: 'Noto Sans SC'; font-weight: 400; font-size: 15px; line-height: 24px; letter-spacing: 0px; text-align: center; color: #5A6066;">
+          <div class="text-center feature-item">
+            <div class="text-6xl font-bold absolute left-1/2 transform -translate-x-1/2 feature-number">01</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3 feature-title">极速响应</h3>
+            <p class="feature-description">
               毫秒级内容生成，基于专为中文教学环境优化的 LLM 模型。
             </p>
           </div>
 
           <!-- 多端同步 -->
-          <div class="text-center" style="position: relative; padding-top: 60px;">
-            <div class="text-6xl font-bold absolute left-1/2 transform -translate-x-1/2" style="color: #314DE21A; top: 25px;">02</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-3" style="color: #2E3339;">多端同步</h3>
-            <p style="font-family: 'Noto Sans SC'; font-weight: 400; font-size: 15px; line-height: 24px; letter-spacing: 0px; text-align: center; color: #5A6066;">
+          <div class="text-center feature-item">
+            <div class="text-6xl font-bold absolute left-1/2 transform -translate-x-1/2 feature-number">02</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3 feature-title">多端同步</h3>
+            <p class="feature-description">
               网页端、平板端与手机端数据无缝互通，随时随地修改教案。
             </p>
           </div>
 
           <!-- 隐私保护 -->
-          <div class="text-center" style="position: relative; padding-top: 60px;">
-            <div class="text-6xl font-bold absolute left-1/2 transform -translate-x-1/2" style="color: #314DE21A; top: 25px;">03</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-3" style="color: #2E3339;">隐私保护</h3>
-            <p style="font-family: 'Noto Sans SC'; font-weight: 400; font-size: 15px; line-height: 24px; letter-spacing: 0px; text-align: center; color: #5A6066;">
+          <div class="text-center feature-item">
+            <div class="text-6xl font-bold absolute left-1/2 transform -translate-x-1/2 feature-number">03</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3 feature-title">隐私保护</h3>
+            <p class="feature-description">
               企业级数据加密，确保您的原创教学课件与学生数据安全。
             </p>
           </div>
@@ -159,21 +159,21 @@
     </section>
 
     <!-- 页脚 -->
-    <footer style="background: #F5F7FA; padding-top: 140px; padding-bottom: 40px;">
+    <footer class="footer-section">
       <div class="container mx-auto max-w-6xl px-4">
         <div class="flex items-center justify-between">
           <!-- 左侧：Logo 和版权信息 -->
           <div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2" style="color: #2E3339;">龙启云</h3>
-            <p class="text-gray-500 text-sm" style="color: #5A6066;">&copy; 2026 龙起未来. 版权所有.</p>
+            <h3 class="text-xl font-bold text-gray-900 mb-2 footer-title">龙启云</h3>
+            <p class="text-gray-500 text-sm footer-copyright">&copy; 2026 龙起未来. 版权所有.</p>
           </div>
 
           <!-- 中间：导航链接 -->
           <div class="flex items-center space-x-8">
-            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">隐私政策</router-link>
-            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">服务条款</router-link>
-            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">联系我们</router-link>
-            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm" style="color: #5A6066">帮助中心</router-link>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm footer-link">隐私政策</router-link>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm footer-link">服务条款</router-link>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm footer-link">联系我们</router-link>
+            <router-link to="#" class="text-gray-600 hover:text-gray-900 text-sm footer-link">帮助中心</router-link>
           </div>
 
           <!-- 右侧：分享和语言切换 -->
@@ -191,28 +191,264 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import LoginModal from '../login/index.vue'
 
-// 登录弹窗控制
-const showLoginModal = ref(false)
+export default {
+  name: 'Home',
+  components: {
+    LoginModal
+  },
+  setup() {
+    const router = useRouter()
+    const showLoginModal = ref(false)
 
-const openLoginModal = () => {
-  showLoginModal.value = true
-}
+    const openLoginModal = () => {
+      const token = localStorage.getItem('k12_token')
+      if (token) {
+        router.push('/workspace')
+      } else {
+        showLoginModal.value = true
+      }
+    }
 
-const closeLoginModal = () => {
-  showLoginModal.value = false
-}
+    const closeLoginModal = () => {
+      showLoginModal.value = false
+    }
 
-const handleLogin = (data: { name: string; phone: string; code: string; education: string; subject: string }) => {
-  console.log('登录信息:', data)
-  // 这里添加登录逻辑
-  closeLoginModal()
+    const handleLogin = (data) => {
+      console.log('登录信息:', data)
+      closeLoginModal()
+    }
+
+    return {
+      showLoginModal,
+      openLoginModal,
+      closeLoginModal,
+      handleLogin
+    }
+  }
 }
 </script>
 
 <style scoped>
-/* 首页样式 */
+/* 导航栏样式 */
+.nav-bar {
+  box-shadow: 0 12px 20px 0 #314DE20F;
+}
+
+/* 导航栏Logo */
+.nav-logo {
+  margin-left: 20px;
+}
+
+/* 导航栏操作按钮 */
+.nav-actions {
+  margin-right: 20px;
+}
+
+/* 英雄区域背景 */
+.hero-section {
+  background: radial-gradient(circle at center, #314DE233 10%, #314DE200 40%);
+}
+
+/* 立即体验按钮 */
+.experience-button {
+  box-shadow: 0px 8px 10px -6px #314DE240, 0px 20px 25px -5px #314DE240;
+}
+
+/* 智能教案生成卡片 */
+.hero-card {
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+  min-height: 400px;
+}
+
+/* 英雄卡片文本 */
+.hero-card-text {
+  max-width: 280px;
+}
+
+/* PPT课件转换卡片 */
+.ppt-card {
+  background: #E6DEFF80;
+  border: 1px solid #6144D31A;
+}
+
+/* 图标容器 */
+.icon-container {
+  background: #E9E5FF;
+}
+
+/* AI随堂练习卡片 */
+.ai-card {
+  background: #DEE5FD80;
+  height: 300px;
+  border: 1px solid #575F731A;
+}
+
+/* AI卡片图标背景 */
+.icon-bg {
+  background: #575F731A;
+}
+
+/* AI卡片文本 */
+.ai-card-text {
+  font-family: 'Noto Sans SC';
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0px;
+}
+
+/* 标签样式 */
+.tag-style {
+  font-family: 'Noto Sans SC';
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0px;
+  background-color: #FFFFFF66;
+}
+
+/* 学术资源库卡片 */
+.resource-card {
+  height: 300px;
+  border: 1px solid #ADB2B91A;
+}
+
+/* 资源描述文本 */
+.resource-description {
+  font-family: 'Noto Sans SC';
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 28px;
+  letter-spacing: 0px;
+  max-width: 60%;
+  padding-top: 10px;
+}
+
+/* 资源链接 */
+.resource-link {
+  font-family: 'Noto Sans SC';
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0px;
+  color: #314DE2;
+  padding-top: 10px;
+}
+
+/* 箭头图标 */
+.arrow-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+}
+
+/* 特性项目 */
+.feature-item {
+  position: relative;
+  padding-top: 60px;
+}
+
+/* 特性编号 */
+.feature-number {
+  color: #314DE21A;
+  top: 25px;
+}
+
+/* 特性标题 */
+.feature-title {
+  color: #2E3339;
+}
+
+/* 特性描述 */
+.feature-description {
+  font-family: 'Noto Sans SC';
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 24px;
+  letter-spacing: 0px;
+  text-align: center;
+  color: #5A6066;
+}
+
+/* 页脚区域 */
+.footer-section {
+  background: #F5F7FA;
+  padding-top: 140px;
+  padding-bottom: 40px;
+}
+
+/* 页脚标题 */
+.footer-title {
+  color: #2E3339;
+}
+
+/* 页脚版权 */
+.footer-copyright {
+  color: #5A6066;
+}
+
+/* 页脚链接 */
+.footer-link {
+  color: #5A6066;
+}
+
+/* 卡片按钮 */
+.card-button {
+  width: 104px;
+  height: 40px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0px 8px 10px -6px #0000001A, 0px 20px 25px -5px #0000001A;
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0px;
+  text-align: center;
+  color: #314DE2;
+}
+
+/* 进度卡片 */
+.progress-card {
+  margin-top: 80px;
+}
+
+/* 紫色图标 */
+.purple-icon {
+  background: #6144D3;
+}
+
+/* 笔图标 */
+.pen-icon {
+  width: 12.25px;
+  height: 12.25px;
+}
+
+/* 进度条 */
+.progress-bar {
+  background: #6144D333;
+  width: 96px;
+  height: 8px;
+  border-radius: 9999px;
+}
+
+/* 资源图片 */
+.resource-image {
+  width: 240px;
+  height: 220px;
+  margin-right: 20px;
+}
+
+/* 数据库图片 */
+.database-image {
+  width: 240px;
+  height: 220px;
+  object-fit: contain;
+}
 </style>
