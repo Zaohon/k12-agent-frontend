@@ -1,18 +1,18 @@
 <template>
-  <div class="h-full w-full flex flex-col overflow-hidden" style="background: #F8F9FD">
+  <div class="h-full w-full flex flex-col overflow-hidden page-container">
     <div class="flex-1 overflow-y-auto min-w-[1200px]">
       <!-- Top Navigation Tabs -->
-      <div class="sticky top-0 z-50" style="background: #F8F9FD80; border-bottom: 1px solid #ADB2B90D; backdrop-filter: blur(4px)">
+      <div class="sticky top-0 z-50 navigation-tabs">
         <div class="max-w-[1600px] mx-auto px-6">
           <div class="flex items-center h-20 relative">
-            <div 
-              v-for="(tab, index) in tabs" 
+            <div
+              v-for="(tab, index) in tabs"
               :key="index"
               :id="'tab-' + index"
               class="cursor-pointer group flex items-center justify-center mx-4"
               @click="activeTab = index"
             >
-              <span 
+              <span
                 :id="'tab-text-' + index"
                 class="text-base font-medium py-3 transition-colors duration-300 ease-in-out"
                 :class="activeTab === index ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'"
@@ -20,7 +20,7 @@
                 {{ tab }}
               </span>
             </div>
-            <div 
+            <div
               class="absolute bottom-0 h-0.5 bg-blue-600 transition-all duration-300 ease-in-out"
               :style="{ left: underlineLeft + 'px', width: underlineWidth + 'px' }"
             />
@@ -32,9 +32,8 @@
         <!-- Hero Banner Cards -->
         <div class="grid grid-cols-3 gap-6 mb-10">
           <!-- Card 1 - 智能教案生成 -->
-          <div 
-            class="relative h-72 rounded-3xl overflow-hidden cursor-pointer group"
-            style="background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%)"
+          <div
+            class="relative h-72 rounded-3xl overflow-hidden cursor-pointer group hero-card-1"
             @click="goChat(1)"
           >
             <div class="absolute top-6 left-6">
@@ -51,9 +50,8 @@
           </div>
 
           <!-- Card 2 - PPT 课件大师 -->
-          <div 
-            class="relative h-72 rounded-3xl overflow-hidden cursor-pointer group"
-            style="background: radial-gradient(circle at top right, #314DE233 30%, #E6DEFF 100%)"
+          <div
+            class="relative h-72 rounded-3xl overflow-hidden cursor-pointer group hero-card-2"
             @click="goChat(2)"
           >
             <div class="absolute top-6 left-6 bg-white rounded-xl p-3 shadow-lg">
@@ -67,9 +65,8 @@
           </div>
 
           <!-- Card 3 - AI 智能组卷 -->
-          <div 
-            class="relative h-72 rounded-3xl overflow-hidden cursor-pointer group"
-            style="background: #DEE5FD"
+          <div
+            class="relative h-72 rounded-3xl overflow-hidden cursor-pointer group hero-card-3"
             @click="goChat(3)"
           >
             <div class="absolute top-6 left-6 bg-white rounded-xl p-3 shadow-lg">
@@ -111,8 +108,8 @@
 
             <!-- Agent Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div 
-                v-for="(item, index) in filteredAgents" 
+              <div
+                v-for="(item, index) in filteredAgents"
                 :key="item.id"
                 class="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-lg hover:border-blue-100 transition-all cursor-pointer group flex flex-col h-full"
                 @click="goChat(item.id)"
@@ -132,7 +129,7 @@
                 <div class="border-t border-[#EBEEF4] pt-4 mt-auto">
                   <div v-if="item.isLabels" class="flex items-center space-x-2">
                     <span
-                      v-for="(label, idx) in item.labels" 
+                      v-for="(label, idx) in item.labels"
                       :key="label"
                       class="px-3 py-1 text-xs font-medium"
                       :style="{
@@ -171,13 +168,13 @@
             <div class="bg-[#F2F4F8] rounded-2xl p-6 border border-gray-100">
               <h3 class="text-base font-bold text-[#5A6066] mb-4">推荐</h3>
               <div class="space-y-4">
-                <div 
-                  v-for="(rec, index) in recommendedList" 
+                <div
+                  v-for="(rec, index) in recommendedList"
                   :key="index"
                   class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition-colors"
                   @click="goChat(rec.id)"
                 >
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #B4BDFF; border: 1px solid #314DE21A">
+                  <div class="recommended-avatar">
                     <img src="@/images/skull.png" alt="" class="h-5 w-5">
                   </div>
                   <div class="flex-1">
@@ -195,13 +192,13 @@
 </template>
 
 <script lang="ts">
-import { 
-  Document, 
-  Monitor, 
-  EditPen, 
-  MagicStick, 
-  User, 
-  ArrowDown 
+import {
+  Document,
+  Monitor,
+  EditPen,
+  MagicStick,
+  User,
+  ArrowDown
 } from '@element-plus/icons-vue'
 
 export default {
@@ -283,7 +280,7 @@ export default {
           usageCount: 6.7,
           creatorName: '小龙老师'
         },
-                {
+        {
           id: 7,
           title: '作文批改助手',
           description: '深度解析学生习作，提供多维度点评与改进建议。',
@@ -397,6 +394,45 @@ export default {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Page container */
+.page-container {
+  background: #F8F9FD;
+}
+
+/* Navigation tabs */
+.navigation-tabs {
+  background: #F8F9FD80;
+  border-bottom: 1px solid #ADB2B90D;
+  backdrop-filter: blur(4px);
+}
+
+/* Hero Card 1 - 智能教案生成 */
+.hero-card-1 {
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+}
+
+/* Hero Card 2 - PPT 课件大师 */
+.hero-card-2 {
+  background: radial-gradient(circle at top right, #314DE233 30%, #E6DEFF 100%);
+}
+
+/* Hero Card 3 - AI 智能组卷 */
+.hero-card-3 {
+  background: #DEE5FD;
+}
+
+/* Recommended avatar */
+.recommended-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #B4BDFF;
+  border: 1px solid #314DE21A;
 }
 
 /* Hero Card Button */
