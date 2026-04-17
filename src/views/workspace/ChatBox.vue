@@ -92,11 +92,7 @@ import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting } f
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
 import { API_BASE } from '../../utils/api'
-
-// 👇 加了 // @ts-ignore 彻底解决报错
-// @ts-ignore
 import ChatInit from './ChatInit.vue'
-// @ts-ignore
 import Chating from './Chating.vue'
 
 const route = useRoute()
