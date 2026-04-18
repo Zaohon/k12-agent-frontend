@@ -42,9 +42,7 @@
                   class="delete-btn" 
                   @click.stop="deleteSession(s.id)"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                  <el-icon><Delete /></el-icon>
                 </div>
             </div>
           </div>
@@ -54,7 +52,7 @@
 
     <!-- 中间窗口：动态切换 -->
     <main class="chat-main-content">
-      <ChatInit v-if="!activeSessionId" />
+      <ChatInit v-if="!activeSessionId" @send-message="handleChatInitSend" />
       <Chating 
         v-else
         :agentId="agentId"
@@ -65,6 +63,7 @@
         :activeSession="activeSession"
         :commonPrompts="commonPrompts"
         @send="handleSend"
+        @refreshSessions="refreshSessions"
       />
     </main>
 
@@ -88,10 +87,10 @@
 <script setup>
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting } from '@element-plus/icons-vue'
+import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting, Delete } from '@element-plus/icons-vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
-import { API_BASE } from '../../utils/api'
+import { sessionApi } from '../../api/api'
 import ChatInit from './ChatInit.vue'
 import Chating from './Chating.vue'
 
@@ -111,14 +110,32 @@ const activeSessionId = ref(null)
 const sessions = ref([])
 const sessionSearch = ref('')
 
-sessions.value = [
-  { id: 1, topic: "数学应用题解题思路" },
-  { id: 2, topic: "语文作文批改" },
-  { id: 3, topic: "英语语法讲解" },
-  { id: 4, topic: "物理受力分析" },
-  { id: 5, topic: "化学方程式配平" },
-  { id: 6, topic: "历史简答题梳理" }
-]
+// 处理 URL 中的 sessionId 参数
+const initFromUrl = () => {
+  const sessionId = route.query.sessionId
+  if (sessionId) {
+    activeSessionId.value = sessionId
+  }
+}
+
+// 加载会话列表
+const loadSessions = async () => {
+  try {
+    const data = await sessionApi.getSessionList()
+    if (data.success) {
+      sessions.value = data.data || []
+    } else {
+      ElMessage.error('加载会话列表失败')
+    }
+  } catch (error) {
+    console.error('加载会话列表失败:', error)
+  }
+}
+
+// 刷新会话列表（供子组件调用）
+const refreshSessions = () => {
+  loadSessions()
+}
 
 const filteredSessions = computed(() => {
   if (!sessionSearch.value) return sessions.value
@@ -129,11 +146,19 @@ const activeSession = computed(() => sessions.value.find(s => s.id === activeSes
 const commonPrompts = ref(['生成一份教案', '批改一段作业', '帮我出3道选择题'])
 
 const createNewSession = async () => {
-  const newId = sessions.value.length + 1
-  sessions.value.unshift({ id: newId, topic: "新对话" })
-  activeSessionId.value = newId
-  messages.value = []
-  ElMessage.success('已新建对话')
+  try {
+    const data = await sessionApi.createSession()
+    if (data.success) {
+      await loadSessions()
+      activeSessionId.value = data.data.id
+      messages.value = []
+      ElMessage.success('已新建对话')
+    } else {
+      ElMessage.error('创建会话失败')
+    }
+  } catch (error) {
+    console.error('创建会话失败:', error)
+  }
 }
 
 const selectSession = (id) => {
@@ -142,12 +167,21 @@ const selectSession = (id) => {
 }
 
 const deleteSession = async (id) => {
-  sessions.value = sessions.value.filter(item => item.id !== id)
-  if (activeSessionId.value === id) {
-    activeSessionId.value = null
-    messages.value = []
+  try {
+    const data = await sessionApi.deleteSession(id)
+    if (data.success) {
+      await loadSessions()
+      if (activeSessionId.value === id) {
+        activeSessionId.value = null
+        messages.value = []
+      }
+      ElMessage.success('删除成功')
+    } else {
+      ElMessage.error('删除会话失败')
+    }
+  } catch (error) {
+    console.error('删除会话失败:', error)
   }
-  ElMessage.success('删除成功')
 }
 
 const handleSend = async () => {
@@ -166,6 +200,40 @@ const handleSend = async () => {
     isStreaming.value = false
   }, 800)
 }
+
+// 处理 ChatInit 发送消息
+const handleChatInitSend = async (content) => {
+  try {
+    // 1. 新建会话
+    const sessionResult = await sessionApi.createSession()
+    if (!sessionResult.success) {
+      ElMessage.error('创建会话失败')
+      return
+    }
+
+    const sessionId = sessionResult.data.id
+
+    // 2. 加载会话列表并切换到新会话
+    await loadSessions()
+    activeSessionId.value = sessionId
+    messages.value = []
+
+    // 3. 发送消息
+    const response = await sessionApi.sendMessage(sessionId, content)
+
+    // 4. 刷新会话列表以更新标题
+    await loadSessions()
+  } catch (error) {
+    console.error('发送消息失败:', error)
+    ElMessage.error('发送失败，请稍后重试')
+  }
+}
+
+// 组件挂载时加载会话列表
+onMounted(() => {
+  initFromUrl()
+  loadSessions()
+})
 
 </script>
 
@@ -192,14 +260,14 @@ const handleSend = async () => {
   isolation: isolate;
   width: 288px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255);
   border-right: 1px solid rgba(173, 178, 185, 0.1);
   backdrop-filter: blur(6px);
   flex: none;
   order: 0; /* 确保在最左 */
   align-self: stretch;
   flex-grow: 0;
-  z-index: 1;
+  z-index: 2;
   position: relative;
 }
 

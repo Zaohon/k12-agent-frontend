@@ -13,6 +13,25 @@
           {{ agentId ? (agentInfo?.title || '正在加载智能体...') : (activeSession?.topic || '通用智能问答') }}
         </h2>
       </div>
+      <div class="header-right">
+        <el-dropdown>
+          <el-button type="text" class="header-action">
+            <el-icon><More /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="updateSessionTopic">
+                <el-icon><Edit /></el-icon>
+                <span>修改标题</span>
+              </el-dropdown-item>
+              <el-dropdown-item @click="deleteSession" type="danger">
+                <el-icon><Delete /></el-icon>
+                <span>删除会话</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </header>
 
     <!-- 消息区域 -->
@@ -102,66 +121,224 @@
 
       <p class="copyright">Powered by K12 Agent Cloud | 内容由 AI 生成，请注意甄别</p>
     </footer>
+
+    <!-- 修改会话标题弹窗 -->
+    <el-dialog
+      v-model="showUpdateTopicDialog"
+      title="修改会话标题"
+      width="400px"
+    >
+      <el-input v-model="newTopic" placeholder="请输入新的会话标题" />
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showUpdateTopicDialog = false">取消</el-button>
+          <el-button type="primary" @click="confirmUpdateTopic">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
-import { Cpu, User, Monitor, Promotion, MagicStick, ChatDotSquare } from '@element-plus/icons-vue'
+import { ref, watch, computed, onMounted, nextTick } from 'vue'
+import { Cpu, User, Monitor, Promotion, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { sessionApi } from '../../api/api'
 
-const props = defineProps([
-  'agentId',
-  'agentInfo',
-  'messages',
-  'isStreaming',
-  'userInput',
-  'activeSession',
-  'commonPrompts'
-])
-
-const emit = defineEmits(['sendMessage'])
-
-const inputVal = ref(props.userInput || '')
-
-watch(() => props.userInput, (val) => {
-  inputVal.value = val
+const props = defineProps({
+  agentId: {
+    type: Number,
+    default: null
+  },
+  agentInfo: {
+    type: Object,
+    default: null
+  },
+  activeSession: {
+    type: Object,
+    default: null
+  },
+  commonPrompts: {
+    type: Array,
+    default: () => []
+  }
 })
 
-const handleSend = () => {
-  if (!inputVal.value.trim()) return
-  emit('sendMessage', inputVal.value)
-  inputVal.value = ''
+const emit = defineEmits(['sendMessage', 'refreshSessions'])
+
+const inputVal = ref('')
+const messages = ref([])
+const isStreaming = ref(false)
+const msgContainer = ref(null)
+const showUpdateTopicDialog = ref(false)
+const newTopic = ref('')
+
+// 计算显示的消息
+const showMessages = computed(() => {
+  return messages.value || []
+})
+
+// 加载会话历史
+const loadSessionHistory = async () => {
+  if (props.activeSession?.id) {
+    try {
+      const data = await sessionApi.getSessionHistory(props.activeSession.id)
+      if (data.success) {
+        messages.value = data.data || []
+      } else {
+        ElMessage.error('加载会话历史失败')
+      }
+    } catch (error) {
+      console.error('加载会话历史失败:', error)
+    }
+  }
 }
 
-//预设对话
-const showMessages = computed(() => {
-  // 如果父组件已经传了消息，就用真实的
-  if (props.messages && props.messages.length > 0) {
-    return props.messages
-  }
-  // 否则返回预设示例
-  return [
-    {
-      role: 'assistant',
-      content: '你好！我是K12智能助教，有什么可以帮你的吗？'
-    },
-    {
-      role: 'user',
-      content: '初一数学一元一次方程怎么解？'
-    },
-    {
-      role: 'assistant',
-      content: '一元一次方程解题步骤：\n1. 去分母（两边同乘分母最小公倍数）\n2. 去括号\n3. 移项（注意变号）\n4. 合并同类项\n5. 系数化为1'
-    },
-    {
-      role: 'user',
-      content: '能给我举个例子吗？'
-    },
-    {
-      role: 'assistant',
-      content: '例如：2x + 5 = 15\n解：\n2x = 15 - 5\n2x = 10\nx = 5'
+// 发送消息
+const handleSend = async () => {
+  if (!inputVal.value.trim() || !props.activeSession?.id) return
+  
+  const content = inputVal.value.trim()
+  inputVal.value = ''
+  
+  // 添加用户消息
+  messages.value.push({
+    role: 'user',
+    content
+  })
+  
+  // 滚动到底部
+  await nextTick()
+  scrollToBottom()
+  
+  isStreaming.value = true
+
+  try {
+    const response = await sessionApi.sendMessage(props.activeSession.id, content)
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let assistantContent = ''
+
+    // 流式接收数据
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value)
+      const lines = chunk.split('\n')
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.substring(6).trim()
+          if (dataStr === '[DONE]') break
+
+          try {
+            const data = JSON.parse(dataStr)
+            if (data.choices && data.choices[0]?.delta?.content) {
+              assistantContent += data.choices[0].delta.content
+            }
+          } catch (e) {
+            console.error('解析SSE数据失败:', e)
+          }
+        }
+      }
     }
-  ]
+
+    // 添加助手消息
+    messages.value.push({
+      role: 'assistant',
+      content: assistantContent
+    })
+
+    // 流结束后刷新会话列表（更新标题），符合API文档推荐的调用顺序
+    emit('refreshSessions')
+  } catch (error) {
+    console.error('发送消息失败:', error)
+  } finally {
+    isStreaming.value = false
+    scrollToBottom()
+  }
+}
+
+// 滚动到底部
+const scrollToBottom = () => {
+  if (msgContainer.value) {
+    msgContainer.value.scrollTop = msgContainer.value.scrollHeight
+  }
+}
+
+// 修改会话标题
+const updateSessionTopic = () => {
+  if (props.activeSession) {
+    newTopic.value = props.activeSession.topic
+    showUpdateTopicDialog.value = true
+  }
+}
+
+// 确认修改标题
+const confirmUpdateTopic = async () => {
+  if (!newTopic.value.trim() || !props.activeSession?.id) return
+
+  try {
+    const data = await sessionApi.updateSessionTopic(props.activeSession.id, newTopic.value.trim())
+    if (data.success) {
+      ElMessage.success('标题修改成功')
+      showUpdateTopicDialog.value = false
+      emit('refreshSessions')
+    } else {
+      ElMessage.error('标题修改失败')
+    }
+  } catch (error) {
+    console.error('修改标题失败:', error)
+  }
+}
+
+// 删除会话
+const deleteSession = async () => {
+  if (!props.activeSession?.id) return
+
+  try {
+    const data = await sessionApi.deleteSession(props.activeSession.id)
+    if (data.success) {
+      ElMessage.success('会话删除成功')
+      emit('refreshSessions')
+    } else {
+      ElMessage.error('会话删除失败')
+    }
+  } catch (error) {
+    console.error('删除会话失败:', error)
+  }
+}
+
+// 监听会话变化
+watch(() => props.activeSession, (newSession) => {
+  if (newSession?.id) {
+    loadSessionHistory()
+  } else {
+    messages.value = []
+  }
+}, { immediate: true })
+
+// 组件挂载时加载历史消息
+onMounted(() => {
+  if (props.activeSession?.id) {
+    loadSessionHistory()
+  }
+})
+
+// 监听智能体变化
+watch(() => props.agentId, (newAgentId) => {
+  if (newAgentId) {
+    messages.value = []
+  }
+})
+
+// 组件挂载时加载历史消息
+onMounted(() => {
+  if (props.activeSession?.id) {
+    loadSessionHistory()
+  }
 })
 </script>
 
@@ -182,6 +359,7 @@ const showMessages = computed(() => {
   border-bottom: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-shrink: 0;
   background: rgba(255,255,255,0.9);
   backdrop-filter: blur(12px);
@@ -192,6 +370,15 @@ const showMessages = computed(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-action {
+  color: #5A6066;
 }
 
 .agent-avatar {
@@ -519,5 +706,12 @@ const showMessages = computed(() => {
   font-size: 10px;
   color: rgba(90,96,102,0.5);
   margin-top: 12px;
+}
+
+/* 对话框样式 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 </style>

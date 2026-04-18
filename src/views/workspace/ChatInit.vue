@@ -19,7 +19,13 @@
       <div class="input-container">
         <div class="input-glow"></div>
         <div class="input-body">
-          <div class="textarea" contenteditable placeholder="输入您的指令，例如：生成一份初中物理《重力》的教案..."></div>
+          <div 
+            ref="textareaRef"
+            class="textarea" 
+            contenteditable 
+            placeholder="输入您的指令，例如：生成一份初中物理《重力》的教案..."
+            @keydown.enter.prevent="handleEnter"
+          ></div>
           <div class="input-bar">
             <div class="left-icons">
               <button class="icon-btn">
@@ -32,7 +38,13 @@
                 <img src="@/images/chatinit-img.png" alt="图片" />
               </button>
             </div>
-            <button class="send-btn">发送</button>
+            <button 
+              class="send-btn" 
+              :disabled="isLoading"
+              @click="handleSend"
+            >
+              {{ isLoading ? '处理中...' : '发送' }}
+            </button>
           </div>
         </div>
       </div>
@@ -57,7 +69,10 @@
 </template>
 
 <script setup>
-const cards = [
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+
+const cards = ref([
   {
     title: '教案生成',
     desc: '快速生成符合大纲要求的详细教学方案。',
@@ -82,11 +97,55 @@ const cards = [
     color: 'purple',
     icon: '@/images/chatinit-4.png',
   },
-];
+])
+
+const textareaRef = ref(null)
+const isLoading = ref(false)
+
+const emit = defineEmits(['sendMessage'])
+
+const getTextareaContent = () => {
+  return textareaRef.value?.innerText.trim() || ''
+}
+
+const clearTextarea = () => {
+  if (textareaRef.value) {
+    textareaRef.value.innerText = ''
+  }
+}
+
+const handleEnter = (e) => {
+  if (e.ctrlKey || e.metaKey) {
+    // 允许 Ctrl+Enter 换行
+    return
+  }
+  e.preventDefault()
+  handleSend()
+}
+
+const handleSend = async () => {
+  const content = getTextareaContent()
+  if (!content) {
+    ElMessage.warning('请输入内容')
+    return
+  }
+
+  isLoading.value = true
+  
+  try {
+    // 通知父组件创建会话并发送消息
+    emit('sendMessage', content)
+    clearTextarea()
+  } catch (error) {
+    console.error('发送消息失败:', error)
+    ElMessage.error('发送失败，请稍后重试')
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
 * {
   margin: 0;
@@ -102,11 +161,12 @@ const cards = [
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   padding: clamp(60px, 12vw, 149px) 24px;
   gap: 44px;
   background: #f8f9fd;
+  z-index: 1;
 }
 
 /* 模糊装饰 */
@@ -126,17 +186,18 @@ const cards = [
   height: clamp(300px, 40vw, 500px);
   right: -10%;
   top: -15%;
-  background: rgba(49, 77, 226, 0.05);
-  filter: blur(50px);
+  background: rgba(49, 77, 226, 0.2);
+  filter: blur(60px);
 }
 .bottom-left {
   width: clamp(240px, 32vw, 400px);
   height: clamp(240px, 32vw, 400px);
   left: -8%;
   bottom: -12%;
-  background: rgba(97, 68, 211, 0.05);
-  filter: blur(40px);
+  background: rgba(97, 68, 211, 0.2);
+  filter: blur(50px);
 }
+
 
 /* 标题区域 */
 .greeting-wrapper {

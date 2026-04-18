@@ -80,7 +80,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { API_BASE } from '../../utils/api'
+import { authApi } from '../../api/api'
 
 export default {
   name: 'LoginModal',
@@ -112,14 +112,9 @@ export default {
         return
       }
       try {
-        const res = await fetch(`${API_BASE}/auth/sms_send`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: loginForm.phone })
-        })
-        const data = await res.json()
-        if (res.ok) {
-          ElMessage.success(data.message || '验证码已发送')
+        const result = await authApi.sendSmsCode(loginForm.phone)
+        if (result.success) {
+          ElMessage.success(result.message || '验证码已发送')
           countdown.value = 60
           countdownTimer = setInterval(() => {
             countdown.value--
@@ -129,9 +124,9 @@ export default {
             }
           }, 1000)
         } else {
-          ElMessage.error(data.message || '发送验证码失败')
+          ElMessage.error(result.message || '发送验证码失败')
         }
-      } catch {
+      } catch (error) {
         ElMessage.error('无法连接到服务器，请确保后端服务和数据库已启动')
       }
     }
@@ -143,26 +138,17 @@ export default {
       }
       loading.value = true
       try {
-        const res = await fetch(`${API_BASE}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: loginForm.phone, code: loginForm.code })
-        })
-        const data = await res.json()
-        if (res.ok && data.access_token) {
-          localStorage.setItem('k12_token', data.access_token)
-          if (data.user) {
-            localStorage.setItem('k12_user', JSON.stringify(data.user))
-          }
+        const result = await authApi.login(loginForm.phone, loginForm.code)
+        if (result.success) {
           ElMessage.success('登录成功！')
           router.push('/workspace')
           emit('close')
           Object.assign(loginForm, { phone: '', code: '' })
           countdown.value = 0
         } else {
-          ElMessage.error(data.message || '登录失败，请检查信息')
+          ElMessage.error(result.message || '登录失败，请检查信息')
         }
-      } catch {
+      } catch (error) {
         ElMessage.error('无法连接到服务器，请确保后端服务和数据库已启动')
       } finally {
         loading.value = false

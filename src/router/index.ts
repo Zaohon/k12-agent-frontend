@@ -75,15 +75,15 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
- const token = localStorage.getItem('k12_token');
- if (to.path !== '/login' && to.path !== '/' && !token) {
-   next('/login');
- } else if (to.path === '/login' && token) {
-   next('/workspace');
- } else {
-   next();
- }
-});
+// router.beforeEach((to, from, next) => {
+//  const token = localStorage.getItem('k12_token');
+//  if (to.path !== '/login' && to.path !== '/' && !token) {
+//    next('/login');
+//  } else if (to.path === '/login' && token) {
+//    next('/workspace');
+//  } else {
+//    next();
+//  }
+// });
 
 export default router
