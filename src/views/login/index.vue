@@ -106,7 +106,7 @@
               >
                 <template #suffix>
                   <img 
-                    src="@/images/isVisable.png" 
+                    src="@/images/is-visable.png" 
                     alt="toggle" 
                     class="password-toggle-icon"
                     @click="showPassword = !showPassword"
