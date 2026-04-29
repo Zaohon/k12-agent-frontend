@@ -2,68 +2,134 @@
   <!-- 登录弹窗 -->
   <Transition name="modal">
     <div v-if="visible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="closeModal">
-      <div class="bg-white rounded-[24px] p-8 max-w-md w-full mx-4 relative modal-content" @click.stop>
+      <div class="bg-white rounded-[24px] max-w-md w-full mx-4 relative modal-content overflow-hidden flex flex-col" @click.stop>
         <!-- 关闭按钮 -->
-        <button @click="closeModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+        <button @click="closeModal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors z-10">
           <img src="@/images/close.png" alt="关闭" class="h-3 w-3" />
         </button>
 
-        <!-- 标题区域 -->
-        <div class="flex items-center mb-8">
-          <div class="w-12 h-12 rounded-[12px] bg-gradient-to-tl from-[#6144D3] to-[#314DE2] flex items-center justify-center mr-4 overflow-hidden logo-container">
-            <img src="@/images/logo-white.png" alt="logo" class="max-w-[80%] max-h-[80%] object-contain" />
-          </div>
-          <div>
-            <h2 class="text-2xl font-bold modal-title">登录</h2>
-            <p class="text-sm modal-subtitle">探索个性化 AI 教学新体验</p>
-          </div>
-        </div>
-
-        <!-- 表单 -->
-        <form @submit.prevent="handleLogin" class="space-y-5">
-          <div>
-            <label class="block text-sm font-medium text-[#314DE2] mb-2">手机号</label>
-            <el-input
-              v-model="loginForm.phone"
-              type="tel"
-              placeholder="请输入 11 位手机号"
-              class="custom-input"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-[#314DE2] mb-2">验证码</label>
-            <div class="flex space-x-3">
-              <el-input
-                v-model="loginForm.code"
-                type="text"
-                maxlength="6"
-                placeholder="6 位数字"
-                class="custom-input flex-1"
-              />
-              <el-button
-                type="primary"
-                class="sms-button whitespace-nowrap"
-                @click="sendSmsCode"
-                :disabled="countdown > 0"
-              >
-                {{ countdown > 0 ? `${countdown}s后重发` : '获取验证码' }}
-              </el-button>
+        <!-- 主内容区 -->
+        <div class="p-8 flex-grow">
+          <!-- 标题区域 -->
+          <div class="flex items-center mb-8">
+            <div class="w-12 h-12 rounded-[12px] bg-gradient-to-tl from-[#6144D3] to-[#314DE2] flex items-center justify-center mr-4 overflow-hidden logo-container">
+              <img src="@/images/logo-white.png" alt="logo" class="max-w-[80%] max-h-[80%] object-contain" />
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold modal-title">登录</h2>
+              <p class="text-sm modal-subtitle">探索个性化 AI 教学新体验</p>
             </div>
           </div>
 
-          <el-button
-            type="primary"
-            native-type="submit"
-            class="submit-button w-full"
-            :loading="loading"
-          >
-            确定
-          </el-button>
-        </form>
+          <!-- 登录方式切换 -->
+          <div class="flex mb-8">
+            <button
+              :class="['tab-item flex-1 py-3 text-center text-sm font-medium transition-all', loginType === 0 ? 'tab-active text-[#314DE2]' : 'text-[#5A6066]']"
+              @click="loginType = 0"
+            >
+              验证码登录
+              <div :class="['tab-underline h-0.5 mt-1 mx-auto transition-all', loginType === 0 ? 'w-16 bg-[#314DE2]' : 'w-0']"></div>
+            </button>
+            <button
+              :class="['tab-item flex-1 py-3 text-center text-sm font-medium transition-all', loginType === 1 ? 'tab-active text-[#314DE2]' : 'text-[#5A6066]']"
+              @click="loginType = 1"
+            >
+              密码登录
+              <div :class="['tab-underline h-0.5 mt-1 mx-auto transition-all', loginType === 1 ? 'w-16 bg-[#314DE2]' : 'w-0']"></div>
+            </button>
+          </div>
+
+          <!-- 表单：验证码登录 -->
+          <form v-if="loginType === 0" @submit.prevent="handleLoginBySms" class="space-y-5">
+            <div>
+              <label class="block text-sm font-medium text-[#314DE2] mb-2">手机号</label>
+              <el-input
+                v-model="loginForm.phone"
+                type="tel"
+                placeholder="请输入 11 位手机号"
+                class="custom-input"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#314DE2] mb-2">验证码</label>
+              <div class="flex space-x-3">
+                <el-input
+                  v-model="loginForm.code"
+                  type="text"
+                  maxlength="6"
+                  placeholder="6 位数字"
+                  class="custom-input flex-1"
+                />
+                <el-button
+                  type="primary"
+                  class="sms-button whitespace-nowrap"
+                  @click="sendSmsCode"
+                  :disabled="countdown > 0"
+                >
+                  {{ countdown > 0 ? `${countdown}s后重发` : '获取验证码' }}
+                </el-button>
+              </div>
+            </div>
+
+            <div class="flex justify-center">
+              <el-button
+                type="primary"
+                native-type="submit"
+                class="submit-button w-1/2"
+                :loading="loading"
+              >
+                登 录 / 注 册
+              </el-button>
+            </div>
+          </form>
+
+          <!-- 表单：密码登录 -->
+          <form v-if="loginType === 1" @submit.prevent="handleLoginByPassword" class="space-y-5">
+            <div>
+              <label class="block text-sm font-medium text-[#314DE2] mb-2">账号</label>
+              <el-input
+                v-model="loginForm.account"
+                type="text"
+                placeholder="请输入您的账号"
+                class="custom-input"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#314DE2] mb-2">密码</label>
+              <el-input
+                v-model="loginForm.password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="请输入您的密码"
+                class="custom-input"
+              >
+                <template #suffix>
+                  <img 
+                    src="@/images/isVisable.png" 
+                    alt="toggle" 
+                    class="password-toggle-icon"
+                    @click="showPassword = !showPassword"
+                  />
+                </template>
+              </el-input>
+            </div>
+
+            <div class="flex justify-center">
+              <el-button
+                type="primary"
+                native-type="submit"
+                class="submit-button w-1/2"
+                :loading="loading"
+              >
+                登  录
+              </el-button>
+            </div>
+          </form>
+        </div>
 
         <!-- 底部协议 -->
-        <div class="mt-6 text-center">
+        <div class="text-center agreement-container">
           <p class="mb-1 agreement-text">继续操作即表示您同意</p>
           <p class="agreement-text-links">
             <a href="#" class="text-[#5A6066] hover:underline">隐私政策</a>
@@ -95,11 +161,15 @@ export default {
     const router = useRouter()
     const loading = ref(false)
     const countdown = ref(0)
+    const loginType = ref(0)
+    const showPassword = ref(false)
     let countdownTimer = null
 
     const loginForm = reactive({
       phone: '',
-      code: ''
+      code: '',
+      account: '',
+      password: ''
     })
 
     const closeModal = () => {
@@ -131,19 +201,26 @@ export default {
       }
     }
 
-    const handleLogin = async () => {
-      if (!loginForm.phone || !loginForm.code) {
-        ElMessage.warning('请填写手机号和验证码！')
+    const handleLoginBySms = async () => {
+      if (!loginForm.phone) {
+        ElMessage.warning('请输入手机号！')
         return
       }
+      
+      if (!loginForm.code) {
+        ElMessage.warning('请输入验证码！')
+        return
+      }
+
       loading.value = true
       try {
-        const result = await authApi.login(loginForm.phone, loginForm.code)
+        const result = await authApi.loginBySms(loginForm.phone, loginForm.code)
+        
         if (result.success) {
           ElMessage.success('登录成功！')
           router.push('/workspace')
           emit('close')
-          Object.assign(loginForm, { phone: '', code: '' })
+          Object.assign(loginForm, { phone: '', code: '', account: '', password: '' })
           countdown.value = 0
         } else {
           ElMessage.error(result.message || '登录失败，请检查信息')
@@ -155,13 +232,20 @@ export default {
       }
     }
 
+    const handleLoginByPassword = async () => {
+      ElMessage.warning('密码登录功能暂未开放')
+    }
+
     return {
       loginForm,
       loading,
       countdown,
+      loginType,
+      showPassword,
       closeModal,
       sendSmsCode,
-      handleLogin
+      handleLoginBySms,
+      handleLoginByPassword
     }
   }
 }
@@ -208,6 +292,22 @@ export default {
   color: #5A6066;
 }
 
+.tab-item {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.tab-item:hover {
+  color: #314DE2;
+}
+
+.tab-underline {
+  transition: width 0.3s ease;
+}
+
 /* 自定义输入框样式 */
 :deep(.custom-input .el-input__wrapper) {
   background-color: #F2F4F8;
@@ -251,7 +351,7 @@ export default {
 /* 提交按钮样式 */
 :deep(.submit-button) {
   margin-top: 30px;
-  height: 56px;
+  height: 50px;
   border-radius: 12px;
   background: linear-gradient(90deg, #314DE2 0%, #6144D3 100%);
   border: none;
@@ -263,6 +363,26 @@ export default {
 :deep(.submit-button:hover) {
   opacity: 0.9;
   box-shadow: 0 4px 12px #314DE240;
+}
+
+/* 密码显示/隐藏图标样式 */
+.password-toggle-icon {
+  width: auto;
+  height: 10px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.password-toggle-icon:hover {
+  opacity: 0.7;
+}
+
+/* 底部协议容器样式 */
+.agreement-container {
+  background-color: #F2F4F880;
+  padding: 20px 16px;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
 }
 
 /* 底部协议文字样式 */
