@@ -214,7 +214,7 @@ export default {
 
       loading.value = true
       try {
-        const result = await authApi.loginBySms(loginForm.phone, loginForm.code)
+        const result = await authApi.login(loginForm.phone, loginForm.code)
         
         if (result.success) {
           ElMessage.success('登录成功！')
