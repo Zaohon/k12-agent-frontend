@@ -37,6 +37,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '我的智能体' }
       },
       {
+        path: 'agent/edit',
+        name: 'AgentEdit',
+        component: () => import('@/views/workspace/AgentEdit.vue'),
+        meta: { title: '编辑智能体' }
+      },
+      {
         path: 'knowledge',
         name: 'KnowledgeBase',
         component: () => import('@/views/workspace/KnowledgeBase.vue'),

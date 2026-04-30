@@ -84,6 +84,47 @@ export const authApi = {
   }
 };
 
+export const agentApi = {
+  getMyAgents: async () => {
+    return request('/agent/my');
+  },
+
+  getAgentById: async (agentId) => {
+    return request(`/agent/${agentId}`);
+  },
+
+  createAgent: async (agentData) => {
+    return request('/agent/create', {
+      method: 'POST',
+      body: JSON.stringify(agentData)
+    });
+  },
+
+  updateAgent: async (agentId, agentData) => {
+    return request(`/agent/update/${agentId}`, {
+      method: 'POST',
+      body: JSON.stringify(agentData)
+    });
+  },
+
+  deleteAgent: async (agentId) => {
+    //暂时不实现删除功能
+    ElMessage.warning('删除功能暂未实现')
+    // return request(`/agent/${agentId}`, {
+    //   method: 'DELETE'
+    // });
+  },
+
+  getDiscoverAgents: async (categoryId) => {
+    const url = categoryId ? `/agent/discover?categoryId=${categoryId}` : '/agent/discover';
+    return request(url);
+  },
+
+  getFeaturedAgents: async () => {
+    return request('/agent/featured');
+  }
+};
+
 export const sessionApi = {
   getSessionList: async () => {
     return request('/session/list');
@@ -141,6 +182,32 @@ export const sessionApi = {
 
   deleteSession: async (sessionId) => {
     return request(`/session/${sessionId}`, {
+      method: 'DELETE'
+    });
+  }
+};
+
+export const categoryApi = {
+  getCategoryList: async () => {
+    return request('/category/list');
+  },
+
+  createCategory: async (categoryData) => {
+    return request('/category/create', {
+      method: 'POST',
+      body: JSON.stringify(categoryData)
+    });
+  },
+
+  updateCategory: async (categoryId, categoryData) => {
+    return request(`/category/${categoryId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(categoryData)
+    });
+  },
+
+  deleteCategory: async (categoryId) => {
+    return request(`/category/${categoryId}`, {
       method: 'DELETE'
     });
   }
