@@ -109,7 +109,7 @@
             <div v-if="showWeichatPopup" class="qr-popup" :style="weichatPopupStyle" @click.stop>
               <div class="qr-popup-inner">
                 <img :src="weichatQr" alt="交流群二维码" class="qr-image" />
-                <div class="qr-text">微信扫一扫 加入用户交流群</div>
+                <div class="qr-text">微信扫一扫<br>加入用户交流群</div>
               </div>
             </div>
           </Transition>
@@ -126,7 +126,7 @@
             <div v-if="showSupportPopup" class="qr-popup" :style="supportPopupStyle" @click.stop>
               <div class="qr-popup-inner">
                 <img :src="supportQr" alt="客服二维码" class="qr-image" />
-                <div class="qr-text">微信扫一扫 联系客服</div>
+                <div class="qr-text">微信扫一扫<br>联系客服</div>
               </div>
             </div>
           </Transition>

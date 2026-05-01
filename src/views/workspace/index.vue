@@ -76,7 +76,9 @@ const userStore = useUserStore()
 
 .page-content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 </style>

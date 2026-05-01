@@ -31,15 +31,31 @@
               :class="activeSessionId === s.id ? 'active' : ''"
               @click="selectSession(s.id)"
             >
-              <img 
-                class="session-icon" 
-                :src="activeSessionId === s.id 
-                  ? '@/images/chatbox-selected.png' 
-                  : '@/images/chatbox-unselected.png'" 
+              <img
+                class="session-icon"
+                :src="activeSessionId === s.id
+                  ? '@/images/chatbox-selected.png'
+                  : '@/images/chatbox-unselected.png'"
               />
-              <div class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0,12) + '...' : s.topic) : '新对话' }}</div>
-                <div 
-                  class="delete-btn" 
+              <input
+                v-if="editingSessionId === s.id"
+                v-model="editSessionName"
+                class="session-edit-input"
+                @blur="confirmEditSession"
+                @keydown.enter.prevent="confirmEditSession"
+                @click.stop
+                ref="editInputRef"
+              />
+              <div v-else class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0,12) + '...' : s.topic) : '新对话' }}</div>
+                <div
+                  v-if="editingSessionId !== s.id"
+                  class="edit-btn"
+                  @click.stop="openEditDialog(s)"
+                >
+                  <el-icon><Edit /></el-icon>
+                </div>
+                <div
+                  class="delete-btn"
                   @click.stop="deleteSession(s.id)"
                 >
                   <el-icon><Delete /></el-icon>
@@ -87,7 +103,7 @@
 <script setup>
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting, Delete } from '@element-plus/icons-vue'
+import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting, Delete, Edit } from '@element-plus/icons-vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
@@ -181,6 +197,39 @@ const deleteSession = async (id) => {
     }
   } catch (error) {
     console.error('删除会话失败:', error)
+  }
+}
+
+const editSessionName = ref('')
+const editingSessionId = ref(null)
+const editInputRef = ref(null)
+
+const openEditDialog = (session) => {
+  editingSessionId.value = session.id
+  editSessionName.value = session.topic || ''
+  nextTick(() => {
+    if (editInputRef.value) {
+      editInputRef.value.focus()
+    }
+  })
+}
+
+const confirmEditSession = async () => {
+  if (!editSessionName.value.trim()) {
+    ElMessage.warning('对话名称不能为空')
+    return
+  }
+  try {
+    const data = await sessionApi.updateSessionTopic(editingSessionId.value, editSessionName.value)
+    if (data.success) {
+      await loadSessions()
+      editingSessionId.value = null
+      ElMessage.success('修改成功')
+    } else {
+      ElMessage.error('修改会话失败')
+    }
+  } catch (error) {
+    console.error('修改会话失败:', error)
   }
 }
 
@@ -395,6 +444,39 @@ onMounted(() => {
 .delete-btn:hover {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
+}
+
+.edit-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #9ca3af;
+  opacity: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.session-item:hover .edit-btn {
+  opacity: 1;
+}
+
+.edit-btn:hover {
+  color: #314DE2;
+  background: rgba(49, 77, 226, 0.1);
+}
+
+.session-edit-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #314DE2;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  background: white;
 }
 
 .session-container {

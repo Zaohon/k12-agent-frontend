@@ -16,30 +16,54 @@
 
     <!-- 中央聊天输入区域 -->
     <div class="input-wrapper">
-      <div class="input-container">
+      <div class="input-container" :class="{ focused: isFocused }">
         <div class="input-glow"></div>
         <div class="input-body">
-          <div 
+          <div
             ref="textareaRef"
-            class="textarea" 
-            contenteditable 
+            class="textarea"
+            contenteditable
             placeholder="输入您的指令，例如：生成一份初中物理《重力》的教案..."
             @keydown.enter.prevent="handleEnter"
+            @focus="isFocused = true"
+            @blur="isFocused = false"
           ></div>
+          <div v-if="attachments.length > 0" class="attachments-wrapper">
+            <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
+              <span class="attachment-icon">{{ getAttachmentIcon(item.type) }}</span>
+              <span class="attachment-name">{{ item.name || '附件' }}</span>
+              <span class="attachment-remove" @click="removeAttachment(index)">×</span>
+            </div>
+          </div>
           <div class="input-bar">
             <div class="left-icons">
-              <button class="icon-btn">
-                <img src="@/images/chatinit-link.png" alt="超链接" />
+              <button class="icon-btn" @click="handleFileUpload">
+                <img src="@/images/chatinit-link.png" alt="上传附件" />
               </button>
-              <button class="icon-btn">
-                <img src="@/images/chatinit-vedio.png" alt="音频" />
-              </button>
-              <button class="icon-btn">
+              <div v-if="isRecording" class="icon-btn recording-btn" @click="stopRecording">
+                <div class="recording-indicator"></div>
+              </div>
+              <el-dropdown v-else trigger="click" @command="handleAudioCommand">
+                <button class="icon-btn">
+                  <img src="@/images/chatinit-vedio.png" alt="音频" />
+                </button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="record">
+                      <span>录音</span>
+                    </el-dropdown-item>
+                    <el-dropdown-item command="upload">
+                      <span>上传音频</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              <button class="icon-btn" @click="handleImageClick">
                 <img src="@/images/chatinit-img.png" alt="图片" />
               </button>
             </div>
-            <button 
-              class="send-btn" 
+            <button
+              class="send-btn"
               :disabled="isLoading"
               @click="handleSend"
             >
@@ -71,38 +95,66 @@
 <script setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import chatinit1 from '@/images/chatinit-1.png'
+import chatinit2 from '@/images/chatinit-2.png'
+import chatinit3 from '@/images/chatinit-3.png'
+import chatinit4 from '@/images/chatinit-4.png'
+import { useAttachment } from '@/hooks/useAttachment'
 
 const cards = ref([
   {
     title: '教案生成',
     desc: '快速生成符合大纲要求的详细教学方案。',
     color: 'blue',
-    icon: '@/images/chatinit-1.png',
+    icon: chatinit1,
   },
   {
     title: '课件生成',
     desc: '智能排版与内容生成，一键导出精品课件。',
     color: 'purple',
-    icon: '@/images/chatinit-2.png',
+    icon: chatinit2,
   },
   {
     title: 'AI 出题',
     desc: '根据知识点自动生成多难度等级试题。',
     color: 'blue',
-    icon: '@/images/chatinit-3.png',
+    icon: chatinit3,
   },
   {
     title: '演讲稿',
     desc: '适用于开学典礼、家长会等多种教育场景。',
     color: 'purple',
-    icon: '@/images/chatinit-4.png',
+    icon: chatinit4,
   },
 ])
 
+const { attachments, isRecording, uploadImage, uploadVideo, uploadAudioFile, uploadFile, addLink, startRecording, stopRecording, clearAttachments, getAttachmentSummary, removeAttachment, getAttachmentIcon } = useAttachment()
+
 const textareaRef = ref(null)
 const isLoading = ref(false)
+const isFocused = ref(false)
 
 const emit = defineEmits(['sendMessage'])
+
+const handleFileUpload = () => {
+  uploadFile()
+}
+
+const handleAudioCommand = (command) => {
+  if (command === 'record') {
+    if (isRecording.value) {
+      stopRecording()
+    } else {
+      startRecording()
+    }
+  } else if (command === 'upload') {
+    uploadAudioFile()
+  }
+}
+
+const handleImageClick = () => {
+  uploadImage()
+}
 
 const getTextareaContent = () => {
   return textareaRef.value?.innerText.trim() || ''
@@ -250,23 +302,69 @@ const handleSend = async () => {
   position: relative;
   width: 100%;
   background: #fff;
+  border: 2px solid transparent;
   border-radius: 16px;
   box-shadow: 0 20px 25px -5px rgba(49, 77, 226, 0.05),
     0 8px 10px -6px rgba(49, 77, 226, 0.05);
   overflow: hidden;
   z-index: 1;
+  transition: all 0.3s ease;
+}
+.input-container.focused .input-body {
+  border-color: #E6DEFF;
+  box-shadow: 0px 10px 25px -5px #C7D2FE, 0px 8px 10px -6px #C7D2FE;
 }
 .textarea {
   width: 100%;
   min-height: 128px;
+  max-height: 200px;
   padding: 20px 24px;
   font-size: 18px;
   color: #2e3339;
   outline: none;
+  overflow-y: auto;
+  resize: none;
 }
 .textarea:empty::before {
   content: attr(placeholder);
   color: rgba(90, 96, 102, 0.4);
+}
+.attachments-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 24px 12px;
+}
+.attachment-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #334155;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+}
+.attachment-icon {
+  font-size: 16px;
+}
+.attachment-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attachment-remove {
+  cursor: pointer;
+  color: #94A3B8;
+  font-size: 16px;
+  line-height: 1;
+  margin-left: 4px;
+}
+.attachment-remove:hover {
+  color: #D0435F;
 }
 .input-bar {
   display: flex;
@@ -294,6 +392,15 @@ const handleSend = async () => {
   width: 20px;
   height: 20px;
   object-fit: contain;
+}
+.recording-btn {
+  background: transparent;
+}
+.recording-indicator {
+  width: 14px;
+  height: 14px;
+  background: #D0435F;
+  border-radius: 2px;
 }
 .send-btn {
   padding: 8px 24px;

@@ -1,7 +1,7 @@
 <template>
   <div class="chat-content-container">
     <!-- 头部 -->
-    <header class="chat-header">
+    <!--<header class="chat-header">
       <div class="header-left">
         <div v-if="agentInfo" class="agent-avatar">
           <el-icon><component :is="agentInfo.iconUrl || 'MagicStick'" /></el-icon>
@@ -32,10 +32,14 @@
           </template>
         </el-dropdown>
       </div>
-    </header>
+    </header>-->
 
     <!-- 消息区域 -->
     <div class="chat-message-wrap" ref="msgContainer">
+      <!-- 测试数据按钮 -->
+      <!--<div v-if="!useTestData && messages.length === 0" style="position: absolute; top: 10px; right: 10px; z-index: 100;">
+        <el-button type="primary" size="small" @click="loadTestData">加载200条测试对话</el-button>
+      </div>-->
       <div v-if="agentId && messages.length === 0" class="welcome-card">
         <div class="welcome-icon">
           <el-icon><component :is="agentInfo?.iconUrl || 'MagicStick'" /></el-icon>
@@ -75,51 +79,92 @@
 
     <!-- 底部输入 -->
     <footer class="chat-input-footer">
-      <div v-if="agentId" class="prompt-tags">
-        <el-tag v-for="tag in commonPrompts" :key="tag" class="tag-item" hit @click="inputVal = tag">{{ tag }}</el-tag>
-      </div>
+      <div class="box-wrap" :class="{ focused: isFocused }">
+        <div class="textarea-wrap">
+          <div class="flex-col" style="width: 100%;">
+            <!-- 附件卡片显示 -->
+            <div v-if="attachments.length > 0" class="attachments-wrapper">
+              <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
+                <span class="attachment-icon">{{ getAttachmentIcon(item.type) }}</span>
+                <span class="attachment-name">{{ item.name || '附件' }}</span>
+                <span class="attachment-remove" @click="removeAttachment(index)">×</span>
+              </div>
+            </div>
 
-      <div class="input-wrapper">
-        <div class="input-glow"></div>
-        <div class="input-body">
-          <!-- 左侧功能按钮 -->
-          <div class="action-left">
-            <button class="icon-btn">
-              <img src="@/images/chatinit-img.png" alt="图片" />
-            </button>
-            <button class="icon-btn">
-              <img src="@/images/chatinit-link.png" alt="链接" />
-            </button>
-            <button class="icon-btn">
-              <img src="@/images/chatinit-vedio.png" alt="音频" />
-            </button>
-          </div>
-
-          <el-input 
-            v-model="inputVal" 
-            type="textarea" 
-            :rows="2" 
-            autosize
-            placeholder="请输入您的问题（按 Enter 发送...）" 
-            class="chat-textarea"
-            @keydown.enter.prevent="handleSend"
-          />
-
-          <!-- 右侧发送按钮 -->
-          <div class="action-right">
-            <el-button 
-              type="primary" 
-              :icon="Promotion" 
-              circle 
-              class="send-btn" 
-              :disabled="!inputVal.trim() || isStreaming" 
-              @click="handleSend"
+            <!-- 文字输入区 -->
+            <el-input
+              v-model="inputVal"
+              type="textarea"
+              :rows="2"
+              placeholder="输入您的问题或指令，按 Enter 发送。"
+              class="chat-textarea"
+              @focus="isFocused = true"
+              @blur="isFocused = false"
+              @keydown.enter.prevent="handleSend"
             />
           </div>
         </div>
-      </div>
 
-      <p class="copyright">Powered by K12 Agent Cloud | 内容由 AI 生成，请注意甄别</p>
+        <!-- 底部按钮组 -->
+        <div class="btn-group-bottom">
+          <button class="icon-btn" @click="handleFileUpload">
+            <div class="icon-inner">
+              <img src="@/images/chatinit-link.png" alt="上传附件" />
+            </div>
+            <div class="tooltip">
+              <span class="tooltip-text">上传附件</span>
+            </div>
+          </button>
+          <div v-if="isRecording" class="icon-btn recording-btn" @click="stopRecording">
+            <div class="icon-inner recording-indicator"></div>
+          </div>
+          <el-dropdown v-else trigger="click" @command="handleAudioCommand">
+            <button class="icon-btn">
+              <div class="icon-inner">
+                <img src="@/images/chatinit-vedio.png" alt="音频" />
+              </div>
+              <div class="tooltip">
+                <span class="tooltip-text">音频</span>
+              </div>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="record">
+                  <span>录音</span>
+                </el-dropdown-item>
+                <el-dropdown-item command="upload">
+                  <span>上传音频</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <button class="icon-btn" @click="handleImageClick">
+            <div class="icon-inner">
+              <img src="@/images/chatinit-img.png" alt="图片" />
+            </div>
+            <div class="tooltip">
+              <span class="tooltip-text">图片</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- 右下角底部栏 -->
+        <div class="bottom-right-bar">
+          <span class="hint-text">Enter 发送 / Shift+Enter 换行</span>
+          <button
+            class="send-btn"
+            :disabled="!inputVal.trim() || isStreaming"
+            @click="handleSend"
+          >
+            <img src="@/images/chat_sendmsg.png" alt="发送" class="send-icon" />
+          </button>
+        </div>
+      </div>
+      
+      <!-- 提示文字 -->
+      <div class="hint-container">
+        <span class="hint-text-bottom">AI生成的内容可能存在错误，请注意甄别核实。</span>
+      </div>
     </footer>
 
     <!-- 修改会话标题弹窗 -->
@@ -141,9 +186,11 @@
 
 <script setup>
 import { ref, watch, computed, onMounted, nextTick } from 'vue'
-import { Cpu, User, Monitor, Promotion, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
+import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
+import { useAttachment } from '@/hooks/useAttachment'
+import { largeChatData } from '@/mock/large-chat-data'
 
 const props = defineProps({
   agentId: {
@@ -172,6 +219,30 @@ const isStreaming = ref(false)
 const msgContainer = ref(null)
 const showUpdateTopicDialog = ref(false)
 const newTopic = ref('')
+const isFocused = ref(false)
+const useTestData = ref(false) // 测试数据开关
+
+const { attachments, isRecording, uploadImage, uploadAudioFile, uploadFile, startRecording, stopRecording, removeAttachment, getAttachmentIcon } = useAttachment()
+
+const handleFileUpload = () => {
+  uploadFile()
+}
+
+const handleAudioCommand = (command) => {
+  if (command === 'record') {
+    if (isRecording.value) {
+      stopRecording()
+    } else {
+      startRecording()
+    }
+  } else if (command === 'upload') {
+    uploadAudioFile()
+  }
+}
+
+const handleImageClick = () => {
+  uploadImage()
+}
 
 // 计算显示的消息
 const showMessages = computed(() => {
@@ -311,6 +382,18 @@ const deleteSession = async () => {
   }
 }
 
+// 加载测试数据
+const loadTestData = () => {
+  useTestData.value = true
+  messages.value = largeChatData
+  ElMessage.success(`已加载 ${largeChatData.length} 条测试消息`)
+  nextTick(() => {
+    if (msgContainer.value) {
+      msgContainer.value.scrollTop = msgContainer.value.scrollHeight
+    }
+  })
+}
+
 // 监听会话变化
 watch(() => props.activeSession, (newSession) => {
   if (newSession?.id) {
@@ -347,9 +430,15 @@ onMounted(() => {
 .chat-content-container {
   display: flex;
   flex-direction: column;
-  height: 95%;
+  flex: 1;
+  width: 100%;
   background: #F8F9FD;
   font-family: 'Noto Sans SC', sans-serif;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+  padding-bottom: 80px;
+  box-sizing: border-box;
 }
 
 /* 头部 */
@@ -408,8 +497,11 @@ onMounted(() => {
 .chat-message-wrap {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 32px 8px 32px;
+  padding: 16px 32px 40px 32px;
   scroll-behavior: smooth;
+  box-sizing: border-box;
+  min-height: 0;
+  position: relative;
 }
 
 /* 欢迎卡片 */
@@ -589,9 +681,19 @@ onMounted(() => {
 
 /* 底部输入 */
 .chat-input-footer {
-  padding: 16px 48px 24px 48px;
-  border-top: 1px solid rgba(0,0,0,0.05);
-  background: white;
+  padding: 0 48px 80px 48px;
+  border-top: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
 .prompt-tags {
@@ -614,67 +716,340 @@ onMounted(() => {
 }
 
 /* 输入框 */
-.input-wrapper {
+/* 聊天框样式 */
+.box-wrap {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   position: relative;
-  max-width: 960px;
-  margin: 0 auto;
+  width: 896px;
+  height: 122px;
+  background: #FFFFFF;
+  border: 1px solid #DEE3EA;
+  box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  transition: all 0.3s ease;
 }
 
-.input-glow {
-  position: absolute;
-  inset: -4px;
-  background: linear-gradient(90deg, #314DE2, #6144D3);
-  opacity: 0.1;
-  filter: blur(6px);
-  border-radius: 20px;
+.box-wrap.focused {
+  border: 1px solid #6144D3;
+  box-shadow: 0px 5px 20px -6px rgba(199, 210, 254, 0.5);
+}
+
+.textarea-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px 16px 84px;
+  width: 894px;
+  height: 120px;
+  min-height: 120px;
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
   z-index: 0;
 }
 
-.input-body {
-  position: relative;
+.flex-col {
   display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  background: white;
-  border-radius: 18px;
-  border: 1px solid rgba(49,77,226,0.15);
-  padding: 12px 16px;
-  z-index: 1;
-  box-shadow: 0 8px 24px rgba(49,77,226,0.08);
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  flex: none;
+  flex-grow: 1;
 }
 
-.action-left {
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 8px;
+  flex: none;
+}
+
+.text-base {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+}
+
+.text-desc {
+  width: 862px;
+  height: 20px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #767B82;
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
+}
+
+.btn-group-bottom {
+  position: absolute;
+  width: 285.42px;
+  height: 32.67px;
+  left: 13px;
+  bottom: 13px;
+  order: 1;
+  flex-grow: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-bottom: 8px;
 }
 
 .icon-btn {
-  width: 36px;
-  height: 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  isolation: isolate;
   border-radius: 8px;
   border: none;
   background: transparent;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
+  position: relative;
 }
 
 .icon-btn:hover {
-  background: rgba(49,77,226,0.08);
+  background: rgba(90, 96, 102, 0.1);
 }
 
-.icon-btn img {
-  width: 20px;
-  height: 20px;
+.icon-btn:hover .tooltip {
+  opacity: 1;
+}
+
+.icon-inner {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  z-index: 0;
+}
+
+.icon-inner img {
+  width: 15.34px;
+  height: 15.34px;
   object-fit: contain;
+}
+
+.icon-bg {
+  background: #5A6066;
+}
+
+.tooltip {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 8px;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  background: #0C0E11;
+  border-radius: 4px;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.tooltip-text {
+  width: 40px;
+  height: 15px;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 15px;
+  text-align: center;
+  color: #9B9DA1;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+.btn-normal {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 18px;
+  gap: 5px;
+  width: 84px;
+  height: 30px;
+  border-radius: 16px;
+  flex: none;
+  flex-grow: 0;
+}
+
+.btn-think {
+  background: #E0E7FF;
+  border: 1px solid #B4BDFF;
+}
+
+.btn-search {
+  background: #F1F5F9;
+  border: 1px solid #DEE3EA;
+}
+
+.text-think {
+  width: 40px;
+  height: 20px;
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 20px;
+  color: #314DE2;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+}
+
+.text-search {
+  width: 40px;
+  height: 20px;
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 20px;
+  color: #334155;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+}
+
+.bottom-right-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 12px;
+  position: absolute;
+  width: 204.83px;
+  height: 33.33px;
+  right: 13px;
+  bottom: 13px;
+  flex: none;
+  order: 2;
+  flex-grow: 0;
+  z-index: 2;
+}
+
+.hint-text {
+  width: 157px;
+  height: 16px;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #767B82;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+.send-btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  width: 35.83px;
+  height: 33.33px;
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-icon {
+  width: 15.83px;
+  height: 13.33px;
+  object-fit: contain;
+}
+
+.recording-btn {
+  background: transparent;
+}
+
+.recording-indicator {
+  width: 14px;
+  height: 14px;
+  background: #D0435F;
+  border-radius: 2px;
+}
+
+.attachments-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 0 8px 0;
+}
+
+.attachment-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #334155;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.attachment-icon {
+  font-size: 16px;
+}
+
+.attachment-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-remove {
+  cursor: pointer;
+  color: #94A3B8;
+  font-size: 16px;
+  line-height: 1;
+  margin-left: 4px;
+}
+
+.attachment-remove:hover {
+  color: #D0435F;
 }
 
 .chat-textarea {
   flex: 1;
+  width: 100%;
 }
 
 .chat-textarea :deep(.el-textarea__inner) {
@@ -683,29 +1058,16 @@ onMounted(() => {
   box-shadow: none !important;
   font-size: 14px;
   color: #2E3339;
-  padding: 8px 12px;
+  padding: 0;
   min-height: 50px;
-  line-height: 1.5;
+  max-height: 120px;
+  overflow-y: auto;
+  line-height: 20px;
+  resize: none;
 }
 
-.action-right {
-  padding-bottom: 4px;
-}
-
-.send-btn {
-  flex-shrink: 0;
-  background: linear-gradient(135deg, #314DE2, #6144D3) !important;
-  border: none;
-  width: 36px;
-  height: 36px;
-}
-
-/* 底部版权 */
-.copyright {
-  text-align: center;
-  font-size: 10px;
-  color: rgba(90,96,102,0.5);
-  margin-top: 12px;
+.chat-textarea :deep(.el-textarea__inner)::placeholder {
+  color: #767B82;
 }
 
 /* 对话框样式 */
@@ -713,5 +1075,36 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.hint-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0px;
+  width: 100%;
+  height: 15px;
+  flex: none;
+  order: 1;
+  align-self: stretch;
+  flex-grow: 0;
+  margin-top: 4px;
+}
+
+.hint-text-bottom {
+  width: auto;
+  height: 15px;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 15px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #767B82;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
 }
 </style>
