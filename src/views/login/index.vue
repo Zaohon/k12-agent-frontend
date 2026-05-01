@@ -147,6 +147,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authApi } from '../../api/api'
+import { useUserStore } from '../../store/user'
 
 export default {
   name: 'LoginModal',
@@ -159,6 +160,7 @@ export default {
   emits: ['close', 'login'],
   setup(props, { emit }) {
     const router = useRouter()
+    const userStore = useUserStore()
     const loading = ref(false)
     const countdown = ref(0)
     const loginType = ref(0)
@@ -215,8 +217,9 @@ export default {
       loading.value = true
       try {
         const result = await authApi.login(loginForm.phone, loginForm.code)
-        
+
         if (result.success) {
+          userStore.setLoginData(result.data)
           ElMessage.success('登录成功！')
           router.push('/workspace')
           emit('close')

@@ -16,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/workspace',
     name: 'Workspace',
     component: () => import('@/views/workspace/index.vue'),
-    redirect: '/workspace/square',
+    redirect: '/workspace/chat',
     children: [
       {
         path: 'square',
@@ -82,14 +82,14 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
- const token = localStorage.getItem('k12_token');
- if (to.path !== '/login' && to.path !== '/' && !token) {
-   next('/login');
- } else if (to.path === '/login' && token) {
-   next('/workspace');
- } else {
-   next();
- }
+  const token = localStorage.getItem('k12_token');
+  if (to.path !== '/login' && to.path !== '/' && !token) {
+    next('/login');
+  } else if (to.path === '/login' && token) {
+    next('/workspace');
+  } else {
+    next();
+  }
 });
 
 export default router
