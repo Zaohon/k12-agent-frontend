@@ -71,6 +71,12 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Profile',
         component: () => import('@/views/workspace/Profile.vue'),
         meta: { title: '个人中心' }
+      },
+      {
+        path: 'model-config',
+        name: 'ModelConfig',
+        component: () => import('@/views/workspace/ModelConfig.vue'),
+        meta: { title: '模型与接口配置' }
       }
     ]
   }
