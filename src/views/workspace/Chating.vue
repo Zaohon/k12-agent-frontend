@@ -35,7 +35,7 @@
     </header>-->
 
     <!-- 消息区域 -->
-    <div class="chat-message-wrap" ref="msgContainer">
+    <div class="chat-message-wrap" ref="msgContainer" :style="{ paddingBottom: dynamicPaddingBottom + 'px' }">
       <!-- 测试数据按钮 -->
       <!--<div v-if="!useTestData && messages.length === 0" style="position: absolute; top: 10px; right: 10px; z-index: 100;">
         <el-button type="primary" size="small" @click="loadTestData">加载200条测试对话</el-button>
@@ -64,12 +64,15 @@
             <el-icon class="icon" v-else><Monitor /></el-icon>
           </div>
           <div class="chat-bubble" :class="msg.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
-            <pre class="message-content">{{ msg.content }}</pre>
+            <div v-if="msg.isThinking" class="thinking-card">
+              <span class="thinking-text">正在思考中...</span>
+            </div>
+            <pre v-else class="message-content">{{ msg.content }}</pre>
           </div>
         </div>
       </div>
 
-      <div v-if="isStreaming" class="streaming-box">
+      <div v-if="isStreaming && messages.length === 0" class="streaming-box">
         <div class="stream-avatar">
           <el-icon><Monitor /></el-icon>
         </div>
@@ -78,30 +81,29 @@
     </div>
 
     <!-- 底部输入 -->
-    <footer class="chat-input-footer">
+    <footer class="chat-input-footer" ref="footerRef">
       <div class="box-wrap" :class="{ focused: isFocused }">
         <div class="textarea-wrap">
           <div class="flex-col" style="width: 100%;">
+            <!-- 文字输入区 -->
+            <textarea
+              v-model="inputVal"
+              ref="textareaRef"
+              placeholder="输入您的问题或指令，按 Enter 发送。"
+              class="chat-textarea-native"
+              @focus="() => { isFocused = true }"
+              @blur="() => { isFocused = false }"
+              @keydown.enter.prevent="handleSend"
+            />
+
             <!-- 附件卡片显示 -->
             <div v-if="attachments.length > 0" class="attachments-wrapper">
               <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
                 <span class="attachment-icon">{{ getAttachmentIcon(item.type) }}</span>
                 <span class="attachment-name">{{ item.name || '附件' }}</span>
-                <span class="attachment-remove" @click="removeAttachment(index)">×</span>
+                <span class="attachment-remove" @click="handleRemoveAttachment(index)">×</span>
               </div>
             </div>
-
-            <!-- 文字输入区 -->
-            <el-input
-              v-model="inputVal"
-              type="textarea"
-              :rows="2"
-              placeholder="输入您的问题或指令，按 Enter 发送。"
-              class="chat-textarea"
-              @focus="isFocused = true"
-              @blur="isFocused = false"
-              @keydown.enter.prevent="handleSend"
-            />
           </div>
         </div>
 
@@ -185,7 +187,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted, nextTick } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
@@ -213,6 +215,8 @@ const props = defineProps({
 
 const emit = defineEmits(['sendMessage', 'refreshSessions'])
 
+const DEFAULT_PADDING = 140
+
 const inputVal = ref('')
 const messages = ref([])
 const isStreaming = ref(false)
@@ -220,123 +224,284 @@ const msgContainer = ref(null)
 const showUpdateTopicDialog = ref(false)
 const newTopic = ref('')
 const isFocused = ref(false)
-const useTestData = ref(false) // 测试数据开关
+const useTestData = ref(false)
+const textareaRef = ref(null)
+const footerRef = ref(null)
+const initialFooterHeight = ref(0)
+const dynamicPaddingBottom = ref(DEFAULT_PADDING)
+
+// 动态调整textarea高度
+const resetInputHeight = () => {
+  const textarea = textareaRef.value
+  if (textarea) {
+    textarea.style.height = '50px'
+  }
+  dynamicPaddingBottom.value = DEFAULT_PADDING
+}
+
+// 自动计算高度（文本 + 附件）
+const calcTextareaHeight = async () => {
+  await nextTick()
+  const textarea = textareaRef.value
+  const footerEl = footerRef.value
+  if (!textarea || !footerEl) return
+
+  // 空内容 → 恢复默认
+  if (!inputVal.value.trim() && attachments.value.length === 0) {
+    resetInputHeight()
+    await nextTick()
+    scrollToBottom()
+    return
+  }
+
+  textarea.style.height = 'auto'
+  const sh = textarea.scrollHeight
+  const finalTextareaHeight = Math.max(50, Math.min(sh, 200))
+  textarea.style.height = finalTextareaHeight + 'px'
+
+  await nextTick()
+
+  const currentHeight = footerEl.offsetHeight
+  const growth = currentHeight - initialFooterHeight.value
+  dynamicPaddingBottom.value = DEFAULT_PADDING + growth
+
+  await nextTick()
+  if (msgContainer.value) {
+    msgContainer.value.scrollTop = msgContainer.value.scrollHeight
+  }
+}
 
 const { attachments, isRecording, uploadImage, uploadAudioFile, uploadFile, startRecording, stopRecording, removeAttachment, getAttachmentIcon } = useAttachment()
 
 const handleFileUpload = () => {
   uploadFile()
+  nextTick().then(() => calcTextareaHeight())
 }
 
 const handleAudioCommand = (command) => {
   if (command === 'record') {
-    if (isRecording.value) {
-      stopRecording()
-    } else {
-      startRecording()
-    }
+    isRecording.value ? stopRecording() : startRecording()
   } else if (command === 'upload') {
     uploadAudioFile()
+    nextTick().then(() => calcTextareaHeight())
   }
 }
 
 const handleImageClick = () => {
   uploadImage()
+  nextTick().then(() => calcTextareaHeight())
 }
 
+const handleRemoveAttachment = (index) => {
+  removeAttachment(index)
+  nextTick().then(() => calcTextareaHeight())
+}
+
+
 // 计算显示的消息
-const showMessages = computed(() => {
-  return messages.value || []
-})
+const showMessages = computed(() => messages.value || [])
 
 // 加载会话历史
 const loadSessionHistory = async () => {
-  if (props.activeSession?.id) {
-    try {
-      const data = await sessionApi.getSessionHistory(props.activeSession.id)
-      if (data.success) {
-        messages.value = data.data || []
-      } else {
-        ElMessage.error('加载会话历史失败')
-      }
-    } catch (error) {
-      console.error('加载会话历史失败:', error)
-    }
-  }
+  if (!props.activeSession?.id) return
+  const { data } = await sessionApi.getSessionHistory(props.activeSession.id)
+  messages.value = data || []
+  nextTick(scrollToBottom)
 }
 
 // 发送消息
 const handleSend = async () => {
+  console.log('handleSend called')
+  console.log('inputVal:', inputVal.value)
+  console.log('activeSession:', props.activeSession)
+  
   if (!inputVal.value.trim() || !props.activeSession?.id) return
   
   const content = inputVal.value.trim()
   inputVal.value = ''
-  
-  // 添加用户消息
-  messages.value.push({
-    role: 'user',
-    content
-  })
-  
-  // 滚动到底部
+
+  resetInputHeight()
+  await nextTick()
+
+  // 1. 先 push 用户消息
+  messages.value.push({ role: 'user', content })
   await nextTick()
   scrollToBottom()
-  
+
+  // 2. 创建一个空的 AI 消息（用于写入）
+  const aiMsg = { role: 'assistant', content: '', isThinking: true }
+  messages.value.push(aiMsg)
   isStreaming.value = true
+  await nextTick()
+  scrollToBottom() // 发送后立即滚动到底部，确保"思考中"状态可见
 
   try {
+    console.log('Calling sessionApi.sendMessage...')
     const response = await sessionApi.sendMessage(props.activeSession.id, content)
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let assistantContent = ''
-
-    // 流式接收数据
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const dataStr = line.substring(6).trim()
-          if (dataStr === '[DONE]') break
-
-          try {
-            const data = JSON.parse(dataStr)
-            if (data.choices && data.choices[0]?.delta?.content) {
-              assistantContent += data.choices[0].delta.content
-            }
-          } catch (e) {
-            console.error('解析SSE数据失败:', e)
-          }
+    console.log('Response received:', response)
+    
+    const contentType = response.headers.get('content-type') || ''
+    console.log('Content-Type:', contentType)
+    
+    if (contentType.includes('application/json')) {
+      // 普通 JSON 响应
+      const result = await response.json()
+      console.log('JSON response:', result)
+      console.log('result.success:', result.success)
+      console.log('result.code:', result.code)
+      console.log('result.result:', result.result)
+      console.log('result.content:', result.content)
+      
+      if (result.success && result.data) {
+        console.log('Case 1: success + data')
+        aiMsg.content = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
+      } else if (result.content) {
+        console.log('Case 2: content')
+        aiMsg.content = result.content
+      } else if (result.code === 'success' && result.result) {
+        console.log('Case 3: code=success + result')
+        // 后端实际返回的格式
+        if (result.result.content) {
+          console.log('Case 3a: result.content exists')
+          aiMsg.content = result.result.content
+        } else if (result.result.id && !result.result.content) {
+          console.log('Case 3b: only result.id, no content')
+          // 只有任务ID，没有内容
+          aiMsg.content = '抱歉，服务器未返回消息内容，请稍后重试。'
+        } else {
+          console.log('Case 3c: other result')
+          aiMsg.content = JSON.stringify(result.result)
         }
+      } else {
+        console.log('Case 4: fallback')
+        aiMsg.content = JSON.stringify(result)
       }
+      console.log('Final aiMsg.content:', aiMsg.content)
+    } else if (contentType.includes('text/event-stream')) {
+      // SSE 流式响应（根据 API 文档格式）
+      console.log('Processing SSE stream...')
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let receivedContent = false
+      
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (value) {
+          buffer += decoder.decode(value, { stream: true })
+        }
+        
+        if (done) {
+          // 流结束时处理剩余数据
+          if (buffer.trim()) {
+            console.log('Final buffer:', buffer)
+            
+            // 检查是否是错误格式
+            try {
+              const parsed = JSON.parse(buffer)
+              if (parsed.error) {
+                // 后端返回错误
+                aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+              } else {
+                // 尝试处理为普通内容
+                processSSEBuffer(buffer, aiMsg)
+              }
+            } catch (e) {
+              // 不是JSON，直接显示
+              aiMsg.content = buffer
+            }
+          }
+          break
+        }
+        
+        // 处理完整的行
+        const lines = buffer.split('\n')
+        for (let i = 0; i < lines.length - 1; i++) {
+          const line = lines[i].trim()
+          if (!line) continue
+          
+          // 检查是否是错误格式（直接返回JSON错误）
+          if (line.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(line)
+              if (parsed.error) {
+                aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+                receivedContent = true
+                reader.releaseLock()
+                return
+              }
+            } catch (e) {}
+          }
+          
+          processSSELine(lines[i], aiMsg)
+        }
+        buffer = lines[lines.length - 1]
+      }
+      
+      // 如果没有收到任何内容，显示错误提示
+      if (!receivedContent && !aiMsg.content) {
+        aiMsg.content = '抱歉，服务器没有返回有效内容，请稍后重试。'
+      }
+    } else {
+      // 其他格式
+      const text = await response.text()
+      console.log('Text response:', text)
+      aiMsg.content = text
     }
-
-    // 添加助手消息
-    messages.value.push({
-      role: 'assistant',
-      content: assistantContent
-    })
-
-    // 流结束后刷新会话列表（更新标题），符合API文档推荐的调用顺序
-    emit('refreshSessions')
   } catch (error) {
-    console.error('发送消息失败:', error)
+    console.error('Send message error:', error)
+    aiMsg.content = '抱歉，服务器暂时无法响应，请稍后重试。'
   } finally {
+    aiMsg.isThinking = false
     isStreaming.value = false
+    await nextTick()
     scrollToBottom()
+  }
+}
+
+// 处理 SSE 行数据
+const processSSELine = (line, aiMsg) => {
+  const trimmedLine = line.trim()
+  if (!trimmedLine) return
+  
+  if (trimmedLine.startsWith('data: ')) {
+    const dataStr = trimmedLine.substring(6).trim()
+    
+    if (dataStr === '[DONE]') {
+      return
+    }
+    
+    try {
+      const data = JSON.parse(dataStr)
+      console.log('Received data:', data)
+      
+      // 根据 API 文档格式: {"choices":[{"delta":{"content":"..."}}]}
+      const delta = data.choices?.[0]?.delta?.content || data.content || ''
+      console.log('Delta:', delta)
+      
+      if (delta) {
+        aiMsg.content += delta
+        nextTick().then(() => scrollToBottom())
+      }
+    } catch (e) {
+      console.error('Parse error:', e, 'Data:', dataStr)
+    }
+  }
+}
+
+// 处理 SSE 缓冲区
+const processSSEBuffer = (buffer, aiMsg) => {
+  const lines = buffer.split('\n')
+  for (const line of lines) {
+    processSSELine(line, aiMsg)
   }
 }
 
 // 滚动到底部
 const scrollToBottom = () => {
-  if (msgContainer.value) {
-    msgContainer.value.scrollTop = msgContainer.value.scrollHeight
-  }
+  const el = msgContainer.value
+  if (el) el.scrollTop = el.scrollHeight
 }
 
 // 修改会话标题
@@ -395,33 +560,34 @@ const loadTestData = () => {
 }
 
 // 监听会话变化
-watch(() => props.activeSession, (newSession) => {
-  if (newSession?.id) {
-    loadSessionHistory()
-  } else {
-    messages.value = []
-  }
-}, { immediate: true })
-
-// 组件挂载时加载历史消息
-onMounted(() => {
-  if (props.activeSession?.id) {
-    loadSessionHistory()
-  }
-})
+watch(() => props.activeSession, () => loadSessionHistory(), { immediate: true })
 
 // 监听智能体变化
-watch(() => props.agentId, (newAgentId) => {
-  if (newAgentId) {
+watch(() => props.agentId, (newAgentId, oldAgentId) => {
+  if (newAgentId && newAgentId !== oldAgentId) {
     messages.value = []
   }
 })
 
-// 组件挂载时加载历史消息
+// 监听输入框内容变化 → 调整高度
+watch(inputVal, () => {
+  calcTextareaHeight()
+})
+
+// 监听附件变化 → 调整高度
+watch(attachments, () => {
+  calcTextareaHeight()
+}, { deep: true })
+
+// 初始化
 onMounted(() => {
-  if (props.activeSession?.id) {
-    loadSessionHistory()
+  loadSessionHistory()
+
+  if (footerRef.value) {
+    initialFooterHeight.value = footerRef.value.offsetHeight
   }
+
+  resetInputHeight()
 })
 </script>
 
@@ -497,7 +663,7 @@ onMounted(() => {
 .chat-message-wrap {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 32px 40px 32px;
+  padding: 16px 32px 180px 32px;
   scroll-behavior: smooth;
   box-sizing: border-box;
   min-height: 0;
@@ -679,6 +845,20 @@ onMounted(() => {
   50% { opacity: 0.6; }
 }
 
+.thinking-card {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(91, 107, 241, 0.08);
+  border-radius: 8px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.thinking-text {
+  font-size: 14px;
+  color: #5B6BF1;
+}
+
 /* 底部输入 */
 .chat-input-footer {
   padding: 0 48px 80px 48px;
@@ -694,6 +874,7 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
+  max-width: calc(100% - 20px);
 }
 
 .prompt-tags {
@@ -723,7 +904,7 @@ onMounted(() => {
   flex-direction: column;
   position: relative;
   width: 896px;
-  height: 122px;
+  height: auto;
   background: #FFFFFF;
   border: 1px solid #DEE3EA;
   box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.04);
@@ -738,27 +919,21 @@ onMounted(() => {
 
 .textarea-wrap {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 16px 16px 84px;
-  width: 894px;
-  height: 120px;
-  min-height: 120px;
-  flex: none;
-  order: 0;
-  align-self: stretch;
-  flex-grow: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 16px 16px 60px;
+  width: 100%;
   z-index: 0;
+  box-sizing: border-box;
 }
 
 .flex-col {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   padding: 0;
-  flex: none;
-  flex-grow: 1;
+  width: 100%;
 }
 
 .flex-row {
@@ -1050,23 +1225,69 @@ onMounted(() => {
 .chat-textarea {
   flex: 1;
   width: 100%;
+  min-height: 50px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-textarea :deep(.el-textarea) {
+  flex: 1;
+  width: 100%;
+  min-height: 50px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-textarea :deep(.el-textarea__wrapper) {
+  flex: 1;
+  width: 100%;
+  min-height: 50px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .chat-textarea :deep(.el-textarea__inner) {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  font-size: 14px;
-  color: #2E3339;
-  padding: 0;
-  min-height: 50px;
-  max-height: 120px;
-  overflow-y: auto;
-  line-height: 20px;
-  resize: none;
+  font-size: 14px !important;
+  color: #2E3339 !important;
+  padding: 0 !important;
+  min-height: 50px !important;
+  max-height: 480px !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  line-height: 20px !important;
+  resize: none !important;
+  flex: 1 !important;
+  box-sizing: border-box !important;
 }
 
 .chat-textarea :deep(.el-textarea__inner)::placeholder {
+  color: #767B82;
+}
+
+.chat-textarea-native {
+  width: 100%;
+  min-height: 50px;
+  font-size: 14px;
+  color: #2E3339;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  resize: none;
+  overflow: auto;
+  line-height: 20px;
+  box-sizing: border-box;
+}
+
+.chat-textarea-native::placeholder {
   color: #767B82;
 }
 
