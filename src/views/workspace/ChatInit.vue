@@ -177,17 +177,21 @@ const handleEnter = (e) => {
 
 const handleSend = async () => {
   const content = getTextareaContent()
-  if (!content) {
-    ElMessage.warning('请输入内容')
+  if (!content && attachments.value.length === 0) {
+    ElMessage.warning('请输入内容或上传附件')
     return
   }
 
   isLoading.value = true
   
   try {
-    // 通知父组件创建会话并发送消息
-    emit('sendMessage', content)
+    // 保存附件副本
+    const currentAttachments = [...attachments.value]
+    // 通知父组件创建会话并发送消息（包含内容和附件）
+    emit('sendMessage', { content, attachments: currentAttachments })
     clearTextarea()
+    // 清空附件
+    clearAttachments()
   } catch (error) {
     console.error('发送消息失败:', error)
     ElMessage.error('发送失败，请稍后重试')

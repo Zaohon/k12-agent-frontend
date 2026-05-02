@@ -250,8 +250,43 @@ const handleSend = async () => {
   }, 800)
 }
 
-// 处理 ChatInit 发送消息
-const handleChatInitSend = async (content) => {
+// 处理 SSE 行数据
+const processSSELine = (line, aiMsg) => {
+  const trimmedLine = line.trim()
+  if (!trimmedLine) return
+  
+  if (trimmedLine.startsWith('data: ')) {
+    const dataStr = trimmedLine.substring(6).trim()
+    
+    if (dataStr === '[DONE]') {
+      return
+    }
+    
+    try {
+      const data = JSON.parse(dataStr)
+      
+      // 根据 API 文档格式: {"choices":[{"delta":{"content":"..."}}]}
+      const delta = data.choices?.[0]?.delta?.content || data.content || ''
+      
+      if (delta) {
+        aiMsg.content += delta
+      }
+    } catch (e) {
+      console.error('Parse error:', e, 'Data:', dataStr)
+    }
+  }
+}
+
+// 处理 SSE 缓冲区
+const processSSEBuffer = (buffer, aiMsg) => {
+  const lines = buffer.split('\n')
+  for (const line of lines) {
+    processSSELine(line, aiMsg)
+  }
+}
+
+// 处理 ChatInit 发送消息（与 Chating 发送逻辑一致）
+const handleChatInitSend = async ({ content, attachments }) => {
   try {
     // 1. 新建会话
     const sessionResult = await sessionApi.createSession()
@@ -262,18 +297,133 @@ const handleChatInitSend = async (content) => {
 
     const sessionId = sessionResult.data.id
 
-    // 2. 加载会话列表并切换到新会话
+    // 2. 添加用户消息到 messages（包含附件信息）
+    messages.value.push({ role: 'user', content, attachments })
+
+    // 3. 创建一个空的 AI 消息（用于显示"思考中"状态）
+    const aiMsg = { role: 'assistant', content: '', isThinking: true }
+    messages.value.push(aiMsg)
+    isStreaming.value = true
+
+    // 4. 加载会话列表并切换到新会话
     await loadSessions()
     activeSessionId.value = sessionId
-    messages.value = []
 
-    // 3. 发送消息
-    const response = await sessionApi.sendMessage(sessionId, content)
+    // 5. 等待 Chating 组件渲染
+    await nextTick()
 
-    // 4. 刷新会话列表以更新标题
+    try {
+      // 6. 调用 API 发送消息
+      const response = await sessionApi.sendMessage(sessionId, content, attachments)
+      
+      const contentType = response.headers.get('content-type') || ''
+      
+      if (contentType.includes('application/json')) {
+        // 普通 JSON 响应
+        const result = await response.json()
+        
+        if (result.success && result.data) {
+          aiMsg.content = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
+        } else if (result.content) {
+          aiMsg.content = result.content
+        } else if (result.code === 'success' && result.result) {
+          // 后端实际返回的格式
+          if (result.result.content) {
+            aiMsg.content = result.result.content
+          } else if (result.result.id && !result.result.content) {
+            // 只有任务ID，没有内容
+            aiMsg.content = '抱歉，服务器未返回消息内容，请稍后重试。'
+          } else {
+            aiMsg.content = JSON.stringify(result.result)
+          }
+        } else {
+          aiMsg.content = JSON.stringify(result)
+        }
+      } else if (contentType.includes('text/event-stream')) {
+        // SSE 流式响应（根据 API 文档格式）
+        console.log('Processing SSE stream...')
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let receivedContent = false
+        
+        while (true) {
+          const { done, value } = await reader.read()
+          
+          if (value) {
+            buffer += decoder.decode(value, { stream: true })
+          }
+          
+          if (done) {
+            // 流结束时处理剩余数据
+            if (buffer.trim()) {
+              // 检查是否是错误格式
+              try {
+                const parsed = JSON.parse(buffer)
+                if (parsed.error) {
+                  // 后端返回错误
+                  aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+                } else {
+                  // 尝试处理为普通内容
+                  processSSEBuffer(buffer, aiMsg)
+                }
+              } catch (e) {
+                // 不是JSON，直接显示
+                aiMsg.content = buffer
+              }
+            }
+            break
+          }
+          
+          // 处理完整的行
+          const lines = buffer.split('\n')
+          for (let i = 0; i < lines.length - 1; i++) {
+            const line = lines[i].trim()
+            if (!line) continue
+            
+            // 检查是否是错误格式（直接返回JSON错误）
+            if (line.startsWith('{')) {
+              try {
+                const parsed = JSON.parse(line)
+                if (parsed.error) {
+                  aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+                  receivedContent = true
+                  reader.releaseLock()
+                  return
+                }
+              } catch (e) {}
+            }
+            
+            processSSELine(lines[i], aiMsg)
+          }
+          buffer = lines[lines.length - 1]
+        }
+        
+        // 如果没有收到任何内容，显示错误提示
+        if (!receivedContent && !aiMsg.content) {
+          aiMsg.content = '抱歉，服务器没有返回有效内容，请稍后重试。'
+        }
+      } else {
+        // 其他格式
+        const text = await response.text()
+        aiMsg.content = text
+      }
+      
+      aiMsg.isThinking = false
+      isStreaming.value = false
+    } catch (apiError) {
+      console.error('API 调用失败:', apiError)
+      aiMsg.content = '抱歉，服务器暂时无法响应，请稍后重试。'
+      aiMsg.isThinking = false
+      isStreaming.value = false
+      ElMessage.error('消息发送失败')
+    }
+
+    // 7. 刷新会话列表以更新标题
     await loadSessions()
   } catch (error) {
     console.error('发送消息失败:', error)
+    isStreaming.value = false
     ElMessage.error('发送失败，请稍后重试')
   }
 }

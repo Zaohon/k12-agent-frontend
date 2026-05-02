@@ -140,7 +140,7 @@ export const sessionApi = {
     return request(`/session/history/${sessionId}`);
   },
 
-  sendMessage: async (sessionId, prompt) => {
+  sendMessage: async (sessionId, prompt, attachments = []) => {
     const token = getToken();
 
     try {
@@ -150,7 +150,10 @@ export const sessionApi = {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ 
+          prompt,
+          attachments
+        })
       });
 
       if (response.ok) {

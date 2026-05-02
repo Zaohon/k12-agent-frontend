@@ -63,11 +63,37 @@
             <el-icon class="icon" v-if="msg.role === 'user'"><User /></el-icon>
             <el-icon class="icon" v-else><Monitor /></el-icon>
           </div>
-          <div class="chat-bubble" :class="msg.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
-            <div v-if="msg.isThinking" class="thinking-card">
-              <span class="thinking-text">正在思考中...</span>
+          <div class="chat-bubble-wrapper" :class="msg.role === 'user' ? 'align-end' : 'align-start'">
+            <div class="chat-bubble" :class="msg.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
+              <div v-if="msg.isThinking" class="thinking-card">
+                <span class="thinking-text">正在思考中...</span>
+              </div>
+              <pre v-else class="message-content">{{ msg.content }}</pre>
             </div>
-            <pre v-else class="message-content">{{ msg.content }}</pre>
+            <!-- 用户消息显示附件卡片 -->
+            <div v-if="msg.role === 'user' && msg.attachments && msg.attachments.length > 0" class="message-attachments">
+              <div v-for="(item, index) in msg.attachments" :key="index" class="message-attachment-card">
+                <div class="attachment-card-background">
+                  <div class="attachment-card-icon-container">
+                    <span class="attachment-card-icon">{{ getAttachmentIcon(item.type) }}</span>
+                  </div>
+                </div>
+                <div class="attachment-card-content">
+                  <div class="attachment-card-name-row">
+                    <span class="attachment-card-name">{{ item.name || '附件' }}</span>
+                  </div>
+                  <div class="attachment-card-info-row">
+                    <div class="attachment-card-size-container">
+                      <span class="attachment-card-size">{{ formatFileSize(item.size) }}</span>
+                    </div>
+                    <div class="attachment-card-dot"></div>
+                    <div class="attachment-card-status-container">
+                      <span class="attachment-card-status">解析完成</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -191,7 +217,7 @@ import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
-import { useAttachment } from '@/hooks/useAttachment'
+import { useAttachment, formatFileSize } from '@/hooks/useAttachment'
 import { largeChatData } from '@/mock/large-chat-data'
 
 const props = defineProps({
@@ -210,6 +236,14 @@ const props = defineProps({
   commonPrompts: {
     type: Array,
     default: () => []
+  },
+  messages: {
+    type: Array,
+    default: () => []
+  },
+  isStreaming: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -297,13 +331,22 @@ const handleRemoveAttachment = (index) => {
   nextTick().then(() => calcTextareaHeight())
 }
 
-
-// 计算显示的消息
-const showMessages = computed(() => messages.value || [])
+// 计算显示的消息（使用内部消息列表）
+const showMessages = computed(() => {
+  return messages.value || []
+})
 
 // 加载会话历史
 const loadSessionHistory = async () => {
   if (!props.activeSession?.id) return
+  
+  // 如果外部传入了消息且有内容（来自 ChatInit），合并到内部消息列表
+  if (props.messages && props.messages.length > 0) {
+    messages.value = [...props.messages]
+    nextTick(scrollToBottom)
+    return
+  }
+  
   const { data } = await sessionApi.getSessionHistory(props.activeSession.id)
   messages.value = data || []
   nextTick(scrollToBottom)
@@ -315,16 +358,21 @@ const handleSend = async () => {
   console.log('inputVal:', inputVal.value)
   console.log('activeSession:', props.activeSession)
   
-  if (!inputVal.value.trim() || !props.activeSession?.id) return
+  if (!inputVal.value.trim() && attachments.value.length === 0) return
+  if (!props.activeSession?.id) return
   
   const content = inputVal.value.trim()
   inputVal.value = ''
+  
+  // 保存附件副本，然后清空附件
+  const currentAttachments = [...attachments.value]
+  attachments.value = []
 
   resetInputHeight()
   await nextTick()
 
-  // 1. 先 push 用户消息
-  messages.value.push({ role: 'user', content })
+  // 1. 先 push 用户消息（包含附件信息）
+  messages.value.push({ role: 'user', content, attachments: currentAttachments })
   await nextTick()
   scrollToBottom()
 
@@ -561,6 +609,15 @@ const loadTestData = () => {
 
 // 监听会话变化
 watch(() => props.activeSession, () => loadSessionHistory(), { immediate: true })
+
+// 监听外部传入的消息变化（来自 ChatInit）
+watch(() => props.messages, (newMessages) => {
+  // 只在内部消息为空且有外部消息时才合并
+  if (newMessages && newMessages.length > 0 && messages.value.length === 0) {
+    messages.value = [...newMessages]
+    nextTick(scrollToBottom)
+  }
+}, { immediate: true })
 
 // 监听智能体变化
 watch(() => props.agentId, (newAgentId, oldAgentId) => {
@@ -1324,6 +1381,218 @@ onMounted(() => {
   align-items: center;
   text-align: center;
   color: #767B82;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+/* 消息气泡包装器 */
+.chat-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.chat-bubble-wrapper.align-end {
+  align-items: flex-end;
+}
+
+/* 消息附件区域 */
+.message-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 消息附件卡片 */
+.message-attachment-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px;
+  gap: 12px;
+  width: 256px;
+  background: #F2F4F8;
+  border: 1px solid #E4E8EF;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+}
+
+/* 附件卡片左侧背景 */
+.attachment-card-background {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0px;
+  width: 40px;
+  height: 40px;
+  background: #DBEAFE;
+  border-radius: 8px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+/* 附件卡片图标容器 */
+.attachment-card-icon-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
+  width: 16px;
+  height: 20px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+/* 附件卡片图标 */
+.attachment-card-icon {
+  width: 16px;
+  height: 20px;
+  background: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+/* 附件卡片内容 */
+.attachment-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
+  gap: 2px;
+  width: 178px;
+  height: 41px;
+  flex: none;
+  order: 1;
+  flex-grow: 1;
+}
+
+/* 附件卡片名称行 */
+.attachment-card-name-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
+  width: 178px;
+  height: 20px;
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
+}
+
+/* 附件卡片名称 */
+.attachment-card-name {
+  width: 178px;
+  height: 20px;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: #2E3339;
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
+}
+
+/* 附件卡片信息行 */
+.attachment-card-info-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px;
+  gap: 8px;
+  width: 178px;
+  height: 19px;
+  flex: none;
+  order: 1;
+  align-self: stretch;
+  flex-grow: 0;
+}
+
+/* 附件卡片大小容器 */
+.attachment-card-size-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
+  width: 35px;
+  height: 16px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+/* 附件卡片大小 */
+.attachment-card-size {
+  width: 35px;
+  height: 16px;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  color: #767B82;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+/* 附件卡片分隔点 */
+.attachment-card-dot {
+  width: 4px;
+  height: 4px;
+  background: #DEE3EA;
+  border-radius: 9999px;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+}
+
+/* 附件卡片状态容器 */
+.attachment-card-status-container {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 2px 6px;
+  width: 52px;
+  height: 19px;
+  background: #E7EAFF;
+  border: 1px solid #D9DDFF;
+  border-radius: 4px;
+  flex: none;
+  order: 2;
+  flex-grow: 0;
+}
+
+/* 附件卡片状态 */
+.attachment-card-status {
+  width: 40px;
+  height: 15px;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 15px;
+  display: flex;
+  align-items: center;
+  color: #314DE2;
   flex: none;
   order: 0;
   flex-grow: 0;

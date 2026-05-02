@@ -12,6 +12,7 @@ export interface AttachmentItem {
   type: 'link' | 'video' | 'image' | 'audio'
   url: string
   name?: string
+  size?: number // 文件大小（字节）
 }
 
 /**
@@ -23,6 +24,19 @@ let mediaRecorder: MediaRecorder | null = null
  * 音频数据块数组
  */
 let audioChunks: Blob[] = []
+
+/**
+ * 格式化文件大小
+ * @param bytes - 文件大小（字节）
+ * @returns 格式化后的文件大小字符串（如 1.2MB）
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0 || !bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
 
 /**
  * 根据附件类型获取图标
@@ -86,7 +100,8 @@ export function useAttachment() {
         addAttachment({
           type,
           url: result,
-          name: file.name
+          name: file.name,
+          size: file.size
         })
       }
       reader.readAsDataURL(file)
@@ -152,7 +167,8 @@ export function useAttachment() {
           addAttachment({
             type: 'link',
             url: result,
-            name: file.name
+            name: file.name,
+            size: file.size
           })
         }
         reader.readAsDataURL(file)
@@ -199,7 +215,8 @@ export function useAttachment() {
           addAttachment({
             type: 'audio',
             url: result,
-            name: `录音_${new Date().toLocaleString()}.mp3`
+            name: `录音_${new Date().toLocaleString()}.mp3`,
+            size: audioBlob.size
           })
         }
         reader.readAsDataURL(audioBlob)
@@ -282,6 +299,7 @@ export function useAttachment() {
     removeAttachment,
     clearAttachments,
     getAttachmentSummary,
-    getAttachmentIcon
+    getAttachmentIcon,
+    formatFileSize
   }
 }
