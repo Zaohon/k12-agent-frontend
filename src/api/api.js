@@ -1,9 +1,11 @@
 import { ElMessage } from 'element-plus';
+import { translateAIError } from '../utils/error';
 
 const API_BASE = 'http://localhost:3000';
 
 const getToken = () => {
-  return localStorage.getItem('k12_token');
+  const token = localStorage.getItem('k12_token');
+  return token ? token.trim() : null;
 };
 
 const request = async (url, options = {}) => {
@@ -101,18 +103,14 @@ export const agentApi = {
   },
 
   updateAgent: async (agentId, agentData) => {
-    return request(`/agent/update/${agentId}`, {
+    return request('/agent/update/${agentId}', {
       method: 'POST',
       body: JSON.stringify(agentData)
     });
   },
 
   deleteAgent: async (agentId) => {
-    //暂时不实现删除功能
     ElMessage.warning('删除功能暂未实现')
-    // return request(`/agent/${agentId}`, {
-    //   method: 'DELETE'
-    // });
   },
 
   getDiscoverAgents: async (categoryId) => {
@@ -142,8 +140,21 @@ export const sessionApi = {
 
   sendMessage: async (sessionId, prompt, attachments = []) => {
     const token = getToken();
+    
+    console.log('=== sendMessage Debug ===');
+    console.log('Token from localStorage:', token);
+    console.log('Token length:', token ? token.length : 0);
+    console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'null');
+    
+    if (!token) {
+      ElMessage.error('未登录或登录已过期，请重新登录');
+      throw new Error('Token is null');
+    }
 
     try {
+      console.log('Sending request to:', `${API_BASE}/session/chat/${sessionId}`);
+      console.log('Authorization header:', `Bearer ${token}`);
+      
       const response = await fetch(`${API_BASE}/session/chat/${sessionId}`, {
         method: 'POST',
         headers: {
@@ -156,9 +167,35 @@ export const sessionApi = {
         })
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', [...response.headers.entries()]);
+
       if (response.ok) {
         return response;
       } else {
+        let errorText = '';
+        try {
+          errorText = await response.text();
+          console.log('Error response body:', errorText);
+          
+          try {
+            const errorJson = JSON.parse(errorText);
+            console.log('Parsed error JSON:', errorJson);
+            
+            if (errorJson.error && errorJson.error.code) {
+              console.error('AI API Error:', errorJson.error.code, errorJson.error.message);
+              ElMessage.error(translateAIError(errorJson.error.code, errorJson.error.message));
+            } else if (errorJson.code && errorJson.message) {
+              console.error('API Error:', errorJson.code, errorJson.message);
+              ElMessage.error(translateAIError(errorJson.code, errorJson.message));
+            }
+          } catch (parseError) {
+            console.log('Error response is not JSON:', errorText);
+          }
+        } catch (e) {
+          console.error('Failed to read error response:', e);
+        }
+        
         if (response.status === 401) {
           ElMessage.error('未授权，请重新登录');
         } else if (response.status === 404) {
@@ -168,7 +205,7 @@ export const sessionApi = {
         } else {
           ElMessage.error('发送消息失败');
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       }
     } catch (error) {
       ElMessage.error('网络错误，请检查后端服务是否启动');

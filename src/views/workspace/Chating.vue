@@ -217,6 +217,7 @@ import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
+import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
 import { useAttachment, formatFileSize } from '@/hooks/useAttachment'
 import { largeChatData } from '@/mock/large-chat-data'
 
@@ -394,7 +395,7 @@ const handleSend = async () => {
 
   try {
     console.log('Calling sessionApi.sendMessage...')
-    const response = await sessionApi.sendMessage(props.activeSession.id, content)
+    const response = await sessionApi.sendMessage(props.activeSession.id, content, currentAttachments)
     console.log('Response received:', response)
     
     const contentType = response.headers.get('content-type') || ''
@@ -514,44 +515,6 @@ const handleSend = async () => {
     isStreaming.value = false
     await nextTick()
     scrollToBottom()
-  }
-}
-
-// 处理 SSE 行数据
-const processSSELine = (line, aiMsg) => {
-  const trimmedLine = line.trim()
-  if (!trimmedLine) return
-  
-  if (trimmedLine.startsWith('data: ')) {
-    const dataStr = trimmedLine.substring(6).trim()
-    
-    if (dataStr === '[DONE]') {
-      return
-    }
-    
-    try {
-      const data = JSON.parse(dataStr)
-      console.log('Received data:', data)
-      
-      // 根据 API 文档格式: {"choices":[{"delta":{"content":"..."}}]}
-      const delta = data.choices?.[0]?.delta?.content || data.content || ''
-      console.log('Delta:', delta)
-      
-      if (delta) {
-        aiMsg.content += delta
-        nextTick().then(() => scrollToBottom())
-      }
-    } catch (e) {
-      console.error('Parse error:', e, 'Data:', dataStr)
-    }
-  }
-}
-
-// 处理 SSE 缓冲区
-const processSSEBuffer = (buffer, aiMsg) => {
-  const lines = buffer.split('\n')
-  for (const line of lines) {
-    processSSELine(line, aiMsg)
   }
 }
 

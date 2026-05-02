@@ -107,6 +107,7 @@ import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting, De
 import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
+import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
 import ChatInit from './ChatInit.vue'
 import Chating from './Chating.vue'
 
@@ -250,41 +251,6 @@ const handleSend = async () => {
   }, 800)
 }
 
-// 处理 SSE 行数据
-const processSSELine = (line, aiMsg) => {
-  const trimmedLine = line.trim()
-  if (!trimmedLine) return
-  
-  if (trimmedLine.startsWith('data: ')) {
-    const dataStr = trimmedLine.substring(6).trim()
-    
-    if (dataStr === '[DONE]') {
-      return
-    }
-    
-    try {
-      const data = JSON.parse(dataStr)
-      
-      // 根据 API 文档格式: {"choices":[{"delta":{"content":"..."}}]}
-      const delta = data.choices?.[0]?.delta?.content || data.content || ''
-      
-      if (delta) {
-        aiMsg.content += delta
-      }
-    } catch (e) {
-      console.error('Parse error:', e, 'Data:', dataStr)
-    }
-  }
-}
-
-// 处理 SSE 缓冲区
-const processSSEBuffer = (buffer, aiMsg) => {
-  const lines = buffer.split('\n')
-  for (const line of lines) {
-    processSSELine(line, aiMsg)
-  }
-}
-
 // 处理 ChatInit 发送消息（与 Chating 发送逻辑一致）
 const handleChatInitSend = async ({ content, attachments }) => {
   try {
@@ -314,7 +280,9 @@ const handleChatInitSend = async ({ content, attachments }) => {
 
     try {
       // 6. 调用 API 发送消息
+      console.log('ChatBox sending message:', { sessionId, content, attachments })
       const response = await sessionApi.sendMessage(sessionId, content, attachments)
+      console.log('ChatBox received response:', response)
       
       const contentType = response.headers.get('content-type') || ''
       
