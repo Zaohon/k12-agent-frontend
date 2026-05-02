@@ -251,6 +251,15 @@ const emit = defineEmits(['sendMessage', 'refreshSessions'])
 
 const DEFAULT_PADDING = 140
 
+// 监听会话切换，自动清除输入框
+watch(() => props.activeSession, (newSession, oldSession) => {
+  if (newSession?.id !== oldSession?.id) {
+    inputVal.value = ''
+    attachments.value = []
+    resetInputHeight()
+  }
+})
+
 const inputVal = ref('')
 const messages = ref([])
 const isStreaming = ref(false)
