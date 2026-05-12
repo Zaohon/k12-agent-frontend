@@ -98,4 +98,19 @@ router.beforeEach((to, from, next) => {
   }
 });
 
+router.onError((error) => {
+  const isNavigationDuplicated = error.message.includes('Avoided redundant navigation to native location');
+  if (!isNavigationDuplicated) {
+    console.error('路由错误:', error);
+  }
+});
+
+const handleUnauthorized = () => {
+  localStorage.removeItem('k12_token');
+  localStorage.removeItem('k12_user');
+  router.push('/');
+};
+
+window.addEventListener('unauthorized', handleUnauthorized);
+
 export default router

@@ -236,7 +236,35 @@ export default {
     }
 
     const handleLoginByPassword = async () => {
-      ElMessage.warning('密码登录功能暂未开放')
+      if (!loginForm.account) {
+        ElMessage.warning('请输入您的账号！')
+        return
+      }
+
+      if (!loginForm.password) {
+        ElMessage.warning('请输入您的密码！')
+        return
+      }
+
+      loading.value = true
+      try {
+        const result = await authApi.passwordLogin(loginForm.account, loginForm.password)
+
+        if (result.success) {
+          userStore.setLoginData(result.data)
+          ElMessage.success('登录成功！')
+          router.push('/workspace')
+          emit('close')
+          Object.assign(loginForm, { phone: '', code: '', account: '', password: '' })
+          countdown.value = 0
+        } else {
+          ElMessage.error(result.message || '登录失败，请检查信息')
+        }
+      } catch (error) {
+        ElMessage.error('无法连接到服务器，请确保后端服务和数据库已启动')
+      } finally {
+        loading.value = false
+      }
     }
 
     return {

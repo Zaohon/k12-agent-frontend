@@ -81,18 +81,16 @@
             <div class="max-w-full mx-auto space-y-6">
               <!-- 基本信息 -->
               <div class="space-y-4">
-                <div class="flex items-start gap-4">
-                  <div class="relative">
-                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#314DE2] to-[#6144D3] flex items-center justify-center shadow-lg">
-                      <el-icon class="w-10 h-10 text-white">
-                        <component :is="currentAgent.iconUrl || 'MagicStick'" />
-                      </el-icon>
+                <div class="flex items-start gap-6">
+                  <div class="relative flex-shrink-0">
+                    <div class="w-36 h-36 rounded-[44px] flex items-center justify-center shadow-lg overflow-hidden bg-transparent">
+                      <img :src="currentIconImage" class="w-full h-full" alt="agent icon">
                     </div>
-                    <button class="absolute -right-1 -bottom-1 w-6 h-6 bg-white rounded-full border border-[#E2E8F0] shadow flex items-center justify-center">
-                      <img src="@/images/icon-edit.png" class="w-3 h-3" alt="edit">
+                    <button @click="showIconPicker = true" class="absolute -right-2 -bottom-2 w-12 h-12 bg-[#1E293B] rounded-full border-[3px] border-[#FFFFFF] shadow flex items-center justify-center cursor-pointer">
+                      <img src="@/images/white-pen-edit.png" class="w-5 h-5" alt="edit">
                     </button>
                   </div>
-                  <div class="flex-1 space-y-4">
+                  <div class="flex-1 space-y-5">
                     <div>
                       <label class="block text-sm font-medium text-[#475569] mb-1.5">
                         <span class="text-[#EF4444]">*</span> 智能体名称
@@ -107,17 +105,11 @@
                       <label class="block text-sm font-medium text-[#475569] mb-1.5">
                         <span class="text-[#EF4444]">*</span> 分类选择
                       </label>
-                      <div class="relative">
-                        <select 
-                          v-model="currentAgent.categoryId"
-                          class="w-full px-3 py-2.5 pr-10 text-sm bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2] appearance-none"
-                          :class="{ 'text-[#6B7280]': !currentAgent.categoryId }"
-                        >
-                          <option value="" disabled style="color: #6B7280;">请选择分类</option>
-                          <option v-for="c in availableCategories" :key="c.id" :value="c.id" style="color: #1E293B;">{{ c.name }}</option>
-                        </select>
-                        <img src="@/images/arrow-grey.png" class="w-2 h-auto absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" alt="arrow">
-                      </div>
+                      <DropdownSelect 
+                        v-model="currentAgent.categoryId"
+                        :options="categoryOptions"
+                        direction="down"
+                      />
                     </div>
                   </div>
                 </div>
@@ -199,59 +191,19 @@
               <div class="grid grid-cols-2 gap-6">
                 <div>
                   <label class="block text-sm font-medium text-[#475569] mb-1.5">选择模型</label>
-                  <select 
+                  <DropdownSelect 
                     v-model="currentAgent.model"
-                    class="w-full px-3 py-2.5 text-sm bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2] appearance-none"
-                    style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364748B%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;"
-                  >
-                    <option value="deepseek-v4-flash">qwen3.6-plus</option>
-                    <option value="deepseek-v3">gpt-4o</option>
-                  </select>
+                    :options="modelOptions"
+                    direction="up"
+                  />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-[#475569] mb-1.5">访问权限</label>
-                  <div class="relative">
-                    <div 
-                      @click="showVisibilityMenu = !showVisibilityMenu"
-                      class="w-full px-3 py-2.5 pr-10 text-sm bg-white border border-[#E2E8F0] rounded-lg cursor-pointer flex items-center justify-between hover:border-[#CBD5E1] transition-colors"
-                    >
-                      <span class="flex items-center gap-4">
-                        <img :src="visibilityIcon" class="w-3 h-auto flex-shrink-0" :alt="currentAgent.visibility" style="margin-right: 8px;">
-                        <span class="text-left">{{ visibilityLabel }}</span>
-                      </span>
-                      <img src="@/images/arrow-grey.png" class="w-3 h-auto" alt="arrow">
-                    </div>
-                    <div 
-                      v-if="showVisibilityMenu"
-                      class="absolute left-0 right-0 mb-1 bg-white rounded-lg shadow-lg border border-[#E2E8F0] z-50"
-                      :style="{ bottom: '100%', top: 'auto' }"
-                      @mouseleave="showVisibilityMenu = false"
-                    >
-                      <div class="py-1">
-                        <div 
-                          @click="selectVisibility('PUBLIC')"
-                          class="flex items-center gap-4 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
-                        >
-                          <img src="@/images/earth.png" class="w-3 h-auto flex-shrink-0" alt="earth">
-                          <span class="text-sm text-[#1E293B]">公开·所有人可使用</span>
-                        </div>
-                        <div 
-                          @click="selectVisibility('ORG_VISIBLE')"
-                          class="flex items-center gap-4 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
-                        >
-                          <img src="@/images/humans.png" class="w-3 h-auto flex-shrink-0" alt="humans">
-                          <span class="text-sm text-[#1E293B]">组织·组织内可见</span>
-                        </div>
-                        <div 
-                          @click="selectVisibility('PRIVATE')"
-                          class="flex items-center gap-4 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
-                        >
-                          <img src="@/images/lock.png" class="w-3 h-auto flex-shrink-0" alt="lock">
-                          <span class="text-sm text-[#1E293B]">私有·仅自己可见</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <DropdownSelect 
+                    v-model="currentAgent.visibility"
+                    :options="visibilityOptions"
+                    direction="up"
+                  />
                 </div>
               </div>
             </div>
@@ -268,7 +220,7 @@
           </div>
           <div class="flex items-center gap-2">
             <button class="flex items-center gap-1 px-3 py-1.5 text-xs text-[#475569] hover:bg-white rounded-lg transition-colors">
-              <img src="@/images/arrow.png" class="w-3 h-3" alt="reset">
+              <img src="@/images/reload.png" class="w-3 h-3" alt="reset">
               重置会话
             </button>
             <button class="flex items-center gap-1 px-3 py-1.5 text-xs text-[#475569] hover:bg-white rounded-lg transition-colors">
@@ -281,10 +233,8 @@
         <div class="flex-1 flex flex-col overflow-hidden">
           <div class="flex-1 overflow-y-auto p-8 flex flex-col items-center justify-center">
             <div class="text-center space-y-4">
-              <div class="w-[78px] h-[78px] rounded-2xl bg-gradient-to-br from-[#314DE2] to-[#6144D3] flex items-center justify-center mx-auto" style="box-shadow: 0px 8px 10px -6px rgba(199, 210, 254, 1), 0px 20px 25px -5px rgba(199, 210, 254, 1)">
-                <el-icon class="w-[34px] h-[34px] text-white">
-                  <component :is="currentAgent.iconUrl || 'MagicStick'" />
-                </el-icon>
+              <div class="w-[78px] h-[78px] rounded-[24px] flex items-center justify-center mx-auto overflow-hidden shadow-lg">
+                <img :src="currentIconImage" class="w-full h-full object-cover" alt="agent icon">
               </div>
               <div>
                 <h3 class="text-xl font-medium text-[#0F172A]">{{ currentAgent.title || '未命名智能体' }}</h3>
@@ -306,15 +256,16 @@
           </div>
 
           <div class="p-6 space-y-4">
-            <div class="bg-white border border-[#E2E8F0] rounded-2xl shadow-lg" style="box-shadow: 0px 8px 10px -6px rgba(226, 232, 240, 0.5), 0px 20px 25px -5px rgba(226, 232, 240, 0.5)">
+            <div class="bg-white border border-[#F1F5F9] rounded-2xl shadow-lg" style="box-shadow: 0px 8px 10px -6px rgba(226, 232, 240, 0.5), 0px 20px 25px -5px rgba(226, 232, 240, 0.5)">
               <div class="flex items-center gap-2 px-4 py-1.5">
-                <img src="@/images/link-file.png" class="w-auto h-5" alt="attach">
-                <img src="@/images/internal-grey.png" class="w-auto h-5" alt="image">
-                <img src="@/images/speak.png" class="w-auto h-5" alt="link">
+                <img src="@/images/link-file.png" class="w-auto h-5" alt="attach" style="margin: 10px;">
+                <img src="@/images/internal-grey.png" class="w-auto h-5" alt="image" style="margin: 10px;">
+                <img src="@/images/speak.png" class="w-auto h-5" alt="link" style="margin: 10px;">
               </div>
               <div class="flex items-end gap-3 px-4 pb-4">
                 <textarea 
                   v-model="previewInput"
+                  style="line-height: 30px;"
                   ref="previewInputRef"
                   class="flex-1 text-sm bg-transparent border-0 focus:outline-none resize-none"
                   rows="3"
@@ -334,72 +285,109 @@
 
     <!-- 发布弹窗 -->
     <div v-if="showPublishDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30" @click.self="showPublishDialog = false">
-      <div class="bg-white rounded-2xl shadow-xl border border-[#E2E8F0] w-[400px] p-6">
+      <div class="bg-white rounded-2xl shadow-xl border border-[#E2E8F0] w-[360px] p-6">
         <div class="text-center mb-6">
-          <h3 class="text-lg font-medium text-[#1E293B] mb-2">申请上架分发</h3>
-          <p class="text-xs text-[#475569] leading-relaxed italic p-4 bg-[#EFF6FF] border border-[#DBEAFE] rounded-xl mb-6">
-            申请发布后，校内管理员或系统级管理员将会对您的智能体进行合规性审核。审核通过后，该应用将在相应的作用域公开显示。
-          </p>
-          <div class="space-y-3">
-            <label class="flex items-center gap-3 p-3 border border-[#E2E8F0] rounded-xl cursor-pointer hover:border-[#314DE2] transition-all">
-              <input type="radio" v-model="publishVisibility" value="ORG_VISIBLE" class="w-4 h-4 text-[#314DE2]">
-              <div class="text-left">
-                <div class="font-medium text-[#1E293B]">仅本校公开</div>
-                <div class="text-xs text-[#64748B]">本校组织内的所有师生都可以从广场看到并使用</div>
-              </div>
-            </label>
-            <label class="flex items-center gap-3 p-3 border border-[#E2E8F0] rounded-xl cursor-pointer hover:border-[#314DE2] transition-all">
-              <input type="radio" v-model="publishVisibility" value="PUBLIC" class="w-4 h-4 text-[#314DE2]">
-              <div class="text-left">
-                <div class="font-medium text-[#1E293B]">全平台公开</div>
-                <div class="text-xs text-[#64748B]">全网所有 K12 平台的注册用户均可探索发现</div>
-              </div>
-            </label>
-          </div>
+          <h3 class="text-lg font-medium text-[#1E293B] mb-2">确认发布</h3>
+          <p class="text-sm text-[#475569]">确定要发布这个智能体吗？</p>
         </div>
         <div class="flex gap-3">
-          <button @click="showPublishDialog = false" class="flex-1 py-2.5 text-sm font-medium text-[#1E293B] border border-[#E2E8F0] rounded-xl hover:bg-[#F8F9FD] transition-all">
-            我再等等
+          <button @click="showPublishDialog = false" class="flex-1 py-3 text-sm font-medium text-[#1E293B] border border-[#E2E8F0] rounded-xl hover:bg-[#F8F9FD] transition-all">
+            取消
           </button>
-          <button @click="confirmPublish" :loading="publishing" class="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-[#314DE2] to-[#6144D3] rounded-xl hover:opacity-90 transition-all">
-            提交上架申请
+          <button @click="confirmPublish" :loading="publishing" class="flex-1 py-3 text-sm font-medium text-white bg-gradient-to-r from-[#314DE2] to-[#6144D3] rounded-xl hover:opacity-90 transition-all">
+            确认发布
           </button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- 图标选择弹窗 -->
+  <IconPicker 
+    :visible="showIconPicker" 
+    :selected-key="currentAgent.iconUrl"
+    @close="showIconPicker = false"
+    @select="(key) => { currentAgent.iconUrl = key; showIconPicker = false; }"
+  />
 </template>
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { MagicStick, Document, DataAnalysis, ChatDotRound, Opportunity, Collection, Reading, EditPen, TrendCharts, Compass } from '@element-plus/icons-vue'
+import DropdownSelect from '../../components/DropdownSelect.vue'
+
 import { agentApi, categoryApi } from '../../api/api'
 
 const route = useRoute()
 const router = useRouter()
 
+const goBack = () => {
+  router.push('/workspace/studio')
+}
+
 const loading = ref(false)
 const saving = ref(false)
 const publishing = ref(false)
 const showPublishDialog = ref(false)
-const showVisibilityMenu = ref(false)
+const visibilityOptions = [
+  {
+    value: 'PUBLIC',
+    label: '公开·所有人可使用',
+    icon: new URL('@/images/earth.png', import.meta.url).href
+  },
+  {
+    value: 'ORG_VISIBLE',
+    label: '组织·组织内可见',
+    icon: new URL('@/images/humans.png', import.meta.url).href
+  },
+  {
+    value: 'PRIVATE',
+    label: '私有·仅自己可见',
+    icon: new URL('@/images/lock.png', import.meta.url).href
+  }
+]
+
+const modelOptions = [
+  {
+    value: 'deepseek-v4-flash',
+    label: 'qwen3.6-plus'
+  },
+  {
+    value: 'deepseek-v3',
+    label: 'gpt-4o'
+  }
+]
+
+const categoryOptions = computed(() => {
+  return availableCategories.value.map(c => ({
+    value: c.id,
+    label: c.name
+  }))
+})
+const showIconPicker = ref(false)
 const searchText = ref('')
 const previewInput = ref('')
 const previewInputRef = ref(null)
 const publishVisibility = ref('ORG_VISIBLE')
 
+const iconPathMap = {
+  'book-icon': new URL('@/images/book-icon.png', import.meta.url).href,
+  'computer-icon': new URL('@/images/computer-icon.png', import.meta.url).href,
+  'file-icon': new URL('@/images/file-icon.png', import.meta.url).href
+}
+
 const myAgents = ref([])
 const availableCategories = ref([])
 const selectedAgent = ref(null)
+const isEditMode = ref(false)
 
 const currentAgent = ref({
   title: '',
   description: '',
   systemPrompt: '',
   welcomeMsg: '',
-  iconUrl: 'MagicStick',
+  iconUrl: 'book-icon',
   visibility: 'PRIVATE',
   categoryId: '',
   model: 'deepseek-v4-flash',
@@ -455,32 +443,20 @@ const capabilityOptions = [
   }
 ]
 
-const iconOptions = [
-  'MagicStick', 'Document', 'DataAnalysis', 'ChatDotRound', 'Opportunity', 
-  'Collection', 'Reading', 'EditPen', 'TrendCharts', 'Compass'
-]
+// const iconOptions = [
+//   'MagicStick', 'Document', 'DataAnalysis', 'ChatDotRound', 'Opportunity', 
+//   'Collection', 'Reading', 'EditPen', 'TrendCharts', 'Compass'
+// ]
 
-const visibilityIcon = computed(() => {
-  const icons = {
-    'PUBLIC': new URL('@/images/earth.png', import.meta.url).href,
-    'ORG_VISIBLE': new URL('@/images/humans.png', import.meta.url).href,
-    'PRIVATE': new URL('@/images/lock.png', import.meta.url).href
-  }
-  return icons[currentAgent.value.visibility] || new URL('@/images/lock.png', import.meta.url).href
+const currentIconImage = computed(() => {
+  return iconPathMap[currentAgent.value.iconUrl] || new URL('@/images/book-icon.png', import.meta.url).href
 })
 
-const visibilityLabel = computed(() => {
-  const labels = {
-    'PUBLIC': '公开·所有人可使用',
-    'ORG_VISIBLE': '组织·组织内可见',
-    'PRIVATE': '私有·仅自己可见'
-  }
-  return labels[currentAgent.value.visibility] || '私有·仅自己可见'
-})
 
-const selectVisibility = (value) => {
-  currentAgent.value.visibility = value
-  showVisibilityMenu.value = false
+
+const selectIcon = (iconKey) => {
+  currentAgent.value.iconUrl = iconKey
+  showIconPicker.value = false
 }
 
 const filteredAgents = computed(() => {
@@ -541,6 +517,7 @@ const selectAgent = (agent) => {
 }
 
 const createNew = () => {
+  isEditMode.value = false
   currentAgent.value = {
     title: '',
     description: '',
@@ -558,6 +535,7 @@ const createNew = () => {
   }
   currentFormConfig.value = []
   selectedAgent.value = null
+  router.replace({ path: '/workspace/agent/edit', query: {} })
 }
 
 const saveAgent = async () => {
@@ -586,14 +564,20 @@ const saveAgent = async () => {
     }
 
     let res
-    if (route.query.id) {
-      res = await agentApi.updateAgent(route.query.id, agentData)
+    if (isEditMode.value) {
+      const agentId = currentAgent.value.id || route.query.id
+      res = await agentApi.updateAgent(agentId, agentData)
     } else {
       res = await agentApi.createAgent(agentData)
     }
 
     if (res.success) {
-      ElMessage.success(route.query.id ? '配置保存成功！' : '应用创建成功！')
+      if (!isEditMode.value && res.data?.id) {
+        currentAgent.value.id = res.data.id
+        isEditMode.value = true
+        router.replace({ path: '/workspace/agent/edit', query: { id: res.data.id } })
+      }
+      ElMessage.success(isEditMode.value ? '配置保存成功！' : '应用创建成功！')
       await loadAgents()
     }
   } catch (error) {
@@ -610,10 +594,15 @@ const publishAgent = () => {
 const confirmPublish = async () => {
   publishing.value = true
   try {
-    await agentApi.updateAgent(currentAgent.value.id, {
-      visibility: publishVisibility.value
+    const agentId = currentAgent.value.id || route.query.id
+    if (!agentId) {
+      ElMessage.error('请先保存智能体再发布！')
+      return
+    }
+    await agentApi.updateAgent(agentId, {
+      visibility: 'ORG_VISIBLE'
     })
-    currentAgent.value.visibility = publishVisibility.value
+    currentAgent.value.visibility = 'ORG_VISIBLE'
     currentAgent.value.approvalStatus = 'PENDING'
     await loadAgents()
     ElMessage.success('发布申请已提交，请等待管理员审核。')
@@ -637,11 +626,14 @@ const autoResizePreviewInput = () => {
 onMounted(async () => {
   await Promise.all([loadCategories(), loadAgents()])
   if (route.query.id) {
+    isEditMode.value = true
     await loadAgentDetail(route.query.id)
     const agent = myAgents.value.find(a => a.id === route.query.id)
     if (agent) {
       selectedAgent.value = agent
     }
+  } else {
+    isEditMode.value = false
   }
 })
 </script>

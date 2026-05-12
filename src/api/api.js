@@ -29,6 +29,9 @@ const request = async (url, options = {}) => {
     } else {
       if (response.status === 401) {
         ElMessage.error('未授权，请重新登录');
+        localStorage.removeItem('k12_token');
+        localStorage.removeItem('k12_user');
+        window.dispatchEvent(new CustomEvent('unauthorized'));
       } else if (response.status === 404) {
         ElMessage.error('资源不存在');
       } else if (response.status === 500) {
@@ -83,6 +86,28 @@ export const authApi = {
     } catch (error) {
       throw new Error('无法连接到服务器，请确保后端服务和数据库已启动');
     }
+  },
+
+  passwordLogin: async (account, password) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/password-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account, password })
+      });
+      const data = await response.json();
+      if (response.ok && data.access_token) {
+        localStorage.setItem('k12_token', data.access_token);
+        if (data.user) {
+          localStorage.setItem('k12_user', JSON.stringify(data.user));
+        }
+        return { success: true, data };
+      } else {
+        return { success: false, message: data.message || '登录失败，请检查信息' };
+      }
+    } catch (error) {
+      throw new Error('无法连接到服务器，请确保后端服务和数据库已启动');
+    }
   }
 };
 
@@ -103,7 +128,7 @@ export const agentApi = {
   },
 
   updateAgent: async (agentId, agentData) => {
-    return request('/agent/update/${agentId}', {
+    return request(`/agent/update/${agentId}`, {
       method: 'POST',
       body: JSON.stringify(agentData)
     });
