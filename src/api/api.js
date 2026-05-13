@@ -1,6 +1,6 @@
 import { ElMessage } from 'element-plus';
 import { translateAIError } from '../utils/error';
-import { API_BASE } from '../costant/costant';
+import { API_BASE } from '../costants/costant';
 
 const getToken = () => {
   const token = localStorage.getItem('k12_token');
@@ -157,6 +157,19 @@ export const agentApi = {
 
   getFeaturedAgents: async () => {
     return request('/agent/featured');
+  },
+
+  getPendingApprovals: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const url = query ? `/approval/pending?${query}` : '/approval/pending';
+    return request(url);
+  },
+
+  reviewApproval: async (id, data) => {
+    return request(`/approval/review/${id}`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   }
 };
 

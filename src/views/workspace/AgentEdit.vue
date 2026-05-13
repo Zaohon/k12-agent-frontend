@@ -318,7 +318,7 @@ import DropdownSelect from '../../components/DropdownSelect.vue'
 import IconPicker from '../../components/IconPicker.vue'
 
 import { agentApi, categoryApi, knowledgeApi } from '../../api/api'
-import { OSS_LOGO_BASE } from '../../constants/costant'
+import { OSS_LOGO_BASE } from '../../costants/costant'
 
 const route = useRoute()
 const router = useRouter()
