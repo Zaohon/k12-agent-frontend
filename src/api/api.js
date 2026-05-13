@@ -1,7 +1,6 @@
 import { ElMessage } from 'element-plus';
 import { translateAIError } from '../utils/error';
-
-const API_BASE = 'http://localhost:3000';
+import { API_BASE } from '../costant/costant';
 
 const getToken = () => {
   const token = localStorage.getItem('k12_token');

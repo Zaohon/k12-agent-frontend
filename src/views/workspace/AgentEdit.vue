@@ -318,6 +318,7 @@ import DropdownSelect from '../../components/DropdownSelect.vue'
 import IconPicker from '../../components/IconPicker.vue'
 
 import { agentApi, categoryApi, knowledgeApi } from '../../api/api'
+import { OSS_LOGO_BASE } from '../../constants/costant'
 
 const route = useRoute()
 const router = useRouter()
@@ -370,8 +371,6 @@ const searchText = ref('')
 const previewInput = ref('')
 const previewInputRef = ref(null)
 const publishVisibility = ref('ORG_VISIBLE')
-
-const OSS_LOGO_BASE = 'https://lqwlcloud.oss-cn-shanghai.aliyuncs.com/system/agent-logo/'
 
 const agentLogos = ref([])
 
