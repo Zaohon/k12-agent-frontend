@@ -108,6 +108,17 @@ export const authApi = {
     } catch (error) {
       throw new Error('无法连接到服务器，请确保后端服务和数据库已启动');
     }
+  },
+
+  getProfile: async () => {
+    return request('/auth/profile');
+  },
+
+  updatePassword: async (passwordData) => {
+    return request('/auth/update-password', {
+      method: 'POST',
+      body: JSON.stringify(passwordData)
+    });
   }
 };
 
@@ -135,7 +146,9 @@ export const agentApi = {
   },
 
   deleteAgent: async (agentId) => {
-    ElMessage.warning('删除功能暂未实现')
+    return request(`/agent/${agentId}`, {
+      method: 'DELETE'
+    });
   },
 
   getDiscoverAgents: async (categoryId) => {
@@ -275,5 +288,148 @@ export const categoryApi = {
     return request(`/category/${categoryId}`, {
       method: 'DELETE'
     });
+  }
+};
+
+export const chatApi = {
+  streamChat: async (agentId, formData) => {
+    const token = getToken();
+    if (!token) {
+      ElMessage.error('未登录或登录已过期，请重新登录');
+      throw new Error('Token is null');
+    }
+
+    const response = await fetch(`${API_BASE}/chat/stream/${agentId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    });
+
+    if (response.ok) {
+      return response;
+    } else {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+    }
+  }
+};
+
+export const orgApi = {
+  getOrgList: async () => {
+    return request('/org/list');
+  },
+
+  createOrg: async (orgData) => {
+    return request('/org/create', {
+      method: 'POST',
+      body: JSON.stringify(orgData)
+    });
+  },
+
+  createOrgAdmin: async (adminData) => {
+    return request('/org/admin', {
+      method: 'POST',
+      body: JSON.stringify(adminData)
+    });
+  },
+
+  getOrgUsers: async (orgId) => {
+    return request(`/org/${orgId}/users`);
+  },
+
+  batchCreateOrgUsers: async (orgId, usersData) => {
+    return request(`/org/${orgId}/users/batch`, {
+      method: 'POST',
+      body: JSON.stringify(usersData)
+    });
+  }
+};
+
+export const approvalApi = {
+  getPendingApprovals: async () => {
+    return request('/approval/pending');
+  },
+
+  reviewApproval: async (id, reviewData) => {
+    return request(`/approval/review/${id}`, {
+      method: 'POST',
+      body: JSON.stringify(reviewData)
+    });
+  }
+};
+
+export const knowledgeApi = {
+  getFolders: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/knowledge/folders${query ? `?${query}` : ''}`);
+  },
+
+  getFolderById: async (folderId) => {
+    return request(`/knowledge/folders/${folderId}`);
+  },
+
+  createFolder: async (folderData) => {
+    return request('/knowledge/folders', {
+      method: 'POST',
+      body: JSON.stringify(folderData)
+    });
+  },
+
+  updateFolder: async (folderId, folderData) => {
+    return request(`/knowledge/folders/${folderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(folderData)
+    });
+  },
+
+  deleteFolder: async (folderId) => {
+    return request(`/knowledge/folders/${folderId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  getFiles: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/knowledge/files${query ? `?${query}` : ''}`);
+  },
+
+  getRecentFiles: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/knowledge/files/recent${query ? `?${query}` : ''}`);
+  },
+
+  getFileById: async (fileId) => {
+    return request(`/knowledge/files/${fileId}`);
+  },
+
+  getUploadPolicy: async (policyData) => {
+    return request('/knowledge/files/upload-policy', {
+      method: 'POST',
+      body: JSON.stringify(policyData)
+    });
+  },
+
+  createFile: async (fileData) => {
+    return request('/knowledge/files', {
+      method: 'POST',
+      body: JSON.stringify(fileData)
+    });
+  },
+
+  deleteFile: async (fileId) => {
+    return request(`/knowledge/files/${fileId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  getStorageStats: async () => {
+    return request('/knowledge/storage/stats');
+  },
+
+  getAgentLogos: async () => {
+    return request('/knowledge/system/agent-logos');
   }
 };

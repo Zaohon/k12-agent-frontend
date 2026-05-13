@@ -24,10 +24,8 @@
               : 'hover:bg-[#F8F9FD]'
           ]"
         >
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shrink-0">
-            <el-icon class="w-6 h-6" :class="selectedAgent?.id === agent.id ? 'text-white' : 'text-blue-600'">
-              <component :is="agent.iconUrl || 'MagicStick'" />
-            </el-icon>
+          <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+            <img :src="agent.iconUrl" class="w-full h-full object-cover" alt="icon">
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium truncate" :class="selectedAgent?.id === agent.id ? 'text-white' : 'text-[#1E293B]'">
@@ -306,6 +304,7 @@
   <IconPicker 
     :visible="showIconPicker" 
     :selected-key="currentAgent.iconUrl"
+    :icon-list="agentLogos"
     @close="showIconPicker = false"
     @select="(key) => { currentAgent.iconUrl = key; showIconPicker = false; }"
   />
@@ -316,8 +315,9 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import DropdownSelect from '../../components/DropdownSelect.vue'
+import IconPicker from '../../components/IconPicker.vue'
 
-import { agentApi, categoryApi } from '../../api/api'
+import { agentApi, categoryApi, knowledgeApi } from '../../api/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -371,11 +371,9 @@ const previewInput = ref('')
 const previewInputRef = ref(null)
 const publishVisibility = ref('ORG_VISIBLE')
 
-const iconPathMap = {
-  'book-icon': new URL('@/images/book-icon.png', import.meta.url).href,
-  'computer-icon': new URL('@/images/computer-icon.png', import.meta.url).href,
-  'file-icon': new URL('@/images/file-icon.png', import.meta.url).href
-}
+const OSS_LOGO_BASE = 'https://lqwlcloud.oss-cn-shanghai.aliyuncs.com/system/agent-logo/'
+
+const agentLogos = ref([])
 
 const myAgents = ref([])
 const availableCategories = ref([])
@@ -387,7 +385,7 @@ const currentAgent = ref({
   description: '',
   systemPrompt: '',
   welcomeMsg: '',
-  iconUrl: 'book-icon',
+  iconUrl: '',
   visibility: 'PRIVATE',
   categoryId: '',
   model: 'deepseek-v4-flash',
@@ -449,7 +447,7 @@ const capabilityOptions = [
 // ]
 
 const currentIconImage = computed(() => {
-  return iconPathMap[currentAgent.value.iconUrl] || new URL('@/images/book-icon.png', import.meta.url).href
+  return currentAgent.value.iconUrl || (agentLogos.value.length > 0 ? agentLogos.value[0].src : '')
 })
 
 
@@ -474,6 +472,23 @@ const loadCategories = async () => {
     }
   } catch (error) {
     console.error('加载分类失败:', error)
+  }
+}
+
+const fetchAgentLogos = async () => {
+  try {
+    const res = await knowledgeApi.getAgentLogos()
+    if (res.success && Array.isArray(res.data)) {
+      agentLogos.value = res.data.map(fileName => ({
+        key: OSS_LOGO_BASE + fileName,
+        src: OSS_LOGO_BASE + fileName
+      }))
+      if (agentLogos.value.length > 0 && !currentAgent.value.iconUrl) {
+        currentAgent.value.iconUrl = agentLogos.value[0].src
+      }
+    }
+  } catch (error) {
+    console.error('加载图标列表失败:', error)
   }
 }
 
@@ -523,7 +538,7 @@ const createNew = () => {
     description: '',
     systemPrompt: '',
     welcomeMsg: '',
-    iconUrl: 'MagicStick',
+    iconUrl: '',
     visibility: 'PRIVATE',
     categoryId: "",
     model: 'deepseek-v4-flash',
@@ -624,7 +639,7 @@ const autoResizePreviewInput = () => {
 }
 
 onMounted(async () => {
-  await Promise.all([loadCategories(), loadAgents()])
+  await Promise.all([loadCategories(), loadAgents(), fetchAgentLogos()])
   if (route.query.id) {
     isEditMode.value = true
     await loadAgentDetail(route.query.id)

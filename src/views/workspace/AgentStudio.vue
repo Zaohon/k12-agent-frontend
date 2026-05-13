@@ -19,25 +19,26 @@
         <div 
           v-for="agent in filteredAgents" 
           :key="agent.id"
+          @click="toChat(agent)"
           class="agent-card bg-white rounded-[16px] shadow-sm border border-[#DEE3EA] hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
           @mouseleave="handleCardMouseLeave"
         >
           <div class="px-6 pt-6 pb-4">
             <div class="flex items-start gap-4 mb-5">
               <!-- 左侧图标 -->
-              <div class="w-[78px] h-[78px] rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                <el-icon class="text-[34px] text-white"><component :is="agent.iconUrl || 'MagicStick'" /></el-icon>
+              <div class="w-[78px] h-[78px] rounded-xl overflow-hidden flex-shrink-0">
+                <img :src="agent.iconUrl" class="w-full h-full object-cover" alt="icon">
               </div>
               <!-- 右侧内容 -->
               <div class="flex-1 min-w-0">
-                <h3 class="font-medium text-[20px] leading-[28px] text-[#0F172A] truncate mb-1">{{ agent.title || '未命名应用' }}</h3>
-                <p class="font-medium text-[14px] leading-[20px] text-[#5A6066] line-clamp-2">{{ agent.description || '暂无描述' }}</p>
+                <h3 class="font-medium text-[20px] leading-[28px] text-[#0F172A] truncate mb-1 max-w-[10em]" :title="agent.title">{{ agent.title || '未命名应用' }}</h3>
+                <p class="font-medium text-[14px] leading-[20px] text-[#5A6066] line-clamp-2 break-words">{{ agent.description || '暂无描述' }}</p>
               </div>
             </div>
             <!-- 底部信息 -->
             <div class="border-t border-[#EBEEF4] pt-[20px] flex items-center justify-between">
               <div class="flex items-center gap-[5px]">
-                <img src="@/images/is-visable.png" alt="visibility" class="w-auto h-3" />
+                <img :src="getVisibilityIcon(agent)" alt="visibility" class="w-auto h-3" />
                 <span class="font-medium text-[12px] leading-[16px] text-[#767B82]">{{ getVisibilityText(agent) }}</span>
               </div>
               <div class="flex items-center gap-6">
@@ -222,10 +223,16 @@ const filteredAgents = computed(() => {
   )
 })
 
+const getVisibilityIcon = (agent) => {
+  if (agent.visibility === 'PUBLIC') return new URL('@/images/earth.png', import.meta.url).href
+  if (agent.visibility === 'ORG_VISIBLE') return new URL('@/images/humans.png', import.meta.url).href
+  return new URL('@/images/lock.png', import.meta.url).href
+}
+
 const getVisibilityText = (agent) => {
-  if (!agent.visibility || agent.visibility === 'PRIVATE') return '私有'
-  if (agent.visibility === 'PUBLIC') return '公开'
-  if (agent.visibility === 'ORG_VISIBLE') return '校内公开'
+  if (!agent.visibility || agent.visibility === 'PRIVATE') return '仅自己可见'
+  if (agent.visibility === 'PUBLIC') return '所有人可使用'
+  if (agent.visibility === 'ORG_VISIBLE') return '组织内可见'
   return '私有'
 }
 
@@ -257,6 +264,12 @@ const editAgent = (agent) => {
 
 const goTest = (agent) => {
   router.push(`/workspace/chat?agentId=${agent.id}`)
+}
+
+const toChat = (agent) => {
+  ElMessage.success('点击了智能体' + agent.title)
+  ElMessage.warning('跳转开发中')
+  // router.push(`/workspace/chat?agentId=${agent.id}`)
 }
 
 const deleteAgent = (agent) => {
