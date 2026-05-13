@@ -269,7 +269,7 @@ const goTest = (agent) => {
 const toChat = (agent) => {
   ElMessage.success('点击了智能体' + agent.title)
   ElMessage.warning('跳转开发中')
-  // router.push(`/workspace/chat?agentId=${agent.id}`)
+  router.push(`/workspace/chat?agentId=${agent.id}`)
 }
 
 const deleteAgent = (agent) => {
