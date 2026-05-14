@@ -79,43 +79,42 @@
 
             <el-table-column label="身份" width="240" align="center">
               <template #default="scope">
-                <el-tag 
-                  :type="scope.row.creator?.role === 'SUPER_ADMIN' ? 'danger' : scope.row.creator?.role === 'ADMIN' ? 'warning' : scope.row.creator?.role === 'TEACHER' ? 'success' : 'info'" 
-                  effect="plain" 
-                  size="small"
-                  class="role-tag"
+                <div 
+                  :class="[
+                    'role-tag',
+                    scope.row.creator?.role === 'SUPER_ADMIN' ? 'role-super-admin' : 
+                    scope.row.creator?.role === 'ADMIN' ? 'role-admin' : 
+                    scope.row.creator?.role === 'TEACHER' ? 'role-teacher' : 'role-student'
+                  ]"
                 >
                   {{ scope.row.creator?.role === 'SUPER_ADMIN' ? '超级管理员' : scope.row.creator?.role === 'ADMIN' ? '管理员' : scope.row.creator?.role === 'TEACHER' ? '教师' : '学生' }}
-                </el-tag>
+                </div>
               </template>
             </el-table-column>
 
             <el-table-column label="状态" width="240" align="center">
               <template #default="scope">
-                <el-tag 
+                <div 
                   v-if="scope.row.approvalStatus === 'PENDING'" 
-                  type="warning" 
-                  effect="plain" 
-                  size="small"
+                  class="status-tag status-pending"
                 >
+                  <span class="dot"></span>
                   待审批
-                </el-tag>
-                <el-tag 
+                </div>
+                <div 
                   v-else-if="scope.row.approvalStatus === 'APPROVED'" 
-                  type="success" 
-                  effect="plain" 
-                  size="small"
+                  class="status-tag status-approved"
                 >
+                  <span class="dot"></span>
                   已审批
-                </el-tag>
-                <el-tag 
+                </div>
+                <div 
                   v-else-if="scope.row.approvalStatus === 'REJECTED'" 
-                  type="danger" 
-                  effect="plain" 
-                  size="small"
+                  class="status-tag status-rejected"
                 >
+                  <span class="dot"></span>
                   已拒绝
-                </el-tag>
+                </div>
               </template>
             </el-table-column>
 
@@ -123,7 +122,7 @@
               <template #default="scope">
                 <div class="flex space-x-2 justify-center">
                   <template v-if="scope.row.approvalStatus === 'PENDING'">
-                    <el-button size="small" class="approve-btn" @click="openReview(scope.row)">批准</el-button>
+                    <el-button size="small" class="approve-btn" @click="submitApprovalBtn(scope.row)">批准</el-button>
                     <el-button size="small" class="reject-btn" @click="handleReview(scope.row.id, 'REJECTED')">拒绝</el-button>
                   </template>
                   <template v-else>
@@ -377,19 +376,25 @@ const fetchCategories = async () => {
   } catch (e) {}
 }
 
-const openReview = (agent: any) => {
+const submitApprovalBtn = (agent: any) => {
   currentAgent.value = agent
-  reviewForm.value = {
-    categoryId: null,
-    isFeatured: false
-  }
-  console.log('当前审批数据:', agent)
-  showReviewDialog.value = true
+  submitApproval()
 }
 
 const submitApproval = async () => {
-  reviewing.value = true
   try {
+    await ElMessageBox.confirm(
+      `确定要批准应用"${currentAgent.value.title || '未命名'}"吗？`,
+      '确认审批',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        customClass: 'approve-confirm-dialog',
+      }
+    )
+    
+    reviewing.value = true
     const res = await agentApi.reviewApproval(currentAgent.value.id, {
       status: 'APPROVED',
       ...reviewForm.value
@@ -400,7 +405,9 @@ const submitApproval = async () => {
       await fetchPending()
     }
   } catch(e) {
-    ElMessage.error('网络校验失败')
+    if (e !== 'cancel') {
+      ElMessage.error('网络校验失败')
+    }
   } finally {
     reviewing.value = false
   }
@@ -434,19 +441,20 @@ const handleReview = (id: number, status: 'APPROVED' | 'REJECTED') => {
   showReviewDialog.value = false
   
   ElMessageBox.confirm(
-    `请确认是否驳回此应用服务申请？`,
-    '决策验证',
+    `请确认是否拒绝此应用服务申请？`,
+    '拒绝申请',
     {
-      confirmButtonText: '执行驳回',
+      confirmButtonText: '拒绝',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'error',
+      customClass: 'reject-confirm-dialog',
     }
   ).then(async () => {
     loading.value = true
     try {
       const res = await agentApi.reviewApproval(id, { status: 'REJECTED' })
       if (res.success) {
-        ElMessage.success(`申请已驳回`)
+        ElMessage.success(`申请已拒绝`)
         await fetchPending()
       }
     } catch(e) {
@@ -583,9 +591,32 @@ onMounted(() => {
 }
 
 .role-tag {
-  height: 20px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: 'Noto Sans SC';
+}
+
+.role-super-admin {
+  background-color: #F3E8FF;
+  color: #8B5CF6;
+}
+
+.role-admin {
+  background-color: #FFF7E6;
+  color: #FF9500;
+}
+
+.role-teacher {
+  background-color: #DBEAFE;
+  color: #3B82F6;
+}
+
+.role-student {
+  background-color: #D6F7CF;
+  color: #10B981;
 }
 
 .filter-select {
@@ -711,5 +742,180 @@ onMounted(() => {
   letter-spacing: 0px;
   vertical-align: middle;
   color: #5A6066;
+}
+
+.status-tag {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-family: 'Noto Sans SC';
+}
+
+.status-tag .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-pending {
+  background-color: #FFFBEB;
+  color: #F59E0B;
+  border: 1px solid #FDE68A;
+}
+
+.status-pending .dot {
+  background-color: #F59E0B;
+}
+
+.status-approved {
+  background-color: #ECFDF5;
+  color: #10B981;
+  border: 1px solid #A7F3D0
+}
+
+.status-approved .dot {
+  background-color: #10B981;
+}
+
+.status-rejected {
+  background-color: #FEF2F2;
+  color: #D0435F;
+  border: 1px solid #FECACA
+}
+
+.status-rejected .dot {
+  background-color: #D0435F;
+}
+
+/* 审批确认弹窗样式 */
+:global(.approve-confirm-dialog .el-message-box) {
+  border-radius: 12px;
+  padding: 0;
+}
+
+:global(.approve-confirm-dialog .el-message-box__header) {
+  padding: 24px 24px 0;
+  margin: 0;
+}
+
+:global(.approve-confirm-dialog .el-message-box__title) {
+  font-family: 'Noto Sans SC';
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+:global(.approve-confirm-dialog .el-message-box__content) {
+  padding: 20px 24px;
+}
+
+:global(.approve-confirm-dialog .el-message-box__message) {
+  font-family: 'Noto Sans SC';
+  font-size: 14px;
+  color: #475569;
+  line-height: 20px;
+}
+
+:global(.approve-confirm-dialog .el-message-box__btns) {
+  padding: 0 24px 24px;
+  gap: 8px;
+}
+
+:global(.approve-confirm-dialog .el-button--default) {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #6B7280;
+  font-size: 14px;
+  font-weight: 500;
+  height: 36px;
+}
+
+:global(.approve-confirm-dialog .el-button--default:hover) {
+  background: #F8F9FD;
+}
+
+:global(.approve-confirm-dialog .el-button--primary) {
+  padding: 10px 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  height: 36px;
+}
+
+:global(.approve-confirm-dialog .el-button--primary:hover) {
+  opacity: 0.9;
+}
+
+/* 拒绝确认弹窗样式 */
+:global(.reject-confirm-dialog .el-message-box) {
+  border-radius: 12px;
+  padding: 0;
+}
+
+:global(.reject-confirm-dialog .el-message-box__header) {
+  padding: 24px 24px 0;
+  margin: 0;
+}
+
+:global(.reject-confirm-dialog .el-message-box__title) {
+  font-family: 'Noto Sans SC';
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+:global(.reject-confirm-dialog .el-message-box__content) {
+  padding: 20px 24px;
+}
+
+:global(.reject-confirm-dialog .el-message-box__message) {
+  font-family: 'Noto Sans SC';
+  font-size: 14px;
+  color: #475569;
+  line-height: 20px;
+}
+
+:global(.reject-confirm-dialog .el-message-box__btns) {
+  padding: 0 24px 24px;
+  gap: 8px;
+}
+
+:global(.reject-confirm-dialog .el-button--default) {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #6B7280;
+  font-size: 14px;
+  font-weight: 500;
+  height: 36px;
+}
+
+:global(.reject-confirm-dialog .el-button--default:hover) {
+  background: #F8F9FD;
+}
+
+:global(.reject-confirm-dialog .el-button--primary) {
+  padding: 10px 24px;
+  border-radius: 8px;
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  height: 36px;
+}
+
+:global(.reject-confirm-dialog .el-button--primary:hover) {
+  background: #DC2626;
 }
 </style>
