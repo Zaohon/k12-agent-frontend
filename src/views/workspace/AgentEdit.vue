@@ -127,9 +127,14 @@
                     <label class="block text-sm font-medium text-[#475569]">
                       <span class="text-[#EF4444]">*</span> 提示词编辑 (Prompt)
                     </label>
-                    <button class="text-xs text-[#314DE2] flex items-center gap-1 hover:underline">
+                    <button 
+                      class="text-xs text-[#314DE2] flex items-center gap-1 hover:underline"
+                      @click="optimizePrompt"
+                      :disabled="optimizing"
+                    >
                       <img src="@/images/pen-with-start.png" class="w-auto h-3" alt="optimize">
-                      一键优化
+                      <span v-if="!optimizing">一键优化</span>
+                      <span v-else>优化中...</span>
                     </button>
                   </div>
                   <div class="relative">
@@ -188,12 +193,12 @@
               <!-- 图标和模型选择 -->
               <div class="grid grid-cols-2 gap-6">
                 <div>
-                  <label class="block text-sm font-medium text-[#475569] mb-1.5">选择模型</label>
-                  <DropdownSelect 
-                    v-model="currentAgent.model"
-                    :options="modelOptions"
-                    direction="up"
-                  />
+                  <label class="block text-sm font-medium text-[#475569] mb-1.5">模型</label>
+                  <input 
+                    v-model="currentAgent.model" 
+                    class="w-full px-3 py-2.5 text-sm bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2]"
+                    placeholder="请输入模型名称"
+                  >
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-[#475569] mb-1.5">访问权限</label>
@@ -330,6 +335,7 @@ const goBack = () => {
 const loading = ref(false)
 const saving = ref(false)
 const publishing = ref(false)
+const optimizing = ref(false)
 const showPublishDialog = ref(false)
 const visibilityOptions = [
   {
@@ -346,17 +352,6 @@ const visibilityOptions = [
     value: 'PRIVATE',
     label: '私有·仅自己可见',
     icon: new URL('@/images/lock.png', import.meta.url).href
-  }
-]
-
-const modelOptions = [
-  {
-    value: 'deepseek-v4-flash',
-    label: 'qwen3.6-plus'
-  },
-  {
-    value: 'deepseek-v3',
-    label: 'gpt-4o'
   }
 ]
 
@@ -387,7 +382,7 @@ const currentAgent = ref({
   iconUrl: '',
   visibility: 'PRIVATE',
   categoryId: '',
-  model: 'deepseek-v4-flash',
+  model: '',
   enableWebSearch: true,
   enableWebParse: true,
   enableDeepThink: false,
@@ -527,6 +522,8 @@ const loadAgentDetail = async (agentId) => {
 
 const selectAgent = (agent) => {
   selectedAgent.value = agent
+  isEditMode.value = true
+  router.replace({ path: '/workspace/agent/edit', query: { id: agent.id } })
   loadAgentDetail(agent.id)
 }
 
@@ -540,7 +537,7 @@ const createNew = () => {
     iconUrl: '',
     visibility: 'PRIVATE',
     categoryId: "",
-    model: 'deepseek-v4-flash',
+    model: '',
     enableWebSearch: true,
     enableWebParse: true,
     enableDeepThink: false,
@@ -567,7 +564,7 @@ const saveAgent = async () => {
       welcomeMsg: currentAgent.value.welcomeMsg,
       iconUrl: currentAgent.value.iconUrl,
       categoryId: currentAgent.value.categoryId,
-      model: currentAgent.value.model || 'deepseek-v4-flash',
+      model: currentAgent.value.model,
       enableWebSearch: currentAgent.value.enableWebSearch || false,
       enableWebParse: currentAgent.value.enableWebParse || false,
       enableDeepThink: currentAgent.value.enableDeepThink || false,
@@ -614,9 +611,9 @@ const confirmPublish = async () => {
       return
     }
     await agentApi.updateAgent(agentId, {
-      visibility: 'ORG_VISIBLE'
+      visibility: currentAgent.value.visibility,
+      model: currentAgent.value.model
     })
-    currentAgent.value.visibility = 'ORG_VISIBLE'
     currentAgent.value.approvalStatus = 'PENDING'
     await loadAgents()
     ElMessage.success('发布申请已提交，请等待管理员审核。')
@@ -635,6 +632,26 @@ const autoResizePreviewInput = () => {
       previewInputRef.value.style.height = Math.min(previewInputRef.value.scrollHeight, 120) + 'px'
     }
   })
+}
+
+const optimizePrompt = async () => {
+  if (!currentAgent.value.systemPrompt.trim()) {
+    ElMessage.warning('请输入提示词内容')
+    return
+  }
+  optimizing.value = true
+  try {
+    const res = await agentApi.optimizePrompt(currentAgent.value.systemPrompt)
+    if (res.success && res.data?.optimizedText) {
+      currentAgent.value.systemPrompt = res.data.optimizedText
+      ElMessage.success('提示词优化成功')
+    }
+  } catch (error) {
+    console.error('提示词优化失败:', error)
+    ElMessage.error('优化失败，请重试')
+  } finally {
+    optimizing.value = false
+  }
 }
 
 onMounted(async () => {

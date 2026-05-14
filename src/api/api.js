@@ -2,11 +2,21 @@ import { ElMessage } from 'element-plus';
 import { translateAIError } from '../utils/error';
 import { API_BASE } from '../costants/costant';
 
+/**
+ * 从 localStorage 获取认证 token
+ * @returns {string|null} token
+ */
 const getToken = () => {
   const token = localStorage.getItem('k12_token');
   return token ? token.trim() : null;
 };
 
+/**
+ * 统一的请求封装函数
+ * @param {string} url - 请求路径
+ * @param {Object} options - 请求配置选项
+ * @returns {Promise<any>} 请求响应数据
+ */
 const request = async (url, options = {}) => {
   const token = getToken();
 
@@ -46,7 +56,15 @@ const request = async (url, options = {}) => {
   }
 };
 
+/**
+ * 认证相关 API 接口
+ */
 export const authApi = {
+  /**
+   * 发送短信验证码
+   * @param {string} phone - 手机号
+   * @returns {Promise<{success: boolean, message: string}>} 发送结果
+   */
   sendSmsCode: async (phone) => {
     try {
       const response = await fetch(`${API_BASE}/auth/sms_send`, {
@@ -65,6 +83,12 @@ export const authApi = {
     }
   },
 
+  /**
+   * 短信验证码登录
+   * @param {string} phone - 手机号
+   * @param {string} code - 验证码
+   * @returns {Promise<{success: boolean, data?: any, message?: string}>} 登录结果
+   */
   login: async (phone, code) => {
     try {
       const response = await fetch(`${API_BASE}/auth/login`, {
@@ -87,6 +111,12 @@ export const authApi = {
     }
   },
 
+  /**
+   * 密码登录
+   * @param {string} account - 账号（用户名/手机号）
+   * @param {string} password - 密码
+   * @returns {Promise<{success: boolean, data?: any, message?: string}>} 登录结果
+   */
   passwordLogin: async (account, password) => {
     try {
       const response = await fetch(`${API_BASE}/auth/password-login`, {
@@ -109,10 +139,19 @@ export const authApi = {
     }
   },
 
+  /**
+   * 获取当前用户信息
+   * @returns {Promise<any>} 用户信息
+   */
   getProfile: async () => {
     return request('/auth/profile');
   },
 
+  /**
+   * 更新密码
+   * @param {Object} passwordData - 密码数据 {oldPassword, newPassword}
+   * @returns {Promise<any>} 更新结果
+   */
   updatePassword: async (passwordData) => {
     return request('/auth/update-password', {
       method: 'POST',
@@ -121,15 +160,32 @@ export const authApi = {
   }
 };
 
+/**
+ * 智能体相关 API 接口
+ */
 export const agentApi = {
+  /**
+   * 获取当前用户创建的智能体列表
+   * @returns {Promise<any>} 智能体列表
+   */
   getMyAgents: async () => {
     return request('/agent/my');
   },
 
+  /**
+   * 根据 ID 获取智能体详情
+   * @param {number|string} agentId - 智能体 ID
+   * @returns {Promise<any>} 智能体详情
+   */
   getAgentById: async (agentId) => {
     return request(`/agent/${agentId}`);
   },
 
+  /**
+   * 创建新智能体
+   * @param {Object} agentData - 智能体数据
+   * @returns {Promise<any>} 创建结果
+   */
   createAgent: async (agentData) => {
     return request('/agent/create', {
       method: 'POST',
@@ -137,6 +193,12 @@ export const agentApi = {
     });
   },
 
+  /**
+   * 更新智能体信息
+   * @param {number|string} agentId - 智能体 ID
+   * @param {Object} agentData - 智能体数据
+   * @returns {Promise<any>} 更新结果
+   */
   updateAgent: async (agentId, agentData) => {
     return request(`/agent/update/${agentId}`, {
       method: 'POST',
@@ -144,50 +206,110 @@ export const agentApi = {
     });
   },
 
+  /**
+   * 删除智能体
+   * @param {number|string} agentId - 智能体 ID
+   * @returns {Promise<any>} 删除结果
+   */
   deleteAgent: async (agentId) => {
     return request(`/agent/${agentId}`, {
       method: 'DELETE'
     });
   },
 
+  /**
+   * 获取发现页面的智能体列表
+   * @param {number|string} [categoryId] - 分类 ID（可选）
+   * @returns {Promise<any>} 智能体列表
+   */
   getDiscoverAgents: async (categoryId) => {
     const url = categoryId ? `/agent/discover?categoryId=${categoryId}` : '/agent/discover';
     return request(url);
   },
 
+  /**
+   * 获取精选智能体列表
+   * @returns {Promise<any>} 精选智能体列表
+   */
   getFeaturedAgents: async () => {
     return request('/agent/featured');
   },
 
+  /**
+   * 获取待审批的智能体列表
+   * @param {Object} [params] - 筛选参数
+   * @returns {Promise<any>} 待审批列表
+   */
   getPendingApprovals: async (params = {}) => {
     const query = new URLSearchParams(params).toString();
     const url = query ? `/approval/pending?${query}` : '/approval/pending';
     return request(url);
   },
 
+  /**
+   * 审批智能体（通过/拒绝）
+   * @param {number|string} id - 审批 ID
+   * @param {Object} data - 审批数据 {status, categoryId, isFeatured}
+   * @returns {Promise<any>} 审批结果
+   */
   reviewApproval: async (id, data) => {
     return request(`/approval/review/${id}`, {
       method: 'POST',
       body: JSON.stringify(data)
     });
+  },
+
+  /**
+   * 一键优化提示词
+   * @param {string} text - 原始提示词文本
+   * @returns {Promise<any>} 优化后的提示词 {success, data: {optimizedText}}
+   */
+  optimizePrompt: async (text) => {
+    return request('/agent/optimize', {
+      method: 'POST',
+      body: JSON.stringify({ text })
+    });
   }
 };
 
+/**
+ * 会话相关 API 接口
+ */
 export const sessionApi = {
+  /**
+   * 获取会话列表
+   * @returns {Promise<any>} 会话列表
+   */
   getSessionList: async () => {
     return request('/session/list');
   },
 
+  /**
+   * 创建新会话
+   * @returns {Promise<any>} 创建结果
+   */
   createSession: async () => {
     return request('/session/create', {
       method: 'POST'
     });
   },
 
+  /**
+   * 获取会话历史记录
+   * @param {number|string} sessionId - 会话 ID
+   * @returns {Promise<any>} 会话历史
+   */
   getSessionHistory: async (sessionId) => {
     return request(`/session/history/${sessionId}`);
   },
 
+  /**
+   * 发送消息
+   * @param {number|string} sessionId - 会话 ID
+   * @param {string} prompt - 提示词/消息内容
+   * @param {Array} [attachments] - 附件列表
+   * @returns {Promise<Response>} 响应流
+   */
   sendMessage: async (sessionId, prompt, attachments = []) => {
     const token = getToken();
     
@@ -263,6 +385,12 @@ export const sessionApi = {
     }
   },
 
+  /**
+   * 更新会话主题
+   * @param {number|string} sessionId - 会话 ID
+   * @param {string} topic - 新主题
+   * @returns {Promise<any>} 更新结果
+   */
   updateSessionTopic: async (sessionId, topic) => {
     return request(`/session/update-topic/${sessionId}`, {
       method: 'POST',
@@ -270,6 +398,11 @@ export const sessionApi = {
     });
   },
 
+  /**
+   * 删除会话
+   * @param {number|string} sessionId - 会话 ID
+   * @returns {Promise<any>} 删除结果
+   */
   deleteSession: async (sessionId) => {
     return request(`/session/${sessionId}`, {
       method: 'DELETE'
@@ -277,11 +410,32 @@ export const sessionApi = {
   }
 };
 
+/**
+ * 分类相关 API 接口
+ */
 export const categoryApi = {
+  /**
+   * 获取分类列表
+   * @returns {Promise<any>} 分类列表
+   */
   getCategoryList: async () => {
     return request('/category/list');
   },
 
+  /**
+   * 获取指定分类下的智能体列表
+   * @param {number|string} categoryId - 分类 ID
+   * @returns {Promise<any>} 智能体列表
+   */
+  getCategoryAgents: async (categoryId) => {
+    return request(`/category/${categoryId}/agents`);
+  },
+
+  /**
+   * 创建新分类
+   * @param {Object} categoryData - 分类数据
+   * @returns {Promise<any>} 创建结果
+   */
   createCategory: async (categoryData) => {
     return request('/category/create', {
       method: 'POST',
@@ -289,6 +443,12 @@ export const categoryApi = {
     });
   },
 
+  /**
+   * 更新分类信息
+   * @param {number|string} categoryId - 分类 ID
+   * @param {Object} categoryData - 分类数据
+   * @returns {Promise<any>} 更新结果
+   */
   updateCategory: async (categoryId, categoryData) => {
     return request(`/category/${categoryId}`, {
       method: 'PATCH',
@@ -296,14 +456,67 @@ export const categoryApi = {
     });
   },
 
+  /**
+   * 删除分类
+   * @param {number|string} categoryId - 分类 ID
+   * @returns {Promise<any>} 删除结果
+   */
   deleteCategory: async (categoryId) => {
     return request(`/category/${categoryId}`, {
       method: 'DELETE'
     });
+  },
+
+  /**
+   * 从分类中删除智能体
+   * @param {number|string} categoryId - 分类 ID
+   * @param {number|string} agentId - 智能体 ID
+   * @returns {Promise<any>} 删除结果
+   */
+  deleteAgentFromCategory: async (categoryId, agentId) => {
+    return request(`/category/${categoryId}/agents/${agentId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  /**
+   * 更新分类中的智能体（如移动到其他分类、修改状态等）
+   * @param {number|string} categoryId - 分类 ID
+   * @param {number|string} agentId - 智能体 ID
+   * @param {Object} agentData - 更新数据 {targetCategoryId?, status?}
+   * @returns {Promise<any>} 更新结果
+   */
+  updateAgentInCategory: async (categoryId, agentId, agentData) => {
+    return request(`/category/${categoryId}/agents/${agentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(agentData)
+    });
+  },
+
+  /**
+   * 设置分类的智能体（完全替换）
+   * @param {number|string} categoryId - 分类 ID
+   * @param {Array<number|string>} agentIds - 智能体 ID 数组
+   * @returns {Promise<any>} 设置结果
+   */
+  setCategoryAgents: async (categoryId, agentIds) => {
+    return request(`/category/${categoryId}/agents`, {
+      method: 'PUT',
+      body: JSON.stringify({ agentIds })
+    });
   }
 };
 
+/**
+ * 聊天相关 API 接口
+ */
 export const chatApi = {
+  /**
+   * 流式聊天（直接与智能体对话）
+   * @param {number|string} agentId - 智能体 ID
+   * @param {Object} formData - 表单数据 {prompt, attachments}
+   * @returns {Promise<Response>} 响应流
+   */
   streamChat: async (agentId, formData) => {
     const token = getToken();
     if (!token) {
@@ -329,11 +542,23 @@ export const chatApi = {
   }
 };
 
+/**
+ * 组织相关 API 接口
+ */
 export const orgApi = {
+  /**
+   * 获取组织列表
+   * @returns {Promise<any>} 组织列表
+   */
   getOrgList: async () => {
     return request('/org/list');
   },
 
+  /**
+   * 创建新组织
+   * @param {Object} orgData - 组织数据
+   * @returns {Promise<any>} 创建结果
+   */
   createOrg: async (orgData) => {
     return request('/org/create', {
       method: 'POST',
@@ -341,6 +566,11 @@ export const orgApi = {
     });
   },
 
+  /**
+   * 创建组织管理员
+   * @param {Object} adminData - 管理员数据
+   * @returns {Promise<any>} 创建结果
+   */
   createOrgAdmin: async (adminData) => {
     return request('/org/admin', {
       method: 'POST',
@@ -348,10 +578,21 @@ export const orgApi = {
     });
   },
 
+  /**
+   * 获取组织用户列表
+   * @param {number|string} orgId - 组织 ID
+   * @returns {Promise<any>} 用户列表
+   */
   getOrgUsers: async (orgId) => {
     return request(`/org/${orgId}/users`);
   },
 
+  /**
+   * 批量创建组织用户
+   * @param {number|string} orgId - 组织 ID
+   * @param {Object} usersData - 用户数据
+   * @returns {Promise<any>} 创建结果
+   */
   batchCreateOrgUsers: async (orgId, usersData) => {
     return request(`/org/${orgId}/users/batch`, {
       method: 'POST',
@@ -360,11 +601,24 @@ export const orgApi = {
   }
 };
 
+/**
+ * 审批相关 API 接口
+ */
 export const approvalApi = {
+  /**
+   * 获取待审批列表
+   * @returns {Promise<any>} 待审批列表
+   */
   getPendingApprovals: async () => {
     return request('/approval/pending');
   },
 
+  /**
+   * 审批智能体
+   * @param {number|string} id - 审批 ID
+   * @param {Object} reviewData - 审批数据 {status, categoryId, isFeatured}
+   * @returns {Promise<any>} 审批结果
+   */
   reviewApproval: async (id, reviewData) => {
     return request(`/approval/review/${id}`, {
       method: 'POST',
@@ -373,16 +627,34 @@ export const approvalApi = {
   }
 };
 
+/**
+ * 知识库相关 API 接口
+ */
 export const knowledgeApi = {
+  /**
+   * 获取文件夹列表
+   * @param {Object} [params] - 筛选参数
+   * @returns {Promise<any>} 文件夹列表
+   */
   getFolders: async (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return request(`/knowledge/folders${query ? `?${query}` : ''}`);
   },
 
+  /**
+   * 根据 ID 获取文件夹详情
+   * @param {number|string} folderId - 文件夹 ID
+   * @returns {Promise<any>} 文件夹详情
+   */
   getFolderById: async (folderId) => {
     return request(`/knowledge/folders/${folderId}`);
   },
 
+  /**
+   * 创建文件夹
+   * @param {Object} folderData - 文件夹数据
+   * @returns {Promise<any>} 创建结果
+   */
   createFolder: async (folderData) => {
     return request('/knowledge/folders', {
       method: 'POST',
@@ -390,6 +662,12 @@ export const knowledgeApi = {
     });
   },
 
+  /**
+   * 更新文件夹
+   * @param {number|string} folderId - 文件夹 ID
+   * @param {Object} folderData - 文件夹数据
+   * @returns {Promise<any>} 更新结果
+   */
   updateFolder: async (folderId, folderData) => {
     return request(`/knowledge/folders/${folderId}`, {
       method: 'PATCH',
@@ -397,26 +675,51 @@ export const knowledgeApi = {
     });
   },
 
+  /**
+   * 删除文件夹
+   * @param {number|string} folderId - 文件夹 ID
+   * @returns {Promise<any>} 删除结果
+   */
   deleteFolder: async (folderId) => {
     return request(`/knowledge/folders/${folderId}`, {
       method: 'DELETE'
     });
   },
 
+  /**
+   * 获取文件列表
+   * @param {Object} [params] - 筛选参数
+   * @returns {Promise<any>} 文件列表
+   */
   getFiles: async (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return request(`/knowledge/files${query ? `?${query}` : ''}`);
   },
 
+  /**
+   * 获取最近使用的文件列表
+   * @param {Object} [params] - 筛选参数
+   * @returns {Promise<any>} 文件列表
+   */
   getRecentFiles: async (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return request(`/knowledge/files/recent${query ? `?${query}` : ''}`);
   },
 
+  /**
+   * 根据 ID 获取文件详情
+   * @param {number|string} fileId - 文件 ID
+   * @returns {Promise<any>} 文件详情
+   */
   getFileById: async (fileId) => {
     return request(`/knowledge/files/${fileId}`);
   },
 
+  /**
+   * 获取文件上传凭证
+   * @param {Object} policyData - 策略数据
+   * @returns {Promise<any>} 上传凭证
+   */
   getUploadPolicy: async (policyData) => {
     return request('/knowledge/files/upload-policy', {
       method: 'POST',
@@ -424,6 +727,11 @@ export const knowledgeApi = {
     });
   },
 
+  /**
+   * 创建文件记录
+   * @param {Object} fileData - 文件数据
+   * @returns {Promise<any>} 创建结果
+   */
   createFile: async (fileData) => {
     return request('/knowledge/files', {
       method: 'POST',
@@ -431,16 +739,29 @@ export const knowledgeApi = {
     });
   },
 
+  /**
+   * 删除文件
+   * @param {number|string} fileId - 文件 ID
+   * @returns {Promise<any>} 删除结果
+   */
   deleteFile: async (fileId) => {
     return request(`/knowledge/files/${fileId}`, {
       method: 'DELETE'
     });
   },
 
+  /**
+   * 获取存储空间统计信息
+   * @returns {Promise<any>} 统计信息
+   */
   getStorageStats: async () => {
     return request('/knowledge/storage/stats');
   },
 
+  /**
+   * 获取智能体 Logo 列表
+   * @returns {Promise<any>} Logo 列表
+   */
   getAgentLogos: async () => {
     return request('/knowledge/system/agent-logos');
   }

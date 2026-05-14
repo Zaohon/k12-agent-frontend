@@ -19,7 +19,7 @@
 
      <div class="bg-white flex flex-col h-[calc(100vh-300px)] mt-[30px] rounded-xl overflow-hidden shadow-sm" v-loading="loading">
         <!-- 搜索筛选栏 -->
-        <!-- <div class="flex items-center justify-between px-8 pt-6 pb-4 border-b border-gray-100 shrink-0">
+        <div class="flex items-center justify-between px-8 pt-6 pb-4 border-b border-gray-100 shrink-0">
           <div class="flex items-center gap-4 flex-1">
             <div class="relative search-input-wrapper">
               <div class="search-icon-wrapper"><el-icon><Search /></el-icon></div>
@@ -48,11 +48,11 @@
             <span class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">待审核</span>
             <button class="text-xs text-gray-400 hover:text-gray-600">清除全部</button>
           </div>
-        </div> -->
+        </div>
 
         <div class="flex-1">
           <el-table :data="pendingList" style="width: 100%" class="custom-table" empty-text="当前全部处理完毕，无新的上架申请 🎉" height="100%">
-            <el-table-column label="应用标识" width="280" class-name="first-col">
+            <el-table-column label="应用标识" width="240" class-name="first-col">
               <template #default="scope">
                 <div class="flex items-center space-x-3 py-2">
                   <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0">
@@ -66,18 +66,18 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="description" label="能力描述" show-overflow-tooltip />
+            <el-table-column prop="description" label="能力描述" width="500" show-overflow-tooltip />
 
-            <el-table-column label="申请人" width="160">
+            <el-table-column label="申请人" width="240">
               <template #default="scope">
                 <div class="flex flex-col">
-                  <span class="text-sm text-gray-800">{{ scope.row.creator?.username || '-' }}</span>
-                  <span class="text-xs text-gray-400">{{ scope.row.creator?.userId || '-' }}</span>
+                  <span class="creator-name">{{ scope.row.creator?.username || '-' }}</span>
+                  <span class="creator-id">{{ scope.row.creatorId ? 'ID: ' + scope.row.creatorId : '-' }}</span>
                 </div>
               </template>
             </el-table-column>
 
-            <el-table-column label="身份" width="150" align="center">
+            <el-table-column label="身份" width="240" align="center">
               <template #default="scope">
                 <el-tag 
                   :type="scope.row.creator?.role === 'SUPER_ADMIN' ? 'danger' : scope.row.creator?.role === 'ADMIN' ? 'warning' : scope.row.creator?.role === 'TEACHER' ? 'success' : 'info'" 
@@ -90,7 +90,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="状态" width="150" align="center">
+            <el-table-column label="状态" width="240" align="center">
               <template #default="scope">
                 <el-tag 
                   v-if="scope.row.approvalStatus === 'PENDING'" 
@@ -119,9 +119,9 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" width="200" fixed="right">
+            <el-table-column label="操作" fixed="right" align="center">
               <template #default="scope">
-                <div class="flex space-x-2">
+                <div class="flex space-x-2 justify-center">
                   <template v-if="scope.row.approvalStatus === 'PENDING'">
                     <el-button size="small" class="approve-btn" @click="openReview(scope.row)">批准</el-button>
                     <el-button size="small" class="reject-btn" @click="handleReview(scope.row.id, 'REJECTED')">拒绝</el-button>
@@ -198,89 +198,17 @@
             <div>
               <h4 class="text-sm font-bold text-gray-800 mb-2">开启的能力插件</h4>
               <div class="space-y-2">
-                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <div v-for="option in capabilityOptions" :key="option.key" :class="['flex items-center justify-between p-3 rounded-lg border', currentAgent?.[option.key] ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-100']">
                   <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
-                      <img src="../../images/earth.png" class="w-3.5 h-3.5" alt="web" />
+                    <div class="w-6 h-6 rounded flex items-center justify-center" :style="{ backgroundColor: option.bgColor }">
+                      <img :src="option.image" class="w-auto h-3" :alt="option.alt" />
                     </div>
                     <div>
-                      <div class="text-xs font-medium text-gray-800">联网搜索</div>
-                      <div class="text-xs text-gray-400">实时搜索网络最新信息并提高回复的时效性。</div>
+                      <div class="text-xs font-medium text-gray-800">{{ option.label }}</div>
+                      <div class="text-xs text-gray-400">{{ option.description }}</div>
                     </div>
                   </div>
-                  <div v-if="currentAgent?.enableWebSearch" class="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
-                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-                </div>
-                
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
-                      <img src="../../images/web-read.png" class="w-3.5 h-3.5" alt="web-parse" />
-                    </div>
-                    <div>
-                      <div class="text-xs font-medium text-gray-800">网页解析</div>
-                      <div class="text-xs text-gray-400">提取网页信息，模型可分析并使用网络信息辅助回复</div>
-                    </div>
-                  </div>
-                  <div v-if="currentAgent?.enableWebParse" class="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
-                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-                </div>
-                
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded bg-purple-100 flex items-center justify-center">
-                      <img src="../../images/think.png" class="w-3.5 h-3.5" alt="think" />
-                    </div>
-                    <div>
-                      <div class="text-xs font-medium text-gray-800">深度思考</div>
-                      <div class="text-xs text-gray-400">启用逻辑推理模型进行多轮思考，处理复杂任务。</div>
-                    </div>
-                  </div>
-                  <div v-if="currentAgent?.enableDeepThink" class="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
-                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-                </div>
-                
-                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded bg-orange-100 flex items-center justify-center">
-                      <img src="../../images/upload-file.png" class="w-3.5 h-3.5" alt="file" />
-                    </div>
-                    <div>
-                      <div class="text-xs font-medium text-gray-800">文档上传</div>
-                      <div class="text-xs text-gray-400">支持用户上传文档，模型可分析并使用其中的信息</div>
-                    </div>
-                  </div>
-                  <div v-if="currentAgent?.enableFileUpload" class="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
-                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-                </div>
-                
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded bg-gray-200 flex items-center justify-center">
-                      <img src="../../images/database.png" class="w-3.5 h-3.5" alt="kb" />
-                    </div>
-                    <div>
-                      <div class="text-xs font-medium text-gray-800">专属知识库</div>
-                      <div class="text-xs text-gray-400">读取知识库信息，支持PDF、Word等多种格式。</div>
-                    </div>
-                  </div>
-                  <div v-if="currentAgent?.enableKnowledgeBase" class="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
-                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
+                  <img :src="currentAgent?.[option.key] ? selectIcon : noSelectIcon" class="w-4 h-4" alt="select" />
                 </div>
               </div>
             </div>
@@ -289,11 +217,6 @@
             <div>
               <h4 class="text-sm font-bold text-gray-800 mb-2">适用模型</h4>
               <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div class="w-6 h-6 rounded bg-gray-100 flex items-center justify-center">
-                  <svg class="w-3.5 h-3.5 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                </div>
                 <span class="text-sm text-gray-700">{{ currentAgent?.model || '-' }}</span>
               </div>
             </div>
@@ -302,14 +225,14 @@
             <div>
               <h4 class="text-sm font-bold text-gray-800 mb-2">访问权限</h4>
               <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div class="w-6 h-6 rounded bg-gray-100 flex items-center justify-center">
+                <div class="w-6 h-6 rounded flex items-center justify-center">
                   <img src="../../images/internal.png" class="w-3.5 h-3.5" alt="visibility" />
                 </div>
-                <span class="text-sm text-gray-700">{{ currentAgent?.visibility === 'ORG_VISIBLE' ? '公开 · 所有人可见' : '仅自己可见' }}</span>
+                <span class="text-sm text-gray-700">{{ getVisibilityText(currentAgent?.visibility) }}</span>
               </div>
             </div>
             
-            <!-- 分配分类目录 -->
+            <!-- 分配分类目录
             <div class="pt-2 border-t border-gray-100">
               <el-form :model="reviewForm" label-position="top">
                 <el-form-item label="分配分类目录" class="mb-2">
@@ -327,7 +250,7 @@
                   </div>
                 </el-form-item>
               </el-form>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -336,7 +259,10 @@
         <div class="flex items-center justify-end gap-3">
           <el-button @click="showReviewDialog = false" class="close-btn">关闭</el-button>
           <el-button @click="handleReview(currentAgent?.id, 'REJECTED')" class="reject-dialog-btn">拒绝</el-button>
-          <el-button @click="submitApproval" :loading="reviewing" class="approve-dialog-btn">通过审批</el-button>
+          <el-button @click="submitApproval" :loading="reviewing" class="approve-dialog-btn">
+            <img src="@/images/pass.png" class="w-4 h-auto" style="margin-right: 10px;" alt="check" />
+            通过审批
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -348,6 +274,62 @@ import { ref, watch, onMounted } from 'vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { agentApi, categoryApi } from '../../api/api'
+
+const selectIcon = new URL('../../images/select-icon.png', import.meta.url).href
+const noSelectIcon = new URL('../../images/no-select-icon.png', import.meta.url).href
+
+const visibilityMap: Record<string, string> = {
+  'PUBLIC': '公开·所有人可使用',
+  'ORG_VISIBLE': '组织·组织内可见',
+  'PRIVATE': '私有·仅自己可见'
+}
+
+const getVisibilityText = (visibility: string | undefined) => {
+  return visibility ? (visibilityMap[visibility] || '私有·仅自己可见') : '私有·仅自己可见'
+}
+
+const capabilityOptions = [
+  {
+    key: 'enableWebSearch',
+    label: '联网搜索',
+    description: '实时搜索网络最新信息并提高回复的时效性。',
+    bgColor: '#DBEAFE',
+    image: new URL('@/images/internal-blue.png', import.meta.url).href,
+    alt: 'web'
+  },
+  {
+    key: 'enableWebParse',
+    label: '网页解析',
+    description: '提取网页信息，模型可分析并使用网络信息辅助回复',
+    bgColor: '#BEEBEE',
+    image: new URL('@/images/web-read.png', import.meta.url).href,
+    alt: 'parse'
+  },
+  {
+    key: 'enableDeepThink',
+    label: '深度思考',
+    description: '启用逻辑推理模型进行多轮思考，处理复杂任务。',
+    bgColor: '#F3E8FF',
+    image: new URL('@/images/think.png', import.meta.url).href,
+    alt: 'deep'
+  },
+  {
+    key: 'enableFileUpload',
+    label: '文档上传',
+    description: '支持用户上传文档，模型可分析并使用其中的信息',
+    bgColor: '#FFF7ED',
+    image: new URL('@/images/upload-file.png', import.meta.url).href,
+    alt: 'file'
+  },
+  {
+    key: 'enableKnowledgeBase',
+    label: '专属知识库',
+    description: '读取知识库信息，支持PDF、Word等多种格式。',
+    bgColor: '#D6F7CF',
+    image: new URL('@/images/database-green.png', import.meta.url).href,
+    alt: 'kb'
+  }
+]
 
 const userStore = useUserStore()
 const pendingList = ref<any[]>([])
@@ -401,6 +383,7 @@ const openReview = (agent: any) => {
     categoryId: null,
     isFeatured: false
   }
+  console.log('当前审批数据:', agent)
   showReviewDialog.value = true
 }
 
@@ -424,7 +407,13 @@ const submitApproval = async () => {
 }
 
 const viewDetail = (agent: any) => {
-  ElMessage.info('查看详情功能开发中')
+  currentAgent.value = agent
+  reviewForm.value = {
+    categoryId: null,
+    isFeatured: false
+  }
+  console.log('当前审批数据:', agent)
+  showReviewDialog.value = true
 }
 
 const formatDate = (dateStr: string) => {
@@ -675,6 +664,7 @@ onMounted(() => {
   color: #6B7280;
   font-size: 14px;
   font-weight: 500;
+  height: 36px;
 }
 
 .reject-dialog-btn {
@@ -685,6 +675,7 @@ onMounted(() => {
   color: #DC2626;
   font-size: 14px;
   font-weight: 500;
+  height: 36px;
 }
 
 .approve-dialog-btn {
@@ -695,9 +686,30 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
   border: none;
+  height: 36px;
 }
 
 .approve-dialog-btn:hover {
   opacity: 0.9;
+}
+
+.creator-name {
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: #2E3339;
+}
+
+.creator-id {
+  font-family: 'Noto Sans SC';
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: #5A6066;
 }
 </style>
