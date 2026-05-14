@@ -1,0 +1,60 @@
+/* 通用操作按钮样式 - 编辑和删除 */
+
+/* 删除按钮 */
+.common-delete-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #9ca3af;
+  opacity: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.item-container:hover .common-delete-btn {
+  opacity: 1;
+}
+
+.common-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* 编辑按钮 */
+.common-edit-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #9ca3af;
+  opacity: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.item-container:hover .common-edit-btn {
+  opacity: 1;
+}
+
+.common-edit-btn:hover {
+  color: #314DE2;
+  background: rgba(49, 77, 226, 0.1);
+}
+
+/* 内联编辑输入框 */
+.common-edit-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #314DE2;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  background: white;
+}
