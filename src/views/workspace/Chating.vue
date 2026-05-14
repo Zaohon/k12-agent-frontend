@@ -47,7 +47,7 @@
         <h1 class="welcome-title">{{ agentInfo?.title }}</h1>
         <p class="welcome-desc">{{ agentInfo?.description || '暂无详细介绍' }}</p>
         <div class="welcome-msg">
-          {{ agentInfo?.welcomeMsg || '您好！我是您的专属辅教助手。' }}
+          {{ agentInfo?.welcomeMsg || '您好，我是您的专属辅教助手。' }}
         </div>
       </div>
 
@@ -57,46 +57,12 @@
       </div>
 
       <!-- 有消息时显示对话 -->
-      <div v-else v-for="(msg, idx) in showMessages" :key="idx" class="chat-message-row" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-        <div class="chat-message-box" :class="msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'">
-          <div class="chat-avatar" :class="msg.role === 'user' ? 'user-avatar' : 'assistant-avatar'">
-            <el-icon class="icon" v-if="msg.role === 'user'"><User /></el-icon>
-            <el-icon class="icon" v-else><Monitor /></el-icon>
-          </div>
-          <div class="chat-bubble-wrapper" :class="msg.role === 'user' ? 'align-end' : 'align-start'">
-            <div class="chat-bubble" :class="msg.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
-              <div v-if="msg.isThinking" class="thinking-card">
-                <span class="thinking-text">正在思考中...</span>
-              </div>
-              <pre v-else class="message-content">{{ msg.content }}</pre>
-            </div>
-            <!-- 用户消息显示附件卡片 -->
-            <div v-if="msg.role === 'user' && msg.attachments && msg.attachments.length > 0" class="message-attachments">
-              <div v-for="(item, index) in msg.attachments" :key="index" class="message-attachment-card">
-                <div class="attachment-card-background">
-                  <div class="attachment-card-icon-container">
-                    <span class="attachment-card-icon">{{ getAttachmentIcon(item.type) }}</span>
-                  </div>
-                </div>
-                <div class="attachment-card-content">
-                  <div class="attachment-card-name-row">
-                    <span class="attachment-card-name">{{ item.name || '附件' }}</span>
-                  </div>
-                  <div class="attachment-card-info-row">
-                    <div class="attachment-card-size-container">
-                      <span class="attachment-card-size">{{ formatFileSize(item.size) }}</span>
-                    </div>
-                    <div class="attachment-card-dot"></div>
-                    <div class="attachment-card-status-container">
-                      <span class="attachment-card-status">解析完成</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ChatMessage
+        v-else
+        v-for="(msg, idx) in showMessages"
+        :key="idx"
+        :message="msg"
+      />
 
       <div v-if="isStreaming && messages.length === 0" class="streaming-box">
         <div class="stream-avatar">
@@ -145,8 +111,7 @@
           </button>
           <div v-if="isRecording" class="icon-btn recording-btn" @click="stopRecording">
             <div class="icon-inner recording-indicator"></div>
-          </div>
-          <el-dropdown v-else trigger="click" @command="handleAudioCommand">
+          </div>          <el-dropdown v-else trigger="click" @command="handleAudioCommand">
             <button class="icon-btn">
               <div class="icon-inner">
                 <img src="@/images/chatinit-vedio.png" alt="音频" />
@@ -191,7 +156,7 @@
       
       <!-- 提示文字 -->
       <div class="hint-container">
-        <span class="hint-text-bottom">AI生成的内容可能存在错误，请注意甄别核实。</span>
+        <span class="hint-text-bottom">AI生成的内容可能存在错误，请甄别核实。</span>
       </div>
     </footer>
 
@@ -218,8 +183,9 @@ import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } fro
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
 import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
-import { useAttachment, formatFileSize } from '@/hooks/useAttachment'
+import { useAttachment } from '@/hooks/useAttachment'
 import { largeChatData } from '@/mock/large-chat-data'
+import ChatMessage from '@/components/ChatMessage.vue'
 
 const props = defineProps({
   agentId: {
@@ -484,7 +450,7 @@ const handleSend = async () => {
             try {
               const parsed = JSON.parse(line)
               if (parsed.error) {
-                aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+                aiMsg.content = '错误： ' + (parsed.error.message || '服务器错误')
                 receivedContent = true
                 reader.releaseLock()
                 return
@@ -762,130 +728,6 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
   color: #5A6066;
-}
-
-/* 消息行 */
-.chat-message-row {
-  display: flex;
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.justify-end {
-  justify-content: flex-end;
-}
-
-.justify-start {
-  justify-content: flex-start;
-}
-
-.chat-message-box {
-  display: flex;
-  max-width: 70%;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-/* 头像 */
-.chat-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.user-avatar {
-  background: linear-gradient(135deg, #314DE2, #5B6BF1);
-}
-
-.assistant-avatar {
-  background: #FFFFFF;
-  border: 1px solid rgba(0,0,0,0.06);
-}
-
-.icon {
-  font-size: 16px;
-}
-
-.user-avatar .icon {
-  color: white;
-}
-
-/* 气泡 */
-.chat-bubble {
-  padding: 10px 14px;
-  border-radius: 16px;
-  font-size: 14px;
-  line-height: 1.5;
-  position: relative;
-  word-break: break-word;
-}
-
-.message-content {
-  margin: 0;
-  white-space: pre-wrap;
-  font-family: inherit;
-}
-
-.user-bubble {
-  background: linear-gradient(135deg, #314DE2, #6144D3);
-  color: #fff;
-  border-top-right-radius: 6px;
-  box-shadow: 0 4px 10px rgba(49,77,226,0.12);
-}
-
-.assistant-bubble {
-  background: #FFFFFF;
-  color: #2E3339;
-  border-top-left-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.06);
-}
-
-/* 加载中 */
-.streaming-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.stream-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(0,0,0,0.06);
-}
-
-.stream-text {
-  animation: pulse 1.5s infinite ease-in-out;
-  font-size: 13px;
-}
-
-@keyframes pulse {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.thinking-card {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  background: rgba(91, 107, 241, 0.08);
-  border-radius: 8px;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.thinking-text {
-  font-size: 14px;
-  color: #5B6BF1;
 }
 
 /* 底部输入 */
@@ -1353,218 +1195,6 @@ onMounted(() => {
   align-items: center;
   text-align: center;
   color: #767B82;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-}
-
-/* 消息气泡包装器 */
-.chat-bubble-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.chat-bubble-wrapper.align-end {
-  align-items: flex-end;
-}
-
-/* 消息附件区域 */
-.message-attachments {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 消息附件卡片 */
-.message-attachment-card {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 12px;
-  gap: 12px;
-  width: 256px;
-  background: #F2F4F8;
-  border: 1px solid #E4E8EF;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-}
-
-/* 附件卡片左侧背景 */
-.attachment-card-background {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0px;
-  width: 40px;
-  height: 40px;
-  background: #DBEAFE;
-  border-radius: 8px;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-}
-
-/* 附件卡片图标容器 */
-.attachment-card-icon-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0px;
-  width: 16px;
-  height: 20px;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-}
-
-/* 附件卡片图标 */
-.attachment-card-icon {
-  width: 16px;
-  height: 20px;
-  background: #2563EB;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-}
-
-/* 附件卡片内容 */
-.attachment-card-content {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0px;
-  gap: 2px;
-  width: 178px;
-  height: 41px;
-  flex: none;
-  order: 1;
-  flex-grow: 1;
-}
-
-/* 附件卡片名称行 */
-.attachment-card-name-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0px;
-  width: 178px;
-  height: 20px;
-  flex: none;
-  order: 0;
-  align-self: stretch;
-  flex-grow: 0;
-}
-
-/* 附件卡片名称 */
-.attachment-card-name {
-  width: 178px;
-  height: 20px;
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  display: flex;
-  align-items: center;
-  color: #2E3339;
-  flex: none;
-  order: 0;
-  align-self: stretch;
-  flex-grow: 0;
-}
-
-/* 附件卡片信息行 */
-.attachment-card-info-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0px;
-  gap: 8px;
-  width: 178px;
-  height: 19px;
-  flex: none;
-  order: 1;
-  align-self: stretch;
-  flex-grow: 0;
-}
-
-/* 附件卡片大小容器 */
-.attachment-card-size-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0px;
-  width: 35px;
-  height: 16px;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-}
-
-/* 附件卡片大小 */
-.attachment-card-size {
-  width: 35px;
-  height: 16px;
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  display: flex;
-  align-items: center;
-  color: #767B82;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-}
-
-/* 附件卡片分隔点 */
-.attachment-card-dot {
-  width: 4px;
-  height: 4px;
-  background: #DEE3EA;
-  border-radius: 9999px;
-  flex: none;
-  order: 1;
-  flex-grow: 0;
-}
-
-/* 附件卡片状态容器 */
-.attachment-card-status-container {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 2px 6px;
-  width: 52px;
-  height: 19px;
-  background: #E7EAFF;
-  border: 1px solid #D9DDFF;
-  border-radius: 4px;
-  flex: none;
-  order: 2;
-  flex-grow: 0;
-}
-
-/* 附件卡片状态 */
-.attachment-card-status {
-  width: 40px;
-  height: 15px;
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 10px;
-  line-height: 15px;
-  display: flex;
-  align-items: center;
-  color: #314DE2;
   flex: none;
   order: 0;
   flex-grow: 0;

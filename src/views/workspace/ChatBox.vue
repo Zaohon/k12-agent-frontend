@@ -40,7 +40,7 @@
               <input
                 v-if="editingSessionId === s.id"
                 v-model="editSessionName"
-                class="session-edit-input"
+                class="common-edit-input"
                 @blur="confirmEditSession"
                 @keydown.enter.prevent="confirmEditSession"
                 @click.stop
@@ -49,13 +49,13 @@
               <div v-else class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0,12) + '...' : s.topic) : '新对话' }}</div>
                 <div
                   v-if="editingSessionId !== s.id"
-                  class="edit-btn"
+                  class="common-edit-btn"
                   @click.stop="openEditDialog(s)"
                 >
                   <el-icon><Edit /></el-icon>
                 </div>
                 <div
-                  class="delete-btn"
+                  class="common-delete-btn"
                   @click.stop="deleteSession(s.id)"
                 >
                   <el-icon><Delete /></el-icon>
@@ -78,7 +78,7 @@
         :userInput="userInput"
         :activeSession="activeSession"
         :commonPrompts="commonPrompts"
-        @send="handleSend"
+        @send-message="handleSend"
         @refreshSessions="refreshSessions"
       />
     </main>
@@ -100,8 +100,8 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting, Delete, Edit } from '@element-plus/icons-vue'
 import { useUserStore } from '../../store/user'
@@ -179,6 +179,9 @@ const createNewSession = async () => {
 }
 
 const selectSession = (id) => {
+  if (editingSessionId.value !== null) {
+    confirmEditSession()
+  }
   activeSessionId.value = id
   messages.value = []
 }
@@ -202,16 +205,18 @@ const deleteSession = async (id) => {
 }
 
 const editSessionName = ref('')
-const editingSessionId = ref(null)
-const editInputRef = ref(null)
+const editingSessionId = ref<number | null>(null)
+const editInputRef = ref<HTMLInputElement | null>(null)
 
 const openEditDialog = (session) => {
   editingSessionId.value = session.id
   editSessionName.value = session.topic || ''
   nextTick(() => {
-    if (editInputRef.value) {
-      editInputRef.value.focus()
-    }
+    setTimeout(() => {
+      if (editInputRef.value) {
+        editInputRef.value.focus()
+      }
+    }, 100)
   })
 }
 
@@ -396,10 +401,21 @@ const handleChatInitSend = async ({ content, attachments }) => {
   }
 }
 
+const handleGlobalClick = (e: MouseEvent) => {
+  if (editingSessionId.value !== null) {
+    confirmEditSession()
+  }
+}
+
 // 组件挂载时加载会话列表
 onMounted(() => {
   initFromUrl()
   loadSessions()
+  document.addEventListener('click', handleGlobalClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleGlobalClick)
 })
 
 </script>
@@ -537,64 +553,16 @@ onMounted(() => {
   object-fit: contain;
 }
 
-.delete-btn {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: #9ca3af;
-  opacity: 0;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
 .session-item:hover {
   background: rgba(49, 77, 226, 0.03);
 }
 
-.session-item:hover .delete-btn {
+.session-item:hover .common-delete-btn {
   opacity: 1;
 }
 
-.delete-btn:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.edit-btn {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: #9ca3af;
-  opacity: 0;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.session-item:hover .edit-btn {
+.session-item:hover .common-edit-btn {
   opacity: 1;
-}
-
-.edit-btn:hover {
-  color: #314DE2;
-  background: rgba(49, 77, 226, 0.1);
-}
-
-.session-edit-input {
-  flex: 1;
-  padding: 4px 8px;
-  border: 1px solid #314DE2;
-  border-radius: 4px;
-  font-size: 13px;
-  outline: none;
-  background: white;
 }
 
 .session-container {
@@ -828,4 +796,9 @@ onMounted(() => {
   overflow-y: auto;
   order: 2;
 }
+</style>
+
+<style>
+/* 导入通用操作按钮样式 */
+@import '../../styles/common-actions.css';
 </style>
