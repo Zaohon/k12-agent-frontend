@@ -128,7 +128,7 @@ const filteredCategories = computed(() => {
   )
 })
 
-const activeCategory = ref('精选页')
+const activeCategory = ref('')
 
 watch(activeCategory, (newVal) => {
   emit('select-category', newVal)
@@ -270,9 +270,6 @@ const loadCategories = async () => {
     categories.value = uniqueCategories.sort((a: { weight: number }, b: { weight: number }) => {
       return (b.weight || 0) - (a.weight || 0)
     })
-    if (categories.value.length > 0 && !activeCategory.value) {
-      activeCategory.value = categories.value[0].name
-    }
   } catch (error) {
     ElMessage.error('加载分类列表失败')
   } finally {

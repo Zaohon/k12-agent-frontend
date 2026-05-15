@@ -12,13 +12,16 @@ import CategoryManageStarContent from './CategoryManageStarContent.vue'
 import CategoryManageRecommendContent from './CategoryManageRecommendContent.vue'
 import CategoryManageNormalContent from './CategoryManageNormalContent.vue'
 
-const selectedCategory = ref('精选页')
+const selectedCategory = ref('')
 
 const handleSelectCategory = (category: string) => {
   selectedCategory.value = category
 }
 
 const currentContentComponent = computed(() => {
+  if (!selectedCategory.value) {
+    return null
+  }
   switch (selectedCategory.value) {
     case '精选页':
       return CategoryManageStarContent

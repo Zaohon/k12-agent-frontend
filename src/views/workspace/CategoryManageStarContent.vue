@@ -80,65 +80,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 卡片B：推荐 -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-left">
-          <div class="section-title-row">
-            <img :src="iconCurated" class="section-icon" />
-            <div class="section-title">推荐</div>
-          </div>
-          <div class="section-desc">
-            管理精选页下推荐栏展示的智能体，最多展示3个。
-          </div>
-        </div>
-
-        <div class="section-right">
-          <button class="btn-delete" @click="handleDelete">删除</button>
-          <button class="btn-link">
-            <div class="link-icon">
-              <span>+</span>
-            </div>
-            关联智能体
-          </button>
-        </div>
-      </div>
-
-      <!-- 智能体列表（可拖拽排序 + 空卡片） -->
-      <div class="agent-card-grid">
-        <draggable
-          v-model="section2Agents"
-          item-key="id"
-          ghost-class="ghost"
-          animation="200"
-          class="draggable-container"
-        >
-          <template #item="{ element: agent }">
-            <div
-              class="agent-card"
-              :class="{ selected: isAgentSelected(agent.id) }"
-              @click="toggleAgentSelection(agent.id)"
-            >
-              <div class="agent-left">
-                <img src="@/images/category-content-drag.png" class="agent-drag-icon" />
-                <div class="agent-logo"></div>
-                <div class="agent-info">
-                  <div class="agent-name">{{ agent.name }}</div>
-                  <div class="agent-id">ID: {{ agent.id }}</div>
-                  <div class="agent-desc">{{ agent.desc }}</div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </draggable>
-
-        <!-- 空卡片（最多3个智能体） -->
-        <div v-if="section2Agents.length < 3" class="agent-card-empty">
-          <span>+ 关联智能体</span>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -146,7 +87,6 @@
 import { ref, computed } from 'vue'
 import draggable from 'vuedraggable'
 import iconRecommend from '@/images/category-content-recommend.png'
-import iconCurated from '@/images/category-content-curated.png'
 
 interface Agent {
   id: string
@@ -179,22 +119,10 @@ const section1Agents = ref<Agent[]>([
   }
 ])
 
-// 卡片B：推荐 - 智能体列表
-const section2Agents = ref<Agent[]>([])
-
-// 合并智能体列表和空卡片（卡片A）
+// 合并智能体列表和空卡片
 const section1DisplayItems = computed(() => {
   const items: Array<{ type: 'agent' | 'empty', data?: Agent }> = section1Agents.value.map(agent => ({ type: 'agent', data: agent }))
   if (section1Agents.value.length < 6) {
-    items.push({ type: 'empty' })
-  }
-  return items
-})
-
-// 合并智能体列表和空卡片（卡片B）
-const section2DisplayItems = computed(() => {
-  const items: Array<{ type: 'agent' | 'empty', data?: Agent }> = section2Agents.value.map(agent => ({ type: 'agent', data: agent }))
-  if (section2Agents.value.length < 3) {
     items.push({ type: 'empty' })
   }
   return items
@@ -219,7 +147,6 @@ const handleDelete = () => {
   if (idsToDelete.length === 0) return
 
   section1Agents.value = section1Agents.value.filter(a => !idsToDelete.includes(a.id))
-  section2Agents.value = section2Agents.value.filter(a => !idsToDelete.includes(a.id))
   selectedAgentIds.value = new Set()
 }
 
