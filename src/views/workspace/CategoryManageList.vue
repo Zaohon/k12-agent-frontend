@@ -107,6 +107,11 @@ import { categoryApi } from '@/api/api'
 
 const emit = defineEmits(['select-category'])
 
+interface Category {
+  id: number
+  name: string
+}
+
 // 日志输出开关，设置为 false 可关闭所有日志
 const ENABLE_LOG = true
 
@@ -131,7 +136,8 @@ const filteredCategories = computed(() => {
 const activeCategory = ref('')
 
 watch(activeCategory, (newVal) => {
-  emit('select-category', newVal)
+  const category = categories.value.find(c => c.name === newVal)
+  emit('select-category', category)
 })
 
 const selectCategory = (name: string) => {
@@ -439,7 +445,7 @@ onUnmounted(() => {
   height: 40px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.5s ease;
+  transition: background 0.5s ease;
   flex-shrink: 0;
 }
 

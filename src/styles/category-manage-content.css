@@ -1,0 +1,295 @@
+/* 右侧内容整体 */
+.category-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  gap: 20px;
+  flex: 1;
+  height: 1108px;
+  background: #f2f4f8;
+  overflow-y: auto;
+}
+
+/* 顶部卡片 */
+.top-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  width: 100%;
+  max-width: 1279px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+}
+
+.top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.top-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.top-title {
+  font-family: "Noto Sans SC";
+  font-weight: 700;
+  font-size: 20px;
+  color: #2e3339;
+}
+
+.top-desc {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 14px;
+  color: #5a6066;
+}
+
+.top-right {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-cancel, .btn-save {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: "Noto Sans SC";
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #f5f6f7;
+  border: 1px solid #adb2b9;
+  color: #5a6066;
+}
+
+.btn-save {
+  background: #314de2;
+  border: 1px solid #314de2;
+  color: #fff;
+}
+
+/* 模块卡片 */
+.section-card {
+  width: 100%;
+  max-width: 1279px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.section-left {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  width: 22px;
+  height: 19px;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-family: "Noto Sans SC";
+  font-weight: 700;
+  font-size: 16px;
+  color: #2e3339;
+}
+
+.section-desc {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 14px;
+  color: #5a6066;
+}
+
+.section-right {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-delete, .btn-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: "Noto Sans SC";
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  gap: 6px;
+}
+
+.btn-delete {
+  background: #fff;
+  border: 1px solid #ff4d4f;
+  color: #ff4d4f;
+}
+
+.btn-link {
+  background: #314de2;
+  border: 1px solid #314de2;
+  color: #fff;
+}
+
+.link-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* 智能体卡片布局 */
+.agent-card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.draggable-container {
+  display: contents;
+}
+
+.agent-card {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  width: 48%;
+  min-width: 300px;
+  height: 80px;
+  background: #f8f9fd;
+  border: 1px solid rgba(173, 178, 185, 0.3);
+  border-radius: 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.agent-card:hover {
+  border-color: #314de2;
+}
+
+.agent-card.selected {
+  border-color: #ff4d4f;
+  background: rgba(255, 77, 79, 0.05);
+}
+
+.agent-card.ghost {
+  opacity: 0.5;
+  background: #e8f4ff;
+  border: 2px dashed #314de2;
+}
+
+.agent-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.agent-drag-icon {
+  width: 10px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.agent-drag-icon:active {
+  cursor: grabbing;
+}
+
+.agent-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #314de2 0%, #6144d3 100%);
+  border-radius: 12px;
+}
+
+.agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-name {
+  font-family: "Noto Sans SC";
+  font-weight: 700;
+  font-size: 14px;
+  color: #2e3339;
+}
+
+.agent-id {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 12px;
+  color: #5a6066;
+}
+
+.agent-desc {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 12px;
+  color: #8a8f96;
+}
+
+.agent-card-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48%;
+  min-width: 300px;
+  height: 80px;
+  background: #fff;
+  border: 2px dashed rgba(173, 178, 185, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.agent-card-empty span {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 14px;
+  color: #8a8f96;
+}
