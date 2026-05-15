@@ -193,7 +193,9 @@
               <!-- 图标和模型选择 -->
               <div class="grid grid-cols-2 gap-6">
                 <div>
-                  <label class="block text-sm font-medium text-[#475569] mb-1.5">模型</label>
+                  <label class="block text-sm font-medium text-[#475569] mb-1.5">
+                    <span class="text-[#EF4444]">*</span> 模型
+                  </label>
                   <input 
                     v-model="currentAgent.model" 
                     class="w-full px-3 py-2.5 text-sm bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2]"
@@ -259,23 +261,24 @@
           </div>
 
           <div class="p-6 space-y-4">
-            <div class="bg-white border border-[#F1F5F9] rounded-2xl shadow-lg" style="box-shadow: 0px 8px 10px -6px rgba(226, 232, 240, 0.5), 0px 20px 25px -5px rgba(226, 232, 240, 0.5)">
+            <div :class="['bg-white border-2 rounded-2xl shadow-lg transition-all preview-input-container', isPreviewInputFocused ? 'border-[#314DE2]' : 'border-[#F1F5F9]']">
               <div class="flex items-center gap-2 px-4 py-1.5">
-                <img src="@/images/link-file.png" class="w-auto h-5" alt="attach" style="margin: 10px;">
-                <img src="@/images/internal-grey.png" class="w-auto h-5" alt="image" style="margin: 10px;">
-                <img src="@/images/speak.png" class="w-auto h-5" alt="link" style="margin: 10px;">
+                <img src="@/images/link-file.png" class="w-auto h-5 preview-input-icon" alt="attach">
+                <img src="@/images/internal-grey.png" class="w-auto h-5 preview-input-icon" alt="image">
+                <img src="@/images/speak.png" class="w-auto h-5 preview-input-icon" alt="link">
               </div>
               <div class="flex items-end gap-3 px-4 pb-4">
                 <textarea 
                   v-model="previewInput"
-                  style="line-height: 30px;"
                   ref="previewInputRef"
-                  class="flex-1 text-sm bg-transparent border-0 focus:outline-none resize-none"
+                  class="flex-1 text-sm bg-transparent border-0 focus:outline-none resize-none preview-textarea"
                   rows="3"
                   placeholder="请尽可能清晰地输入您的问题，shift+回车可换行。"
                   @input="autoResizePreviewInput"
+                  @focus="isPreviewInputFocused = true"
+                  @blur="isPreviewInputFocused = false"
                 ></textarea>
-                <button class="w-10 h-10 bg-gradient-to-br from-[#314DE2] to-[#6144D3] rounded-xl flex items-center justify-center flex-shrink-0" style="box-shadow: 0px 4px 6px -4px rgba(224, 231, 255, 1), 0px 10px 15px -3px rgba(224, 231, 255, 1)">
+                <button class="w-10 h-10 bg-gradient-to-br from-[#314DE2] to-[#6144D3] rounded-xl flex items-center justify-center flex-shrink-0 send-button">
                   <img src="@/images/send.png" class="w-auto h-4 transform" alt="send">
                 </button>
               </div>
@@ -365,6 +368,7 @@ const showIconPicker = ref(false)
 const searchText = ref('')
 const previewInput = ref('')
 const previewInputRef = ref(null)
+const isPreviewInputFocused = ref(false)
 const publishVisibility = ref('ORG_VISIBLE')
 
 const agentLogos = ref([])
@@ -551,8 +555,8 @@ const createNew = () => {
 }
 
 const saveAgent = async () => {
-  if (!currentAgent.value.title || !currentAgent.value.systemPrompt) {
-    ElMessage.warning('智能体名称与核心提示词(System Prompt)为必填项！')
+  if (!currentAgent.value.title || !currentAgent.value.description || !currentAgent.value.systemPrompt || !currentAgent.value.model) {
+    ElMessage.warning('智能体名称、智能体介绍、核心提示词(System Prompt)与模型为必填项！')
     return
   }
   saving.value = true
@@ -708,5 +712,27 @@ onMounted(async () => {
 .prompt-textarea {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+textarea.prompt-textarea:focus {
+  border-color: #314DE2 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px #314DE2 !important;
+}
+
+.preview-input-container {
+  box-shadow: 0px 8px 10px -6px rgba(226, 232, 240, 0.5), 0px 20px 25px -5px rgba(226, 232, 240, 0.5);
+}
+
+.preview-input-icon {
+  margin: 10px;
+}
+
+.preview-textarea {
+  line-height: 30px;
+}
+
+.send-button {
+  box-shadow: 0px 4px 6px -4px rgba(224, 231, 255, 1), 0px 10px 15px -3px rgba(224, 231, 255, 1);
 }
 </style>

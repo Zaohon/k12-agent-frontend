@@ -17,7 +17,7 @@
          </el-button> -->
       </div>
 
-     <div class="bg-white flex flex-col h-[calc(100vh-300px)] mt-[30px] rounded-xl overflow-hidden shadow-sm" v-loading="loading">
+     <div class="bg-white flex flex-col h-[calc(100vh-272px)] mt-[30px] rounded-xl overflow-hidden shadow-sm" v-loading="loading">
         <!-- 搜索筛选栏 -->
         <div class="flex items-center justify-between px-8 pt-6 pb-4 border-b border-gray-100 shrink-0">
           <div class="flex items-center gap-4 flex-1">
@@ -25,19 +25,20 @@
               <div class="search-icon-wrapper"><el-icon><Search /></el-icon></div>
               <input 
                 type="text" 
+                v-model="searchText"
                 placeholder="按智能体名称或ID搜索..." 
                 class="search-input"
               />
             </div>
-            <el-select v-model="statusFilter" placeholder="所有状态" popper-class="filter-select-popper" class="filter-select">
+            <el-select v-model="statusFilter" placeholder="所有状态" popper-class="filter-select-popper" class="filter-select" @change="onFilterChange">
               <el-option label="所有状态" value="" />
               <el-option label="待审核" value="PENDING" />
               <el-option label="已通过" value="APPROVED" />
               <el-option label="已拒绝" value="REJECTED" />
             </el-select>
-            <el-select v-model="roleFilter" placeholder="所有身份" popper-class="filter-select-popper" class="filter-select">
+            <el-select v-model="roleFilter" placeholder="所有身份" popper-class="filter-select-popper" class="filter-select" @change="onFilterChange">
               <el-option label="所有身份" value="" />
-              <el-option label="超级管理员" value="SUPER_ADMIN" />
+              <el-option v-if="isSuperAdmin" label="超级管理员" value="SUPER_ADMIN" />
               <el-option label="组织管理员" value="SCHOOL_ADMIN" />
               <el-option label="教师" value="TEACHER" />
               <el-option label="学生" value="STUDENT" />
@@ -47,15 +48,15 @@
           <div class="flex items-center gap-3">
             <span class="text-xs text-gray-500">当前筛选:</span>
             <span class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">待审核</span>
-            <button class="text-xs text-gray-400 hover:text-gray-600">清除全部</button>
+            <button class="text-xs text-gray-400 hover:text-gray-600" @click="clearAll">清除全部</button>
           </div>
         </div>
 
         <div class="flex-1">
-          <el-table :data="pendingList" style="width: 100%" class="custom-table" empty-text="当前全部处理完毕，无新的上架申请 🎉" height="100%">
-            <el-table-column label="应用标识" width="240" class-name="first-col">
+          <el-table :data="pagedList" class="custom-table full-width-table" empty-text="当前全部处理完毕，无新的上架申请 🎉" height="100%">
+            <el-table-column label="应用标识" width="240">
               <template #default="scope">
-                <div class="flex items-center space-x-3 py-2">
+                <div class="flex items-center space-x-3 py-2 first-col">
                   <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0">
                     <img :src="scope.row.iconUrl" class="w-full h-full object-cover" alt="icon" />
                   </div>
@@ -128,7 +129,7 @@
                     <el-button size="small" class="reject-btn" @click="handleReview(scope.row.id, 'REJECTED')">拒绝</el-button>
                   </template>
                   <template v-else>
-                    <el-button type="default" plain size="small" @click="handleRevoke(scope.row.id)">撤销</el-button>
+                    <el-button size="small" class="revoke-btn" @click="handleRevoke(scope.row.id)">删除</el-button>
                   </template>
                   <el-button type="default" text size="small" @click="viewDetail(scope.row)">
                     <img src="../../images/is-visable.png" class="h-2 w-auto" alt="view" />
@@ -137,6 +138,17 @@
               </template>
             </el-table-column>
           </el-table>
+        </div>
+        <div class="flex justify-end px-8 py-4 border-t border-gray-100 shrink-0 items-center gap-4">
+          <span class="text-sm text-gray-600">共 {{ filteredList.length }} 条记录</span>
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="filteredList.length"
+            layout="prev, pager, next, jumper"
+            background
+            small
+          />
         </div>
       </div>
     </main>
@@ -153,11 +165,31 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
                 <h3 class="text-lg font-bold text-gray-800 truncate">{{ currentAgent?.title || '-' }}</h3>
-                <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded shrink-0">学科辅导</span>
-                <span class="px-2 py-1 bg-amber-50 text-amber-600 text-xs rounded border border-amber-200 shrink-0">待审批</span>
+                <!-- <span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded shrink-0">学科辅导</span> -->
+                <span 
+                  v-if="currentAgent?.approvalStatus === 'PENDING'"
+                  class="status-tag status-pending"
+                >
+                  <span class="dot"></span>
+                  待审批
+                </span>
+                <span 
+                  v-else-if="currentAgent?.approvalStatus === 'APPROVED'"
+                  class="status-tag status-approved"
+                >
+                  <span class="dot"></span>
+                  已审批
+                </span>
+                <span 
+                  v-else-if="currentAgent?.approvalStatus === 'REJECTED'"
+                  class="status-tag status-rejected"
+                >
+                  <span class="dot"></span>
+                  已拒绝
+                </span>
               </div>
               <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                <span>申请人：{{ currentAgent?.creator?.username || '-' }}({{ currentAgent?.creator?.userId || '-' }})</span>
+                <span>申请人：{{ currentAgent?.creator?.username || '-' }}({{ currentAgent?.creatorId ? currentAgent?.creatorId || '-' : '-' }})</span>
                 <span class="text-gray-300">|</span>
                 <span>提交时间：{{ formatDate(currentAgent?.createdAt) }}</span>
               </div>
@@ -175,14 +207,14 @@
           </div>
           
           <div class="space-y-4">
-            <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div class="p-4 rounded-xl border border-gray-200">
               <h4 class="text-sm font-bold text-gray-800 mb-2">智能体简介</h4>
               <p class="text-sm text-gray-600 leading-relaxed">{{ currentAgent?.description || '暂无简介' }}</p>
             </div>
             
-            <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div class="p-4 rounded-xl border border-gray-200 prompt-container">
               <h4 class="text-sm font-bold text-gray-800 mb-2">提示词 (Prompt)</h4>
-              <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{{ currentAgent?.systemPrompt || '暂无提示词' }}</p>
+              <p class="p-4 text-sm bg-gray-50 rounded-xl border border-gray-200 text-gray-600 leading-relaxed whitespace-pre-wrap prompt-content">{{ currentAgent?.systemPrompt || '暂无提示词' }}</p>
             </div>
           </div>
         </div>
@@ -237,7 +269,7 @@
             <div class="pt-2 border-t border-gray-100">
               <el-form :model="reviewForm" label-position="top">
                 <el-form-item label="分配分类目录" class="mb-2">
-                  <el-select v-model="reviewForm.categoryId" placeholder="请选择该应用归属目录" style="width: 100%">
+                  <el-select v-model="reviewForm.categoryId" placeholder="请选择该应用归属目录" class="category-select">
                     <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
                   </el-select>
                 </el-form-item>
@@ -262,12 +294,12 @@
           <template v-if="currentAgent?.approvalStatus === 'PENDING'">
             <el-button @click="handleReview(currentAgent?.id, 'REJECTED')" class="reject-dialog-btn">拒绝</el-button>
             <el-button @click="submitApproval" :loading="reviewing" class="approve-dialog-btn">
-              <img src="@/images/pass.png" class="w-4 h-auto" style="margin-right: 10px;" alt="check" />
+              <img src="@/images/pass.png" class="w-4 h-auto approve-icon" alt="check" />
               通过审批
             </el-button>
           </template>
           <template v-else>
-            <el-button class="reject-dialog-btn" @click="handleRevoke(currentAgent?.id)">撤销</el-button>
+            <el-button class="revoke-dialog-btn" @click="handleRevoke(currentAgent?.id)">删除</el-button>
           </template>
         </div>
       </template>
@@ -276,7 +308,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { agentApi, categoryApi } from '../../api/api'
@@ -338,6 +370,10 @@ const capabilityOptions = [
 ]
 
 const userStore = useUserStore()
+
+const isSuperAdmin = computed(() => {
+  return userStore.userInfo?.role === 'SUPER_ADMIN'
+})
 const pendingList = ref<any[]>([])
 const categories = ref<any[]>([])
 const loading = ref(false)
@@ -347,18 +383,57 @@ const showReviewDialog = ref(false)
 const currentAgent = ref<any>(null)
 const statusFilter = ref('')
 const roleFilter = ref('')
+const searchText = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 const reviewForm = ref({
   categoryId: null,
   isFeatured: false
 })
 
+const filteredList = computed(() => {
+  let list = pendingList.value
+
+  if (statusFilter.value) {
+    list = list.filter(item => item.approvalStatus === statusFilter.value)
+  }
+
+  if (roleFilter.value) {
+    list = list.filter(item => item.creator?.role === roleFilter.value)
+  }
+
+  if (searchText.value.trim()) {
+    const keyword = searchText.value.trim().toLowerCase()
+    list = list.filter(item =>
+      item.title?.toLowerCase().includes(keyword) ||
+      String(item.id).includes(keyword)
+    )
+  }
+
+  return list
+})
+
+const pagedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredList.value.slice(start, end)
+})
+
+const onFilterChange = () => {
+  currentPage.value = 1
+}
+
+const clearAll = () => {
+  statusFilter.value = ''
+  roleFilter.value = ''
+  searchText.value = ''
+  currentPage.value = 1
+}
+
 const fetchPending = async () => {
   loading.value = true
   try {
-    const params: Record<string, string> = {}
-    if (statusFilter.value) params.status = statusFilter.value
-    if (roleFilter.value) params.role = roleFilter.value
-    const res = await agentApi.getPendingApprovals(params)
+    const res = await agentApi.getPendingApprovals()
     if (res.success) {
       pendingList.value = res.data
       console.log('审批列表数据:', res.data)
@@ -370,8 +445,8 @@ const fetchPending = async () => {
   }
 }
 
-watch([statusFilter, roleFilter], () => {
-  fetchPending()
+watch([statusFilter, roleFilter, searchText], () => {
+  currentPage.value = 1
 })
 
 const fetchCategories = async () => {
@@ -475,8 +550,8 @@ const handleReview = (id: number, status: 'APPROVED' | 'REJECTED') => {
 const handleRevoke = async (id: number) => {
   try {
     await ElMessageBox.confirm(
-      '确定要撤销此审批结果吗？',
-      '撤销确认',
+      '确定要删除此智能体吗？',
+      '确认删除',
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -485,13 +560,15 @@ const handleRevoke = async (id: number) => {
     )
 
     loading.value = true
-    await agentApi.deleteAgent(id)
-    ElMessage.success('已撤销')
-    showReviewDialog.value = false
-    await fetchPending()
+    const res = await agentApi.deleteAgent(id)
+    if (res.success) {
+      ElMessage.success('已删除')
+      showReviewDialog.value = false
+      await fetchPending()
+    }
   } catch(e) {
     if (e !== 'cancel') {
-      ElMessage.error('撤销失败')
+      ElMessage.error('删除失败')
     }
   } finally {
     loading.value = false
@@ -508,6 +585,26 @@ onMounted(() => {
 .header-container {
   background: #FFFFFF;
   box-shadow: 0px 3px 5px -6px #C7D2FE;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.approve-icon {
+  margin-right: 10px;
+}
+
+.prompt-container {
+  height: 433px;
+  display: flex;
+  flex-direction: column;
+}
+
+.prompt-content {
+  height: 240px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .icon-wrapper {
@@ -545,7 +642,13 @@ onMounted(() => {
   border-top: none;
 }
 
-.custom-table :deep(.first-col .cell) {
+/* 2. 设置每一行的高度和对齐 - 通过调整单元格内边距 */
+.custom-table :deep(.el-table__cell) {
+  padding-top: 4px;    /* 调整上下内边距来控制行高 */
+  padding-bottom: 4px;
+}
+
+.first-col {
   text-align: left !important;
 }
 
@@ -565,6 +668,25 @@ onMounted(() => {
 }
 
 .approve-btn:hover {
+  opacity: 0.9;
+}
+
+.revoke-btn {
+  width: 48px;
+  height: 28px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #ffdada98;
+  color: #ff4646;
+  border: 1px solid #ff4646;
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.revoke-btn:hover {
   opacity: 0.9;
 }
 
@@ -762,6 +884,21 @@ onMounted(() => {
   opacity: 0.9;
 }
 
+.revoke-dialog-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  background: #ffdada98;
+  color: #ff4646;
+  border: 1px solid #ff4646;
+  font-size: 14px;
+  font-weight: 500;
+  height: 36px;
+}
+
+.revoke-dialog-btn:hover {
+  opacity: 0.9;
+}
+
 .creator-name {
   font-family: 'Noto Sans SC';
   font-weight: 500;
@@ -955,5 +1092,59 @@ onMounted(() => {
 
 :global(.reject-confirm-dialog .el-button--primary:hover) {
   background: #DC2626;
+}
+
+/* 分页组件样式 */
+:deep(.el-pagination.is-background .el-pager li) {
+  border-radius: 5px !important;
+  background-color: #FFFFFF !important;
+  border: 2px solid hsl(231, 75%, 54%) !important;
+  color: #314DE2 !important;
+}
+
+:deep(.el-pagination.is-background .el-pager li.is-active) {
+  background-color: #314DE2 !important;
+  color: #FFFFFF !important;
+}
+
+:deep(.el-pagination.is-background .el-pager li.is-active:hover) {
+  background-color: #F0F4FF !important;
+  color: #314DE2 !important;
+}
+
+:deep(.el-pagination.is-background .el-pager li:hover) {
+  background-color: #314DE2 !important;
+  color: #F0F4FF !important;
+}
+
+:deep(.el-pagination.is-background .btn-prev),
+:deep(.el-pagination.is-background .btn-next) {
+  border-radius: 5px !important;
+  background-color: #FFFFFF !important;
+  border: 2px solid #314DE2 !important;
+  color: #314DE2 !important;
+}
+
+:deep(.el-pagination.is-background .btn-prev:hover),
+:deep(.el-pagination.is-background .btn-next:hover) {
+  background-color: #314DE2 !important;
+  color: #FFFFFF !important;
+}
+
+:deep(.el-pagination .el-pagination__jump) {
+  color: #314DE2 !important;
+}
+
+:deep(.el-pagination .el-pagination__jump .el-input__wrapper) {
+  border: 2px solid #314DE2 !important;
+}
+
+:deep(.el-pagination .el-pagination__jump .el-input__wrapper:hover) {
+  border: 2px solid #314DE2 !important;
+}
+
+:deep(.el-pagination .el-pagination__jump .el-input__wrapper.is-focus) {
+  border: 2px solid #314DE2 !important;
+  box-shadow: 0 0 0 1px #314DE2 inset !important;
 }
 </style>
