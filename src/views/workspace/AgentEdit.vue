@@ -99,7 +99,7 @@
                         placeholder="请输入智能体名称"
                       >
                     </div>
-                    <div>
+                    <!-- <div>
                       <label class="block text-sm font-medium text-[#475569] mb-1.5">
                         <span class="text-[#EF4444]">*</span> 分类选择
                       </label>
@@ -108,7 +108,7 @@
                         :options="categoryOptions"
                         direction="down"
                       />
-                    </div>
+                    </div> -->
                   </div>
                 </div>
                 <div>
@@ -140,8 +140,8 @@
                   <div class="relative">
                     <textarea 
                       v-model="currentAgent.systemPrompt"
-                      class="w-full px-3 py-2.5 text-sm bg-white border border-[#E2E8F0] rounded-xl focus:outline-none focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2] resize-none"
-                      rows="5"
+                      :class="['prompt-textarea w-full px-3 py-2.5 text-sm bg-white border rounded-xl resize-none transition-all', optimizing ? 'border-[#314DE2] border-4 ring-4 ring-[#314DE2]/30 bg-blue-50/30' : 'border-[#E2E8F0] focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2]']"
+                      rows="8"
                       placeholder="# 角色设定
 你是一位深耕教学十年的特级教师..."
                     ></textarea>
@@ -355,12 +355,12 @@ const visibilityOptions = [
   }
 ]
 
-const categoryOptions = computed(() => {
-  return availableCategories.value.map(c => ({
-    value: c.id,
-    label: c.name
-  }))
-})
+// const categoryOptions = computed(() => {
+//   return availableCategories.value.map(c => ({
+//     value: c.id,
+//     label: c.name
+//   }))
+// })
 const showIconPicker = ref(false)
 const searchText = ref('')
 const previewInput = ref('')
@@ -370,7 +370,7 @@ const publishVisibility = ref('ORG_VISIBLE')
 const agentLogos = ref([])
 
 const myAgents = ref([])
-const availableCategories = ref([])
+// const availableCategories = ref([])
 const selectedAgent = ref(null)
 const isEditMode = ref(false)
 
@@ -381,7 +381,7 @@ const currentAgent = ref({
   welcomeMsg: '',
   iconUrl: '',
   visibility: 'PRIVATE',
-  categoryId: '',
+  // categoryId: '',
   model: '',
   enableWebSearch: true,
   enableWebParse: true,
@@ -458,16 +458,16 @@ const filteredAgents = computed(() => {
   )
 })
 
-const loadCategories = async () => {
-  try {
-    const res = await categoryApi.getCategoryList()
-    if (res.success && res.data) {
-      availableCategories.value = res.data
-    }
-  } catch (error) {
-    console.error('加载分类失败:', error)
-  }
-}
+// const loadCategories = async () => {
+//   try {
+//     const res = await categoryApi.getCategoryList()
+//     if (res.success && res.data) {
+//       availableCategories.value = res.data
+//     }
+//   } catch (error) {
+//     console.error('加载分类失败:', error)
+//   }
+// }
 
 const fetchAgentLogos = async () => {
   try {
@@ -503,8 +503,8 @@ const loadAgentDetail = async (agentId) => {
     const res = await agentApi.getAgentById(agentId)
     if (res.success && res.data) {
       currentAgent.value = {
-        ...res.data,
-        categoryId: res.data.categories && res.data.categories.length > 0 ? res.data.categories[0].categoryId : null
+        ...res.data
+        // categoryId: res.data.categories && res.data.categories.length > 0 ? res.data.categories[0].categoryId : null
       }
       try {
         currentFormConfig.value = res.data.formConfig ? JSON.parse(res.data.formConfig) : []
@@ -521,6 +521,7 @@ const loadAgentDetail = async (agentId) => {
 }
 
 const selectAgent = (agent) => {
+  optimizing.value = false
   selectedAgent.value = agent
   isEditMode.value = true
   router.replace({ path: '/workspace/agent/edit', query: { id: agent.id } })
@@ -534,9 +535,9 @@ const createNew = () => {
     description: '',
     systemPrompt: '',
     welcomeMsg: '',
-    iconUrl: '',
+    iconUrl: agentLogos.value[0]?.src || '',
     visibility: 'PRIVATE',
-    categoryId: "",
+    // categoryId: "",
     model: '',
     enableWebSearch: true,
     enableWebParse: true,
@@ -563,7 +564,7 @@ const saveAgent = async () => {
       systemPrompt: currentAgent.value.systemPrompt,
       welcomeMsg: currentAgent.value.welcomeMsg,
       iconUrl: currentAgent.value.iconUrl,
-      categoryId: currentAgent.value.categoryId,
+      // categoryId: currentAgent.value.categoryId,
       model: currentAgent.value.model,
       enableWebSearch: currentAgent.value.enableWebSearch || false,
       enableWebParse: currentAgent.value.enableWebParse || false,
@@ -655,7 +656,8 @@ const optimizePrompt = async () => {
 }
 
 onMounted(async () => {
-  await Promise.all([loadCategories(), loadAgents(), fetchAgentLogos()])
+  optimizing.value = false
+  await Promise.all([/* loadCategories(), */ loadAgents(), fetchAgentLogos()])
   if (route.query.id) {
     isEditMode.value = true
     await loadAgentDetail(route.query.id)
@@ -697,5 +699,14 @@ onMounted(async () => {
   height: 8px;
   object-fit: contain;
   transform: translateX(-10px);
+}
+
+.prompt-textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.prompt-textarea {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>
