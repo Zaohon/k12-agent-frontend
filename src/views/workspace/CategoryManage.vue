@@ -1,20 +1,33 @@
 <template>
   <div class="category-manage-page">
     <CategoryManageList @select-category="handleSelectCategory" />
-    <CategoryManageContent :selected-category="selectedCategory" />
+    <component :is="currentContentComponent" :selected-category="selectedCategory" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import CategoryManageList from './CategoryManageList.vue'
-import CategoryManageContent from './CategoryManageContent.vue'
+import CategoryManageStarContent from './CategoryManageStarContent.vue'
+import CategoryManageRecommendContent from './CategoryManageRecommendContent.vue'
+import CategoryManageNormalContent from './CategoryManageNormalContent.vue'
 
 const selectedCategory = ref('精选页')
 
 const handleSelectCategory = (category: string) => {
   selectedCategory.value = category
 }
+
+const currentContentComponent = computed(() => {
+  switch (selectedCategory.value) {
+    case '精选页':
+      return CategoryManageStarContent
+    case '推荐页':
+      return CategoryManageRecommendContent
+    default:
+      return CategoryManageNormalContent
+  }
+})
 </script>
 
 <style scoped>

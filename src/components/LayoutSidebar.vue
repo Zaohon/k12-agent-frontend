@@ -58,7 +58,6 @@
         </router-link>
 
         <router-link
-          v-if="userStore.userInfo?.role === 'SUPER_ADMIN'"
           to="/workspace/org"
           active-class="active"
           class="admin-item"
@@ -71,7 +70,6 @@
         </router-link>
 
         <router-link
-          v-if="userStore.userInfo?.role === 'SUPER_ADMIN'"
           to="/workspace/category"
           active-class="active"
           class="admin-item"
@@ -84,7 +82,6 @@
         </router-link>
 
         <router-link
-          v-if="userStore.userInfo?.role === 'SUPER_ADMIN'"
           to="/workspace/model-config"
           active-class="active"
           class="admin-item"
