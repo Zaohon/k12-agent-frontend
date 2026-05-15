@@ -11,10 +11,10 @@
               <p class="text-gray-500 mt-1 text-sm">审查来自于网点和平台的智能体发布申请。</p>
             </div>
          </div>
-         <el-button type="default" size="small" class="export-btn">
+         <!-- <el-button type="default" size="small" class="export-btn">
            <img src="../../images/download-black.png" class="w-2.5 h-auto mr-[5px]" alt="download" />
            导出日志
-         </el-button>
+         </el-button> -->
       </div>
 
      <div class="bg-white flex flex-col h-[calc(100vh-300px)] mt-[30px] rounded-xl overflow-hidden shadow-sm" v-loading="loading">
@@ -38,9 +38,10 @@
             <el-select v-model="roleFilter" placeholder="所有身份" popper-class="filter-select-popper" class="filter-select">
               <el-option label="所有身份" value="" />
               <el-option label="超级管理员" value="SUPER_ADMIN" />
-              <el-option label="管理员" value="ADMIN" />
+              <el-option label="组织管理员" value="SCHOOL_ADMIN" />
               <el-option label="教师" value="TEACHER" />
               <el-option label="学生" value="STUDENT" />
+              <el-option label="家长" value="PARENT" />
             </el-select>
           </div>
           <div class="flex items-center gap-3">
@@ -83,11 +84,12 @@
                   :class="[
                     'role-tag',
                     scope.row.creator?.role === 'SUPER_ADMIN' ? 'role-super-admin' : 
-                    scope.row.creator?.role === 'ADMIN' ? 'role-admin' : 
-                    scope.row.creator?.role === 'TEACHER' ? 'role-teacher' : 'role-student'
+                    scope.row.creator?.role === 'SCHOOL_ADMIN' ? 'role-school-admin' : 
+                    scope.row.creator?.role === 'TEACHER' ? 'role-teacher' : 
+                    scope.row.creator?.role === 'STUDENT' ? 'role-student' : 'role-parent'
                   ]"
                 >
-                  {{ scope.row.creator?.role === 'SUPER_ADMIN' ? '超级管理员' : scope.row.creator?.role === 'ADMIN' ? '管理员' : scope.row.creator?.role === 'TEACHER' ? '教师' : '学生' }}
+                  {{ scope.row.creator?.role === 'SUPER_ADMIN' ? '超级管理员' : scope.row.creator?.role === 'SCHOOL_ADMIN' ? '组织管理员' : scope.row.creator?.role === 'TEACHER' ? '教师' : scope.row.creator?.role === 'STUDENT' ? '学生' : '家长' }}
                 </div>
               </template>
             </el-table-column>
@@ -126,7 +128,7 @@
                     <el-button size="small" class="reject-btn" @click="handleReview(scope.row.id, 'REJECTED')">拒绝</el-button>
                   </template>
                   <template v-else>
-                    <el-button type="default" plain size="small" disabled>撤销</el-button>
+                    <el-button type="default" plain size="small" @click="handleRevoke(scope.row.id)">撤销</el-button>
                   </template>
                   <el-button type="default" text size="small" @click="viewDetail(scope.row)">
                     <img src="../../images/is-visable.png" class="h-2 w-auto" alt="view" />
@@ -257,11 +259,16 @@
       <template #footer>
         <div class="flex items-center justify-end gap-3">
           <el-button @click="showReviewDialog = false" class="close-btn">关闭</el-button>
-          <el-button @click="handleReview(currentAgent?.id, 'REJECTED')" class="reject-dialog-btn">拒绝</el-button>
-          <el-button @click="submitApproval" :loading="reviewing" class="approve-dialog-btn">
-            <img src="@/images/pass.png" class="w-4 h-auto" style="margin-right: 10px;" alt="check" />
-            通过审批
-          </el-button>
+          <template v-if="currentAgent?.approvalStatus === 'PENDING'">
+            <el-button @click="handleReview(currentAgent?.id, 'REJECTED')" class="reject-dialog-btn">拒绝</el-button>
+            <el-button @click="submitApproval" :loading="reviewing" class="approve-dialog-btn">
+              <img src="@/images/pass.png" class="w-4 h-auto" style="margin-right: 10px;" alt="check" />
+              通过审批
+            </el-button>
+          </template>
+          <template v-else>
+            <el-button class="reject-dialog-btn" @click="handleRevoke(currentAgent?.id)">撤销</el-button>
+          </template>
         </div>
       </template>
     </el-dialog>
@@ -465,6 +472,32 @@ const handleReview = (id: number, status: 'APPROVED' | 'REJECTED') => {
   }).catch(() => {})
 }
 
+const handleRevoke = async (id: number) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要撤销此审批结果吗？',
+      '撤销确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+
+    loading.value = true
+    await agentApi.deleteAgent(id)
+    ElMessage.success('已撤销')
+    showReviewDialog.value = false
+    await fetchPending()
+  } catch(e) {
+    if (e !== 'cancel') {
+      ElMessage.error('撤销失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(() => {
   fetchPending()
   fetchCategories()
@@ -604,9 +637,14 @@ onMounted(() => {
   color: #8B5CF6;
 }
 
-.role-admin {
+.role-school-admin {
   background-color: #FFF7E6;
   color: #FF9500;
+}
+
+.role-parent {
+  background-color: #E0F2FE;
+  color: #0284C7;
 }
 
 .role-teacher {
@@ -620,7 +658,7 @@ onMounted(() => {
 }
 
 .filter-select {
-  width: 114px;
+  width: 120px;
 }
 
 .filter-select :deep(.el-select__wrapper) {
