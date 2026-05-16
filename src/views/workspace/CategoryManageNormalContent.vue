@@ -38,7 +38,7 @@
     </div>
 
     <!-- 可见性与权限控制 -->
-    <div class="section-card small-section">
+    <!--<div class="section-card small-section">
       <div class="section-header">
         <div class="section-left">
           <div class="section-title-row">
@@ -70,7 +70,7 @@
           <img v-if="!isSuperAdmin" src="@/images/lock.png" class="lock-icon" />
         </label>
       </div>
-    </div>
+    </div>-->
 
     <!-- 智能体列表卡片 -->
     <div class="section-card">
@@ -176,7 +176,7 @@ interface Category {
   visible_roles?: string[]
 }
 
-const ENABLE_LOG = true
+const ENABLE_LOG = false
 
 const emit = defineEmits(['delete-success', 'update-success'])
 

@@ -116,7 +116,7 @@ interface Category {
 }
 
 // 日志输出开关，设置为 false 可关闭所有日志
-const ENABLE_LOG = true
+const ENABLE_LOG = false
 
 const props = defineProps<{
   category?: Category
