@@ -105,11 +105,12 @@ import { Delete, Edit, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { categoryApi } from '@/api/api'
 
-const emit = defineEmits(['select-category'])
+const emit = defineEmits(['select-category', 'category-updated'])
 
 interface Category {
   id: number
   name: string
+  weight?: number
 }
 
 // 日志输出开关，设置为 false 可关闭所有日志
@@ -121,7 +122,7 @@ const editName = ref('')
 const editInputRef = ref<HTMLInputElement | null>(null)
 const loading = ref(false)
 
-const categories = ref<Array<{ id: number; name: string }>>([])
+const categories = ref<Category[]>([])
 
 const filteredCategories = computed(() => {
   if (!searchQuery.value.trim()) {
@@ -180,9 +181,11 @@ const confirmEdit = async () => {
         categories.value = categories.value.map((cat, i) => 
           i === index ? { ...cat, name: data.name || newName } : cat
         )
+        const updatedCategory = categories.value[index]
         if (activeCategory.value === oldName) {
           activeCategory.value = data.name || newName
         }
+        emit('category-updated', updatedCategory)
         ElMessage.success('修改成功')
       } catch (error) {
         ENABLE_LOG && console.error('=== 更新分类失败 ===')
@@ -261,7 +264,8 @@ const loadCategories = async () => {
     const response = await categoryApi.getCategoryList()
     ENABLE_LOG && console.log('=== 分类列表请求成功 ===')
     ENABLE_LOG && console.log('返回数据:', JSON.stringify(response, null, 2))
-    const data = response && response.data ? response.data : []
+    // 兼容两种响应格式：{ success, data } 和直接返回数组
+    const data = (response && response.data) ? response.data : (Array.isArray(response) ? response : [])
     const seenNames = new Set<string>()
     const uniqueCategories = data.filter((item: { name: string }) => {
       if (item.name === '精选页' || item.name === '推荐页') {
@@ -276,6 +280,10 @@ const loadCategories = async () => {
     categories.value = uniqueCategories.sort((a: { weight: number }, b: { weight: number }) => {
       return (b.weight || 0) - (a.weight || 0)
     })
+    // 加载完成后自动选中第一个分类
+    if (categories.value.length > 0 && !activeCategory.value) {
+      activeCategory.value = categories.value[0].name
+    }
   } catch (error) {
     ElMessage.error('加载分类列表失败')
   } finally {
@@ -295,6 +303,10 @@ onMounted(() => {
 })
 onUnmounted(() => {
   document.removeEventListener('click', handleGlobalClick)
+})
+
+defineExpose({
+  loadCategories
 })
 </script>
 

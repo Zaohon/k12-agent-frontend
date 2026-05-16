@@ -1,38 +1,36 @@
 <template>
-  <!-- 主容器 -->
-  <div class="org-container">
-    <!-- 基础信息卡片 -->
-    <div class="info-card">
-      <!-- 标题栏 -->
-      <div class="header-row">
-        <div class="title-container">
-          <h2 class="heading-2">学科助教</h2>
-        </div>
-        <div class="btn-group">
-          <button class="btn danger-btn">
-            <span>删除该组</span>
+  <div class="category-content">
+    <!-- 顶部卡片 -->
+    <div class="top-card">
+      <div class="top-header">
+        <div class="top-title">{{ category?.name }}</div>
+        <div class="top-right">
+          <button
+            v-if="category?.name !== '精选页' && category?.name !== '推荐页'"
+            class="btn-delete-group"
+            @click="handleDeleteGroup"
+          >
+            删除该组
           </button>
-          <button class="btn default-btn">
-            <span>编辑</span>
-          </button>
-          <button class="btn primary-btn">
-            <span>保存修改</span>
-          </button>
+          <button class="btn-reset" @click="handleReset">重置</button>
+          <button class="btn-save" @click="handleSave">保存修改</button>
         </div>
       </div>
-
-      <!-- 表单行 -->
-      <div class="form-row">
-        <!-- 左侧：分类名称 -->
-        <div class="form-item">
+      <div class="divider-line"></div>
+      <div class="form-group">
+        <div class="form-column">
           <label class="form-label">分类名称</label>
-          <input type="text" class="form-input" value="学科助教" />
+          <input
+            type="text"
+            class="form-input"
+            v-model="categoryName"
+            :disabled="category?.name === '精选页' || category?.name === '推荐页'"
+          />
         </div>
-        <!-- 右侧：排序权重 -->
-        <div class="form-item">
+        <div class="form-column">
           <label class="form-label">排序权重</label>
-          <div class="input-wrapper">
-            <input type="text" class="form-input" value="10" />
+          <div class="input-with-tip">
+            <input type="text" class="form-input form-input-with-tip" v-model="sortWeight" />
             <span class="input-tip">数值越小越靠前</span>
           </div>
         </div>
@@ -40,230 +38,435 @@
     </div>
 
     <!-- 可见性与权限控制 -->
-    <div class="info-card small-card">
+    <div class="section-card small-section">
       <div class="section-header">
-        <div class="icon-box"></div>
-        <h3 class="heading-3">可见性与权限控制</h3>
+        <div class="section-left">
+          <div class="section-title-row">
+            <img src="@/images/eye.png" class="section-icon" />
+            <div class="section-title">可见性与权限控制</div>
+          </div>
+          <div class="section-desc">
+            配置哪些用户角色可以在智能体集市的导航区看到此菜单节点及其内容（默认管理员可见）。
+          </div>
+        </div>
       </div>
-      <p class="section-desc">
-        配置哪些用户角色可以在智能体集市的导航区看到此菜单节点及其内容（默认管理员可见）。
-      </p>
 
       <div class="checkbox-group">
-        <label class="checkbox-item">
-          <div class="checkbox checked"></div>
+        <label class="checkbox-item" @click="togglePermission('teacher')">
+          <div class="checkbox" :class="{ checked: permissions.teacher }"></div>
           <span>教职工组</span>
         </label>
-        <label class="checkbox-item">
-          <div class="checkbox checked"></div>
-          <span>管理员</span>
-        </label>
-        <label class="checkbox-item">
-          <div class="checkbox"></div>
+        <label class="checkbox-item" @click="togglePermission('student')">
+          <div class="checkbox" :class="{ checked: permissions.student }"></div>
           <span>学生组</span>
         </label>
-        <label class="checkbox-item disabled">
-          <div class="checkbox checked disabled-bg"></div>
-          <span>访客</span>
-          <div class="lock-icon"></div>
+        <label class="checkbox-item" @click="togglePermission('parent')">
+          <div class="checkbox" :class="{ checked: permissions.parent }"></div>
+          <span>家长组</span>
+        </label>
+        <label class="checkbox-item" :class="{ disabled: !isSuperAdmin }" @click="isSuperAdmin && togglePermission('admin')">
+          <div class="checkbox" :class="{ checked: permissions.admin, 'disabled-bg': !isSuperAdmin }"></div>
+          <span>管理员组</span>
+          <img v-if="!isSuperAdmin" src="@/images/lock.png" class="lock-icon" />
         </label>
       </div>
     </div>
 
-    <!-- 智能体挂载与版位管理 -->
-    <div class="info-card agent-card">
-      <div class="section-header justify-between">
-        <div class="header-left">
-          <div class="icon-box agent-icon"></div>
-          <h3 class="heading-3">智能体挂载与版位管理</h3>
+    <!-- 智能体列表卡片 -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-left">
+          <div class="section-title-row">
+            <img :src="iconRecommend" class="section-icon" />
+            <div class="section-title">{{ category?.name }} - 学科提效神器</div>
+          </div>
+          <div class="section-desc">
+            管理该分类下展示的智能体。
+          </div>
         </div>
-        <div class="header-right">
-          <button class="btn small-danger-btn">选择删除</button>
-          <button class="btn small-primary-line-btn">
-            <div class="small-icon"></div>
-            <span>关联智能体</span>
+
+        <div class="section-right">
+          <button class="btn-delete" @click="handleDelete">删除</button>
+          <button class="btn-link" @click="openAgentDialog">
+            <div class="link-icon">
+              <span>+</span>
+            </div>
+            关联智能体
           </button>
         </div>
       </div>
-      <p class="section-desc">管理该分类下展示的智能体。</p>
 
-      <!-- 智能体列表 -->
-      <div class="agent-list">
-        <!-- 智能体1 -->
-        <div class="agent-item">
-          <div class="agent-left">
-            <div class="drag-icon"></div>
-            <div class="agent-avatar">
-              <div class="edit-icon"></div>
+      <!-- 智能体列表（可拖拽排序 + 空卡片） -->
+      <div class="agent-card-grid">
+        <draggable
+          v-model="sectionAgents"
+          item-key="id"
+          ghost-class="ghost"
+          animation="200"
+          class="draggable-container"
+          @end="handleDragEnd"
+        >
+          <template #item="{ element: agent }">
+            <div
+              class="agent-card"
+              :class="{ selected: isAgentSelected(agent.id, selectedAgentIds) }"
+              @click="handleAgentCardClick(agent.id)"
+            >
+              <div class="agent-left">
+                <img src="@/images/category-content-drag.png" class="agent-drag-icon" />
+                <img v-if="agent.iconUrl" :src="agent.iconUrl" class="agent-logo" />
+                <div v-else class="agent-logo"></div>
+                <div class="agent-info">
+                  <div class="agent-name">{{ agent.name }}</div>
+                  <div class="agent-id">ID: {{ agent.id }}</div>
+                  <div class="agent-desc">{{ agent.desc }}</div>
+                </div>
+              </div>
             </div>
-            <div class="agent-info">
-              <h4 class="agent-title">作文批改助手</h4>
-              <p class="agent-id">ID: AGT-6789</p>
-              <p class="agent-desc">提供多维度的高中语文作文批改与建议</p>
-            </div>
-          </div>
-        </div>
+          </template>
+        </draggable>
 
-        <!-- 智能体2 -->
-        <div class="agent-item">
-          <div class="agent-left">
-            <div class="drag-icon"></div>
-            <div class="agent-avatar">
-              <div class="file-icon"></div>
-            </div>
-            <div class="agent-info">
-              <h4 class="agent-title">古诗文赏析引擎</h4>
-              <p class="agent-id">ID: AGT-6788</p>
-              <p class="agent-desc">逐字逐句翻译，意境深度解析</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 添加智能体 -->
-        <div class="add-agent-box">
+        <!-- 空卡片（无数量限制） -->
+        <div class="agent-card-empty" @click="openAgentDialog">
           <span>+ 关联智能体</span>
         </div>
       </div>
     </div>
+
+    <!-- 智能体选择弹窗 -->
+    <AgentSelectDialog
+      v-model:visible="agentDialogVisible"
+      :agents="filteredAvailableAgents"
+      :max-select="999"
+      @confirm="handleAgentSelect"
+    />
   </div>
 </template>
 
-<script setup>
-// 业务逻辑可自行扩展
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import draggable from 'vuedraggable'
+import iconRecommend from '@/images/category-content-recommend.png'
+import '@/styles/category-manage-content.css'
+import AgentSelectDialog from '@/views/dialog/AgentSelectDialog.vue'
+import { ElMessage } from 'element-plus'
+import { categoryApi } from '@/api/api'
+import { useUserStore } from '@/store/user'
+import {
+  loadCategoryAgents,
+  saveCategoryAgents,
+  loadAvailableAgents,
+  toggleAgentSelection,
+  isAgentSelected,
+  deleteSelectedAgents
+} from '@/utils/categoryManageContent'
+import type { Agent } from '@/utils/categoryManageContent'
+
+interface Category {
+  id: number
+  name: string
+  weight?: number
+  permissions?: {
+    teacher: boolean
+    admin: boolean
+    student: boolean
+    parent: boolean
+    visitor: boolean
+  }
+  visible_roles?: string[]
+}
+
+const ENABLE_LOG = true
+
+const emit = defineEmits(['delete-success', 'update-success'])
+
+const props = defineProps<{
+  category?: Category
+}>()
+
+const selectedAgentIds = ref<Set<string | number>>(new Set())
+const sectionAgents = ref<Agent[]>([])
+const availableAgents = ref<Agent[]>([])
+const agentDialogVisible = ref(false)
+const originalAgentIds = ref<(string | number)[]>([])
+const categoryName = ref('')
+const sortWeight = ref('')
+const originalCategoryName = ref('')
+const originalSortWeight = ref('')
+const permissions = ref({
+  teacher: true,
+  admin: true,
+  student: false,
+  parent: false,
+  visitor: false
+})
+const originalPermissions = ref({
+  teacher: true,
+  admin: true,
+  student: false,
+  parent: false,
+  visitor: false
+})
+
+const userStore = useUserStore()
+
+const isSuperAdmin = computed(() => {
+  return userStore.userInfo?.role === 'SUPER_ADMIN'
+})
+
+const hasChanges = computed(() => {
+  const currentIds = sectionAgents.value.map(a => a.id).sort()
+  const originalIds = originalAgentIds.value.sort()
+  const idsChanged = JSON.stringify(currentIds) !== JSON.stringify(originalIds)
+  const nameChanged = categoryName.value !== originalCategoryName.value
+  const weightChanged = sortWeight.value !== originalSortWeight.value
+  const permChanged = JSON.stringify(permissions.value) !== JSON.stringify(originalPermissions.value)
+  return idsChanged || nameChanged || weightChanged || permChanged
+})
+
+const filteredAvailableAgents = computed(() => {
+  const addedIds = new Set(sectionAgents.value.map(a => a.id))
+  return availableAgents.value.filter(a => !addedIds.has(a.id))
+})
+
+const loadAgents = async () => {
+  if (!props.category?.id) return
+  ENABLE_LOG && console.log('普通分类 - 加载分类智能体, categoryId=', props.category?.id)
+  const agents = await loadCategoryAgents(props.category?.id)
+  sectionAgents.value = agents
+  originalAgentIds.value = agents.map(a => a.id)
+  ENABLE_LOG && console.log('普通分类 - 加载完成, 智能体数量=', agents.length)
+}
+
+const loadAvailable = async () => {
+  ENABLE_LOG && console.log('普通分类 - 加载可用智能体列表')
+  const agents = await loadAvailableAgents()
+  availableAgents.value = agents
+  ENABLE_LOG && console.log('普通分类 - 可用智能体列表加载完成, 数量=', agents.length)
+}
+
+const handleAgentCardClick = (agentId: string | number) => {
+  selectedAgentIds.value = toggleAgentSelection(agentId, selectedAgentIds.value)
+}
+
+const handleDragEnd = () => {
+  ENABLE_LOG && console.log('普通分类 - 用户拖动完成')
+  ENABLE_LOG && console.log('普通分类 - 拖动后的智能体顺序:', sectionAgents.value.map((a, index) => ({
+    index: index + 1,
+    id: a.id,
+    name: a.name
+  })))
+}
+
+const handleDelete = () => {
+  const idsToDelete = Array.from(selectedAgentIds.value)
+  if (idsToDelete.length === 0) return
+  ENABLE_LOG && console.log('普通分类 - 删除智能体, ids=', idsToDelete)
+
+  sectionAgents.value = deleteSelectedAgents(idsToDelete, sectionAgents.value)
+  selectedAgentIds.value = new Set()
+}
+
+const openAgentDialog = () => {
+  ENABLE_LOG && console.log('普通分类 - 打开智能体选择弹窗')
+  agentDialogVisible.value = true
+}
+
+const handleAgentSelect = (selectedIds: (string | number)[]) => {
+  ENABLE_LOG && console.log('普通分类 - 选择智能体, ids=', selectedIds)
+  const newAgents = availableAgents.value.filter(a => selectedIds.includes(a.id))
+  sectionAgents.value = [...sectionAgents.value, ...newAgents]
+}
+
+const togglePermission = (key: 'teacher' | 'admin' | 'student' | 'parent') => {
+  if (props.category?.name === '精选页' || props.category?.name === '推荐页') {
+    return
+  }
+  // 只有 SUPER_ADMIN 可以修改管理员权限
+  if (key === 'admin' && !isSuperAdmin.value) {
+    return
+  }
+  permissions.value[key] = !permissions.value[key]
+}
+
+const handleReset = () => {
+  ENABLE_LOG && console.log('普通分类 - 重置所有变更')
+  categoryName.value = originalCategoryName.value
+  sortWeight.value = originalSortWeight.value
+  permissions.value = { ...originalPermissions.value }
+  loadAgents()
+}
+
+const handleDeleteGroup = async () => {
+  if (!props.category?.id || !props.category?.name) return
+  try {
+    ENABLE_LOG && console.log('普通分类 - 开始删除该组')
+    ENABLE_LOG && console.log('请求参数: categoryId=', props.category?.id, ', name=', props.category?.name)
+    const response = await categoryApi.deleteCategory(props.category?.id)
+    ENABLE_LOG && console.log('普通分类 - 删除该组成功')
+    ENABLE_LOG && console.log('返回数据:', JSON.stringify(response, null, 2))
+    emit('delete-success')
+    ElMessage.success('删除成功')
+  } catch (error) {
+    ENABLE_LOG && console.error('普通分类 - 删除该组失败')
+    ENABLE_LOG && console.error('错误信息:', error)
+    ElMessage.error('删除失败')
+  }
+}
+
+const handleSave = async () => {
+  if (!props.category?.id) return
+
+  try {
+    ENABLE_LOG && console.log('普通分类 - 开始保存所有变更')
+
+    // 1. 保存分类信息（名称、权重）- 权限字段后端暂不支持
+    const categoryData: any = {
+      name: categoryName.value,
+      weight: sortWeight.value ? parseInt(sortWeight.value) : 0
+    }
+
+    ENABLE_LOG && console.log('普通分类 - 保存分类信息, categoryId=', props.category?.id)
+    ENABLE_LOG && console.log('普通分类 - 分类数据:', JSON.stringify(categoryData, null, 2))
+
+    await categoryApi.updateCategory(props.category?.id, categoryData)
+    ENABLE_LOG && console.log('普通分类 - 分类信息保存成功')
+
+    // 2. 保存智能体关联
+    const agentIds = sectionAgents.value.map(a => a.id)
+    ENABLE_LOG && console.log('普通分类 - 保存智能体关联, categoryId=', props.category?.id, ', agentIds=', agentIds)
+    await saveCategoryAgents(props.category?.id, agentIds)
+    ENABLE_LOG && console.log('普通分类 - 智能体关联保存成功')
+
+    // 3. 更新原始值
+    originalAgentIds.value = agentIds
+    originalCategoryName.value = categoryName.value
+    originalSortWeight.value = sortWeight.value
+    originalPermissions.value = { ...permissions.value }
+
+    // 4. 通知父组件更新列表
+    emit('update-success', { 
+      id: props.category?.id, 
+      name: categoryName.value,
+      weight: sortWeight.value ? parseInt(sortWeight.value) : 0
+    })
+
+    ENABLE_LOG && console.log('普通分类 - 保存所有变更成功')
+    ElMessage.success('保存成功')
+  } catch (error) {
+    ENABLE_LOG && console.error('普通分类 - 保存所有变更失败')
+    ENABLE_LOG && console.error('错误信息:', error)
+    ElMessage.error('保存失败')
+  }
+}
+
+watch(() => props.category, (newCategory) => {
+  if (newCategory?.id) {
+    ENABLE_LOG && console.log('普通分类 - category 变更, 重新加载数据, categoryId=', newCategory.id, ', name=', newCategory.name, ', weight=', newCategory.weight)
+    categoryName.value = newCategory.name || ''
+    originalCategoryName.value = categoryName.value
+    sortWeight.value = newCategory.weight !== undefined ? String(newCategory.weight) : ''
+    originalSortWeight.value = sortWeight.value
+    // 从后端数据获取权限状态，如果没有则使用默认值
+    // 支持两种格式：permissions 对象 和 visible_roles 数组
+    const defaultPermissions = { teacher: true, admin: true, student: false, parent: false, visitor: false }
+    
+    if (newCategory.permissions) {
+      // 后端返回的是 permissions 对象
+      permissions.value = { ...defaultPermissions, ...newCategory.permissions }
+    } else if (newCategory.visible_roles && Array.isArray(newCategory.visible_roles)) {
+      // 后端返回的是 visible_roles 数组，转换为对象格式
+      const roles = newCategory.visible_roles
+      permissions.value = {
+        teacher: roles.includes('teacher'),
+        admin: roles.includes('admin'),
+        student: roles.includes('student'),
+        parent: roles.includes('parent'),
+        visitor: roles.includes('visitor')
+      }
+    } else {
+      permissions.value = defaultPermissions
+    }
+    
+    originalPermissions.value = { ...permissions.value }
+    loadAgents()
+    loadAvailable()
+  }
+}, { immediate: true })
 </script>
 
 <style scoped>
-/* 全局字体 */
-* {
-  font-family: 'Noto Sans SC', sans-serif;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* 主容器 */
-.org-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32px;
-  gap: 20px;
-  width: 1343px;
-  height: 1108px;
-  background: #f2f4f8;
-  align-self: stretch;
-}
-
-/* 白色卡片 */
-.info-card {
-  display: flex;
+.top-card {
   flex-direction: column;
   align-items: flex-start;
-  padding: 24px;
-  gap: 24px;
-  width: 1279px;
-  background: #ffffff;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  align-self: stretch;
 }
 
-.small-card {
-  height: 132px;
-  gap: 16px;
-}
-
-.agent-card {
-  height: 284px;
-  gap: 16px;
-}
-
-/* 标题行 */
-.header-row {
+.top-header {
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  width: 1231px;
-  border-bottom: 1px solid rgba(173, 178, 185, 0.3);
-  align-self: stretch;
+  width: 100%;
+  margin-bottom: 16px;
 }
 
-.title-container {
+.top-right {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-
-.heading-2 {
-  font-weight: 700;
-  font-size: 20px;
-  line-height: 28px;
-  color: #2e3339;
-}
-
-/* 按钮组 */
-.btn-group {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
   gap: 12px;
 }
 
-.btn {
+.btn-delete-group, .btn-save, .btn-reset {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 8px 16px;
   border-radius: 8px;
   font-weight: 500;
   font-size: 14px;
-  line-height: 20px;
   cursor: pointer;
-  border: none;
 }
 
-.danger-btn {
-  width: 90px;
-  height: 38px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #d0435f;
+.btn-delete-group {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #D0435F;
 }
 
-.default-btn {
-  width: 62px;
-  height: 38px;
-  border: 1px solid #adb2b9;
+.btn-reset {
+  background: transparent;
+  border: 1px solid #ADB2B9;
   color: #2e3339;
-  background: #fff;
 }
 
-.primary-btn {
-  width: 88px;
-  height: 38px;
-  background: linear-gradient(135deg, #314de2 0%, #6144d3 100%);
-  color: #ffffff;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+.btn-reset:disabled, .form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-/* 表单行 */
-.form-row {
-  position: relative;
-  width: 1231px;
-  height: 64px;
+.btn-save {
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+  border: 1px solid #314DE2;
+  box-shadow: 0px 1px 2px 0px #0000000D;
+  color: #fff;
+}
+
+.divider-line {
+  width: 100%;
+  height: 1px;
+  background: rgba(173, 178, 185, 0.3);
+  margin-bottom: 24px;
+}
+
+.form-group {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
+  gap: 24px;
 }
 
-.form-item {
+.form-column {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  width: 603.5px;
+  gap: 8px;
 }
 
 .form-label {
@@ -274,7 +477,7 @@
 }
 
 .form-input {
-  width: 100%;
+  width: 603.5px;
   height: 38px;
   padding: 8px 12px;
   background: #f8f9fd;
@@ -282,72 +485,47 @@
   border-radius: 8px;
   font-size: 14px;
   color: #2e3339;
+  outline: none;
 }
 
-.input-wrapper {
+.input-with-tip {
   position: relative;
-  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.form-input-with-tip {
+  padding-right: 120px;
 }
 
 .input-tip {
   position: absolute;
   right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  line-height: 16px;
-  color: #767b82;
-}
-
-/* 模块标题 */
-.section-header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.justify-between {
-  width: 100%;
-  justify-content: space-between;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.icon-box {
-  width: 22px;
-  height: 15px;
-  background: #1f3ed6;
-}
-
-.agent-icon {
-  height: 19px;
-}
-
-.heading-3 {
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 24px;
-  color: #2e3339;
-}
-
-.section-desc {
-  font-weight: 400;
   font-size: 14px;
-  line-height: 20px;
-  color: #5a6066;
+  color: #767B82;
+  pointer-events: none;
 }
 
-/* 复选框组 */
+.form-input::placeholder {
+  color: #767B82;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  border-color: #314de2;
+}
+
+.small-section {
+  height: auto;
+  padding-bottom: 24px;
+}
+
 .checkbox-group {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: 16px;
+  margin-top: 8px;
 }
 
 .checkbox-item {
@@ -383,149 +561,6 @@
 .lock-icon {
   width: 9.33px;
   height: 12.25px;
-  background: #767b82;
   margin-left: 4px;
-}
-
-/* 小按钮 */
-.header-right {
-  display: flex;
-  gap: 10px;
-}
-
-.small-danger-btn {
-  width: 90px;
-  height: 32px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #d0435f;
-  font-size: 14px;
-}
-
-.small-primary-line-btn {
-  width: 110px;
-  height: 32px;
-  background: rgba(49, 77, 226, 0.1);
-  border: 1px solid rgba(49, 77, 226, 0.2);
-  color: #314de2;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-}
-
-.small-icon {
-  width: 10.5px;
-  height: 10.5px;
-  background: #314de2;
-}
-
-/* 智能体列表 */
-.agent-list {
-  position: relative;
-  width: 1231px;
-  height: 172px;
-}
-
-.agent-item {
-  position: absolute;
-  width: 609.5px;
-  height: 80px;
-  padding: 12px;
-  background: #f8f9fd;
-  border: 1px solid rgba(173, 178, 185, 0.3);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.agent-item:nth-child(1) {
-  left: 0;
-  top: 0;
-}
-
-.agent-item:nth-child(2) {
-  left: 621.5px;
-  top: 0;
-}
-
-.agent-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.drag-icon {
-  width: 10px;
-  height: 16px;
-  background: #adb2b9;
-}
-
-.agent-avatar {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #314de2 0%, #6144d3 100%);
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.edit-icon {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #fff;
-}
-
-.file-icon {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #fff;
-}
-
-.agent-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.agent-title {
-  font-weight: 700;
-  font-size: 14px;
-  line-height: 20px;
-  color: #2e3339;
-}
-
-.agent-id {
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  color: #5a6066;
-}
-
-.agent-desc {
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 16px;
-  color: #5a6066;
-}
-
-/* 添加智能体 */
-.add-agent-box {
-  position: absolute;
-  width: 609.5px;
-  height: 80px;
-  left: 0;
-  top: 92px;
-  border: 2px dashed rgba(173, 178, 185, 0.4);
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  color: #767b82;
 }
 </style>

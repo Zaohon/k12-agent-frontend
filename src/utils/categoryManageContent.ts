@@ -7,6 +7,7 @@ export interface Agent {
   desc: string
   title?: string
   description?: string
+  iconUrl?: string
 }
 
 export const loadCategoryAgents = async (categoryId: string | number): Promise<Agent[]> => {
@@ -16,7 +17,8 @@ export const loadCategoryAgents = async (categoryId: string | number): Promise<A
       return response.data.map((agent: any) => ({
         id: agent.id,
         name: agent.title || agent.name || '',
-        desc: agent.description || agent.desc || ''
+        desc: agent.description || agent.desc || '',
+        iconUrl: agent.iconUrl || ''
       }))
     }
     return []
@@ -48,12 +50,13 @@ export const saveCategoryAgents = async (
 
 export const loadAvailableAgents = async (): Promise<Agent[]> => {
   try {
-    const response = await agentApi.getMyAgents()
+    const response = await agentApi.getDiscoverAgents()
     if (response.success && response.data) {
       return response.data.map((agent: any) => ({
         id: agent.id,
         name: agent.title || agent.name || '',
-        desc: agent.description || agent.desc || ''
+        desc: agent.description || agent.desc || '',
+        iconUrl: agent.iconUrl || ''
       }))
     }
     return []

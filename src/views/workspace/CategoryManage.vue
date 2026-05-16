@@ -1,10 +1,12 @@
 <template>
   <div class="category-manage-page">
-    <CategoryManageList @select-category="handleSelectCategory" />
+    <CategoryManageList ref="categoryListRef" @select-category="handleSelectCategory" @category-updated="handleCategoryUpdated" />
     <component
       :is="currentContentComponent"
-      :selected-category="currentCategory?.name || ''"
-      :category-id="currentCategory?.id"
+      :category="currentCategory"
+      :key="currentCategory?.id"
+      @delete-success="handleDeleteSuccess"
+      @update-success="handleUpdateSuccess"
     />
   </div>
 </template>
@@ -19,12 +21,36 @@ import CategoryManageNormalContent from './CategoryManageNormalContent.vue'
 interface Category {
   id: number
   name: string
+  weight?: number
 }
 
+const categoryListRef = ref<InstanceType<typeof CategoryManageList> | null>(null)
 const currentCategory = ref<Category | undefined>(undefined)
 
 const handleSelectCategory = (category: Category | undefined) => {
   currentCategory.value = category
+}
+
+const handleCategoryUpdated = (updatedCategory: Category) => {
+  if (currentCategory.value && currentCategory.value.id === updatedCategory.id) {
+    currentCategory.value = updatedCategory
+  }
+}
+
+const handleDeleteSuccess = () => {
+  currentCategory.value = undefined
+  if (categoryListRef.value) {
+    categoryListRef.value.loadCategories()
+  }
+}
+
+const handleUpdateSuccess = (updatedCategory: Category) => {
+  if (currentCategory.value && currentCategory.value.id === updatedCategory.id) {
+    currentCategory.value = updatedCategory
+  }
+  if (categoryListRef.value) {
+    categoryListRef.value.loadCategories()
+  }
 }
 
 const currentContentComponent = computed(() => {
