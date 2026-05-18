@@ -30,8 +30,8 @@
         <div class="form-column">
           <label class="form-label">排序权重</label>
           <div class="input-with-tip">
-            <input type="text" class="form-input form-input-with-tip" v-model="sortWeight" />
-            <span class="input-tip">数值越小越靠前</span>
+            <input type="text" class="form-input form-input-with-tip" v-model="sortWeight" @input="validateSortWeight($event.target.value)" />
+            <span class="input-tip">数值越小越靠前（1-99）</span>
           </div>
         </div>
       </div>
@@ -193,6 +193,25 @@ const categoryName = ref('')
 const sortWeight = ref('')
 const originalCategoryName = ref('')
 const originalSortWeight = ref('')
+
+const validateSortWeight = (value: string) => {
+  // 只保留数字
+  let cleaned = value.replace(/\D/g, '')
+  // 如果为空或0，保持为空
+  if (cleaned === '' || cleaned === '0') {
+    sortWeight.value = ''
+    return
+  }
+  // 转换为数字并限制在1-99之间
+  const num = parseInt(cleaned)
+  if (num > 99) {
+    sortWeight.value = '99'
+  } else if (num < 1) {
+    sortWeight.value = '1'
+  } else {
+    sortWeight.value = String(num)
+  }
+}
 const permissions = ref({
   teacher: true,
   admin: true,
@@ -460,6 +479,9 @@ watch(() => props.category, (newCategory) => {
   display: flex;
   flex-direction: row;
   gap: 24px;
+  padding: 16px 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-column {
@@ -477,7 +499,7 @@ watch(() => props.category, (newCategory) => {
 }
 
 .form-input {
-  width: 603.5px;
+  width: 100%;
   height: 38px;
   padding: 8px 12px;
   background: #f8f9fd;
@@ -486,16 +508,24 @@ watch(() => props.category, (newCategory) => {
   font-size: 14px;
   color: #2e3339;
   outline: none;
+  box-sizing: border-box;
 }
 
 .input-with-tip {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .form-input-with-tip {
   padding-right: 120px;
+  width: 100%;
+}
+
+.form-input-small {
+  width: 150px !important;
+  flex-shrink: 0;
 }
 
 .input-tip {
