@@ -20,7 +20,7 @@
           v-for="agent in filteredAgents" 
           :key="agent.id"
           @click="toChat(agent)"
-          class="agent-card bg-white rounded-[16px] shadow-sm border border-[#DEE3EA] hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+          class="my-agent-card bg-white rounded-[16px] shadow-sm border border-[#DEE3EA] hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
           @mouseleave="handleCardMouseLeave"
         >
           <div class="px-6 pt-6 pb-4">
@@ -305,7 +305,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.agent-card {
+.my-agent-card {
   min-height: 178.8px;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
 }
