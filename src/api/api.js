@@ -17,8 +17,15 @@ const getToken = () => {
  * @param {Object} options - 请求配置选项
  * @returns {Promise<any>} 请求响应数据
  */
+const ENABLE_LOG = true;
+
 const request = async (url, options = {}) => {
   const token = getToken();
+  const fullUrl = `${API_BASE}${url}`;
+  
+  ENABLE_LOG && console.log('[API] 请求 URL:', fullUrl);
+  ENABLE_LOG && console.log('[API] 请求方法:', options.method || 'GET');
+  ENABLE_LOG && console.log('[API] 是否有 token:', !!token);
 
   const config = {
     ...options,
@@ -30,10 +37,14 @@ const request = async (url, options = {}) => {
   };
 
   try {
-    const response = await fetch(`${API_BASE}${url}`, config);
+    const response = await fetch(fullUrl, config);
+    
+    ENABLE_LOG && console.log('[API] 响应状态:', response.status);
+    ENABLE_LOG && console.log('[API] 响应状态文本:', response.statusText);
 
     if (response.ok) {
       const data = await response.json();
+      ENABLE_LOG && console.log('[API] 响应数据:', data);
       return data;
     } else {
       if (response.status === 401) {
@@ -51,6 +62,7 @@ const request = async (url, options = {}) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   } catch (error) {
+    ENABLE_LOG && console.error('[API] 请求异常:', error);
     ElMessage.error('网络错误，请检查后端服务是否启动');
     throw error;
   }
@@ -764,5 +776,30 @@ export const knowledgeApi = {
    */
   getAgentLogos: async () => {
     return request('/knowledge/system/agent-logos');
+  }
+};
+
+/**
+ * 模型配置相关 API 接口
+ */
+export const modelConfigApi = {
+  /**
+   * 获取模型配置
+   * @returns {Promise<any>} 模型配置信息
+   */
+  getModelConfig: async () => {
+    return request('/model-config');
+  },
+
+  /**
+   * 保存模型配置
+   * @param {Object} configData - 模型配置数据
+   * @returns {Promise<any>} 保存结果
+   */
+  saveModelConfig: async (configData) => {
+    return request('/model-config', {
+      method: 'POST',
+      body: JSON.stringify(configData)
+    });
   }
 };

@@ -9,14 +9,14 @@
           <h2 class="heading-title">模型与接口</h2>
           <p class="heading-desc">管理系统核心模型与接口通讯参数</p>
         </div>
-        <button class="primary-btn">
+        <button class="primary-btn" @click="saveModelConfig" :disabled="loading">
           <img src="@/images/save-white.png" class="btn-icon" />
-          <span>保存设置</span>
+          <span>{{ loading ? '保存中...' : '保存设置' }}</span>
         </button>
       </div>
 
       <!-- 内容卡片区域 -->
-      <div class="settings-content">
+      <div v-if="!loading || configLoaded" class="settings-content">
         <!-- 模型设置卡片 -->
         <div class="settings-card">
           <div class="card-header">
@@ -24,7 +24,7 @@
           </div>
           <div class="card-body">
             <label class="form-label">默认推理模型</label>
-            <input class="model-input" type="text" placeholder="请输入模型名称" value="qwen3.6-plus" />
+            <input class="model-input" type="text" placeholder="请输入模型名称" v-model="defaultModel" />
             <p class="form-tip">选择用于处理任务的主力大语言模型。</p>
           </div>
         </div>
@@ -36,7 +36,7 @@
           </div>
           <div class="card-body">
             <label class="form-label">请求 URL (Base URL)</label>
-            <input class="input-box" type="text" value="https://api.xiaolongai.com/v1" />
+            <input class="input-box" type="text" v-model="apiUrl" />
 
             <label class="form-label mt-20">API Key</label>
             <div class="input-box input-key">
@@ -45,9 +45,8 @@
                 <input 
                   class="key-input" 
                   :type="showKey ? 'text' : 'password'" 
-                  :value="apiKey"
+                  v-model="apiKey"
                   placeholder="请输入API Key"
-                  @input="apiKey = $event.target.value"
                 />
               </div>
               <img 
@@ -73,7 +72,7 @@
               <label class="form-label">组织最大 Token 限制</label>
               <div class="token-input-wrapper">
                 <img :src="tokenIcon" class="token-icon" />
-                <input class="token-input" type="text" value="4096" />
+                <input class="token-input" type="text" v-model="tokenLimit" />
               </div>
             </div>
 
@@ -82,7 +81,7 @@
             <div class="timeout-section">
               <label class="form-label">请求超时时间</label>
               <div class="timeout-row">
-                <input class="timeout-input" type="text" value="60" />
+                <input class="timeout-input" type="text" v-model="timeout" />
                 <span class="timeout-unit">秒</span>
               </div>
             </div>
@@ -99,20 +98,108 @@
           </div>
         </div>
       </div>
+
+      <!-- 加载状态 -->
+      <div v-if="loading && !configLoaded" class="loading-container">
+        <div class="loading-spinner"></div>
+        <span class="loading-text">加载中...</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { modelConfigApi } from '@/api/api'
 import isVisable from '@/images/is-visable.png'
 import unVisable from '@/images/un-visable.png'
 import warnIcon from '@/images/warn.png'
 import tokenIcon from '@/images/token-icon.png'
 
+const defaultModel = ref('')
+const apiUrl = ref('')
 const apiKey = ref('')
 const showKey = ref(false)
+const tokenLimit = ref('')
+const timeout = ref('')
 const contextMemory = ref(true)
+const loading = ref(false)
+const configLoaded = ref(false)
+
+const ENABLE_LOG = false
+
+const loadModelConfig = async () => {
+  try {
+    loading.value = true
+    ENABLE_LOG && console.log('[ModelConfig] 开始加载模型配置...')
+    
+    const res = await modelConfigApi.getModelConfig()
+    ENABLE_LOG && console.log('[ModelConfig] API 返回数据:', res)
+    ENABLE_LOG && console.log('[ModelConfig] 数据类型:', typeof res)
+    
+    if (res && typeof res === 'object') {
+      const data = res.data || res
+      ENABLE_LOG && console.log('[ModelConfig] 实际数据:', data)
+      ENABLE_LOG && console.log('[ModelConfig] defaultModel:', data.defaultModel)
+      ENABLE_LOG && console.log('[ModelConfig] apiBaseUrl:', data.apiBaseUrl)
+      ENABLE_LOG && console.log('[ModelConfig] apiKey:', data.apiKey ? '已设置' : '空')
+      ENABLE_LOG && console.log('[ModelConfig] orgMaxTokenLimit:', data.orgMaxTokenLimit)
+      ENABLE_LOG && console.log('[ModelConfig] requestTimeout:', data.requestTimeout)
+      ENABLE_LOG && console.log('[ModelConfig] enableContextMemory:', data.enableContextMemory)
+      
+      defaultModel.value = data.defaultModel !== undefined ? String(data.defaultModel) : ''
+      apiUrl.value = data.apiBaseUrl !== undefined ? String(data.apiBaseUrl) : ''
+      apiKey.value = data.apiKey !== undefined ? String(data.apiKey) : ''
+      tokenLimit.value = data.orgMaxTokenLimit !== undefined ? String(data.orgMaxTokenLimit) : ''
+      timeout.value = data.requestTimeout !== undefined ? String(data.requestTimeout) : ''
+      contextMemory.value = data.enableContextMemory !== undefined ? Boolean(data.enableContextMemory) : true
+      
+      ENABLE_LOG && console.log('[ModelConfig] 数据赋值完成:', {
+        defaultModel: defaultModel.value,
+        apiUrl: apiUrl.value,
+        apiKey: apiKey.value,
+        tokenLimit: tokenLimit.value,
+        timeout: timeout.value,
+        contextMemory: contextMemory.value
+      })
+    } else {
+      ENABLE_LOG && console.warn('[ModelConfig] API 返回数据无效:', res)
+    }
+  } catch (err) {
+    ENABLE_LOG && console.error('[ModelConfig] 加载模型配置失败:', err)
+  } finally {
+    loading.value = false
+    configLoaded.value = true
+    ENABLE_LOG && console.log('[ModelConfig] 加载完成，configLoaded:', configLoaded.value)
+  }
+}
+
+const saveModelConfig = async () => {
+  try {
+    loading.value = true
+    const configData = {
+      defaultModel: defaultModel.value,
+      apiBaseUrl: apiUrl.value,
+      apiKey: apiKey.value,
+      orgMaxTokenLimit: parseInt(tokenLimit.value) || 4096,
+      requestTimeout: parseInt(timeout.value) || 60,
+      enableContextMemory: contextMemory.value
+    }
+    ENABLE_LOG && console.log('[ModelConfig] 保存数据:', configData)
+    await modelConfigApi.saveModelConfig(configData)
+    ElMessage.success('保存成功')
+  } catch (err) {
+    ENABLE_LOG && console.error('[ModelConfig] 保存模型配置失败:', err)
+    ElMessage.error('保存失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadModelConfig()
+})
 </script>
 
 <style scoped>
@@ -489,6 +576,36 @@ const contextMemory = ref(true)
 }
 
 .timeout-unit {
+  font-size: 14px;
+  color: #5a6066;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  width: 100%;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #314de2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 16px;
   font-size: 14px;
   color: #5a6066;
 }
