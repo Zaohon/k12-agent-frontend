@@ -25,6 +25,9 @@ const request = async (url, options = {}) => {
   
   ENABLE_LOG && console.log('[API] 请求 URL:', fullUrl);
   ENABLE_LOG && console.log('[API] 请求方法:', options.method || 'GET');
+  if (options.body) {
+    ENABLE_LOG && console.log('[API] 请求体:', options.body);
+  }
   ENABLE_LOG && console.log('[API] 是否有 token:', !!token);
 
   const config = {
@@ -298,11 +301,14 @@ export const sessionApi = {
 
   /**
    * 创建新会话
+   * @param {number} [agentId] - 智能体 ID
    * @returns {Promise<any>} 创建结果
    */
-  createSession: async () => {
+  createSession: async (agentId) => {
+    const body = agentId !== undefined ? JSON.stringify({ agentId }) : undefined;
     return request('/session/create', {
-      method: 'POST'
+      method: 'POST',
+      body
     });
   },
 

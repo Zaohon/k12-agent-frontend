@@ -214,7 +214,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['sendMessage', 'refreshSessions'])
+const emit = defineEmits(['sendMessage', 'refreshSessions', 'updateMessages', 'updateStreaming'])
 
 const DEFAULT_PADDING = 140
 
@@ -228,7 +228,7 @@ watch(() => props.activeSession, (newSession, oldSession) => {
 })
 
 const inputVal = ref('')
-const messages = ref([])
+const internalMessages = ref([])
 const isStreaming = ref(false)
 const msgContainer = ref(null)
 const showUpdateTopicDialog = ref(false)
@@ -309,7 +309,7 @@ const handleRemoveAttachment = (index) => {
 
 // 计算显示的消息（使用内部消息列表）
 const showMessages = computed(() => {
-  return messages.value || []
+  return internalMessages.value || []
 })
 
 // 加载会话历史
@@ -318,13 +318,13 @@ const loadSessionHistory = async () => {
   
   // 如果外部传入了消息且有内容（来自 ChatInit），合并到内部消息列表
   if (props.messages && props.messages.length > 0) {
-    messages.value = [...props.messages]
+    internalMessages.value = [...props.messages]
     nextTick(scrollToBottom)
     return
   }
   
   const { data } = await sessionApi.getSessionHistory(props.activeSession.id)
-  messages.value = data || []
+  internalMessages.value = data || []
   nextTick(scrollToBottom)
 }
 
@@ -348,16 +348,35 @@ const handleSend = async () => {
   await nextTick()
 
   // 1. 先 push 用户消息（包含附件信息）
-  messages.value.push({ role: 'user', content, attachments: currentAttachments })
+  internalMessages.value.push({ role: 'user', content, attachments: currentAttachments })
+  emit('updateMessages', [...internalMessages.value])
   await nextTick()
   scrollToBottom()
 
   // 2. 创建一个空的 AI 消息（用于写入）
-  const aiMsg = { role: 'assistant', content: '', isThinking: true }
-  messages.value.push(aiMsg)
+  let currentContent = ''
+  let isThinkingState = true
+  internalMessages.value.push({ role: 'assistant', content: '', isThinking: true })
   isStreaming.value = true
+  emit('updateStreaming', true)
   await nextTick()
-  scrollToBottom() // 发送后立即滚动到底部，确保"思考中"状态可见
+  scrollToBottom()
+
+  // 辅助函数：更新消息
+  const updateMessage = async (content, thinking) => {
+    currentContent = content
+    isThinkingState = thinking
+    // 替换整个消息对象以确保响应式更新
+    internalMessages.value[internalMessages.value.length - 1] = {
+      role: 'assistant',
+      content: currentContent,
+      isThinking: isThinkingState
+    }
+    internalMessages.value = [...internalMessages.value]
+    emit('updateMessages', [...internalMessages.value])
+    await nextTick()
+    scrollToBottom()
+  }
 
   try {
     console.log('Calling sessionApi.sendMessage...')
@@ -368,46 +387,33 @@ const handleSend = async () => {
     console.log('Content-Type:', contentType)
     
     if (contentType.includes('application/json')) {
-      // 普通 JSON 响应
       const result = await response.json()
       console.log('JSON response:', result)
-      console.log('result.success:', result.success)
-      console.log('result.code:', result.code)
-      console.log('result.result:', result.result)
-      console.log('result.content:', result.content)
       
+      let responseContent = ''
       if (result.success && result.data) {
-        console.log('Case 1: success + data')
-        aiMsg.content = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
+        responseContent = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
       } else if (result.content) {
-        console.log('Case 2: content')
-        aiMsg.content = result.content
+        responseContent = result.content
       } else if (result.code === 'success' && result.result) {
-        console.log('Case 3: code=success + result')
-        // 后端实际返回的格式
         if (result.result.content) {
-          console.log('Case 3a: result.content exists')
-          aiMsg.content = result.result.content
+          responseContent = result.result.content
         } else if (result.result.id && !result.result.content) {
-          console.log('Case 3b: only result.id, no content')
-          // 只有任务ID，没有内容
-          aiMsg.content = '抱歉，服务器未返回消息内容，请稍后重试。'
+          responseContent = '抱歉，服务器未返回消息内容，请稍后重试。'
         } else {
-          console.log('Case 3c: other result')
-          aiMsg.content = JSON.stringify(result.result)
+          responseContent = JSON.stringify(result.result)
         }
       } else {
-        console.log('Case 4: fallback')
-        aiMsg.content = JSON.stringify(result)
+        responseContent = JSON.stringify(result)
       }
-      console.log('Final aiMsg.content:', aiMsg.content)
+      await updateMessage(responseContent, false)
     } else if (contentType.includes('text/event-stream')) {
-      // SSE 流式响应（根据 API 文档格式）
       console.log('Processing SSE stream...')
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
       let receivedContent = false
+      let hasStartedThinking = true
       
       while (true) {
         const { done, value } = await reader.read()
@@ -417,70 +423,72 @@ const handleSend = async () => {
         }
         
         if (done) {
-          // 流结束时处理剩余数据
           if (buffer.trim()) {
-            console.log('Final buffer:', buffer)
-            
-            // 检查是否是错误格式
             try {
               const parsed = JSON.parse(buffer)
               if (parsed.error) {
-                // 后端返回错误
-                aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+                await updateMessage('错误：' + (parsed.error.message || '服务器错误'), false)
               } else {
-                // 尝试处理为普通内容
-                processSSEBuffer(buffer, aiMsg)
+                // 直接处理缓冲区
+                const tempMsg = { content: currentContent }
+                const result = processSSEBuffer(buffer, tempMsg)
+                if (result.hasNewContent) {
+                  await updateMessage(tempMsg.content, false)
+                }
               }
             } catch (e) {
-              // 不是JSON，直接显示
-              aiMsg.content = buffer
+              await updateMessage(buffer, false)
             }
           }
           break
         }
         
-        // 处理完整的行
         const lines = buffer.split('\n')
         for (let i = 0; i < lines.length - 1; i++) {
           const line = lines[i].trim()
           if (!line) continue
           
-          // 检查是否是错误格式（直接返回JSON错误）
-          if (line.startsWith('{')) {
-            try {
-              const parsed = JSON.parse(line)
-              if (parsed.error) {
-                aiMsg.content = '错误： ' + (parsed.error.message || '服务器错误')
-                receivedContent = true
-                reader.releaseLock()
-                return
-              }
-            } catch (e) {}
+          const tempMsg = { content: currentContent }
+          const result = processSSELine(line, tempMsg)
+          
+          if (result.shouldStop) {
+            receivedContent = true
+            reader.releaseLock()
+            await updateMessage(tempMsg.content, false)
+            break
           }
           
-          processSSELine(lines[i], aiMsg)
+          if (result.hasNewContent) {
+            // 当收到第一块内容时，立即结束思考状态
+            if (hasStartedThinking) {
+              console.log('收到第一块内容，结束思考状态，当前内容:', tempMsg.content)
+              hasStartedThinking = false
+              await updateMessage(tempMsg.content, false)
+            } else {
+              await updateMessage(tempMsg.content, false)
+            }
+          }
         }
         buffer = lines[lines.length - 1]
       }
       
-      // 如果没有收到任何内容，显示错误提示
-      if (!receivedContent && !aiMsg.content) {
-        aiMsg.content = '抱歉，服务器没有返回有效内容，请稍后重试。'
+      if (!receivedContent && !currentContent) {
+        await updateMessage('抱歉，服务器没有返回有效内容，请稍后重试。', false)
       }
     } else {
-      // 其他格式
       const text = await response.text()
-      console.log('Text response:', text)
-      aiMsg.content = text
+      await updateMessage(text, false)
     }
   } catch (error) {
     console.error('Send message error:', error)
-    aiMsg.content = '抱歉，服务器暂时无法响应，请稍后重试。'
+    await updateMessage('抱歉，服务器暂时无法响应，请稍后重试。', false)
   } finally {
-    aiMsg.isThinking = false
     isStreaming.value = false
-    await nextTick()
-    scrollToBottom()
+    emit('updateStreaming', false)
+    // 确保最终状态是结束思考
+    if (isThinkingState) {
+      await updateMessage(currentContent, false)
+    }
   }
 }
 
@@ -536,7 +544,7 @@ const deleteSession = async () => {
 // 加载测试数据
 const loadTestData = () => {
   useTestData.value = true
-  messages.value = largeChatData
+  internalMessages.value = largeChatData
   ElMessage.success(`已加载 ${largeChatData.length} 条测试消息`)
   nextTick(() => {
     if (msgContainer.value) {
@@ -551,8 +559,8 @@ watch(() => props.activeSession, () => loadSessionHistory(), { immediate: true }
 // 监听外部传入的消息变化（来自 ChatInit）
 watch(() => props.messages, (newMessages) => {
   // 只在内部消息为空且有外部消息时才合并
-  if (newMessages && newMessages.length > 0 && messages.value.length === 0) {
-    messages.value = [...newMessages]
+  if (newMessages && newMessages.length > 0 && internalMessages.value.length === 0) {
+    internalMessages.value = [...newMessages]
     nextTick(scrollToBottom)
   }
 }, { immediate: true })
@@ -560,7 +568,7 @@ watch(() => props.messages, (newMessages) => {
 // 监听智能体变化
 watch(() => props.agentId, (newAgentId, oldAgentId) => {
   if (newAgentId && newAgentId !== oldAgentId) {
-    messages.value = []
+    internalMessages.value = []
   }
 })
 

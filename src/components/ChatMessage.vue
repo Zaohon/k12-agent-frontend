@@ -11,10 +11,11 @@
       </div>
       <div class="chat-bubble-wrapper" :class="message.role === 'user' ? 'align-end' : 'align-start'">
         <div class="chat-bubble" :class="message.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
-          <div v-if="message.isThinking" class="thinking-card">
+          <!-- 如果有内容，优先显示内容，思考状态只在没有内容时显示 -->
+          <div v-if="message.content" class="message-content">{{ message.content }}</div>
+          <div v-else-if="message.isThinking" class="thinking-card">
             <span class="thinking-text">{{ thinkingText }}</span>
           </div>
-          <div v-else class="message-content">{{ message.content }}</div>
         </div>
         <!-- 用户消息显示附件卡片 -->
         <div v-if="showAttachments && message.role === 'user' && message.attachments && message.attachments.length > 0" class="message-attachments">
@@ -47,7 +48,7 @@
 
 <script setup lang="ts">
 import { User, Monitor } from '@element-plus/icons-vue'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -74,6 +75,15 @@ const props = withDefaults(defineProps<{
   showAttachments: true,
   attachmentStatus: '解析完成'
 })
+
+// 监听message变化
+watch(() => props.message, (newMsg) => {
+  console.log('ChatMessage收到新message:', {
+    role: newMsg.role,
+    content: newMsg.content,
+    isThinking: newMsg.isThinking
+  })
+}, { deep: true, immediate: true })
 
 const userIconComponent = computed(() => {
   return props.userIcon

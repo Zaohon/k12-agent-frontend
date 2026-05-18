@@ -69,7 +69,7 @@
     <!-- 中间窗口：动态切换 -->
     <main class="chat-main-content">
       <ChatInit v-if="!activeSessionId" @send-message="handleChatInitSend" />
-      <Chating 
+      <Chating
         v-else
         :agentId="agentId"
         :agentInfo="agentInfo"
@@ -80,6 +80,8 @@
         :commonPrompts="commonPrompts"
         @send-message="handleSend"
         @refreshSessions="refreshSessions"
+        @updateMessages="messages = $event"
+        @updateStreaming="isStreaming = $event"
       />
     </main>
 
@@ -110,28 +112,75 @@ import { sessionApi } from '../../api/api'
 import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
 import ChatInit from './ChatInit.vue'
 import Chating from './Chating.vue'
+import { DEFAULT_AGENT_ID } from '../../costants/costant'
 
 const route = useRoute()
 const userStore = useUserStore()
 
-const agentId = computed(() => route.params.agentId || '')
-const agentInfo = ref(null)
-const formConfig = ref([])
-const formData = ref({})
+const agentId = computed(() => {
+  const param = route.params.agentId
+  if (param && typeof param === 'string') {
+    const num = Number(param)
+    return !isNaN(num) ? num : undefined
+  }
+  return undefined
+})
+interface AgentInfo {
+  id?: number
+  title?: string
+  description?: string
+  iconUrl?: string
+  welcomeMsg?: string
+  systemPrompt?: string
+  [key: string]: any
+}
+
+interface FormConfigItem {
+  key: string
+  label: string
+  type: 'input' | 'textarea'
+  placeholder?: string
+  required?: boolean
+}
+
+const agentInfo = ref<AgentInfo | null>(null)
+const formConfig = ref<FormConfigItem[]>([])
+const formData = ref<Record<string, any>>({})
+
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
+  isThinking?: boolean
+  attachments?: any[]
+  [key: string]: any
+}
 
 const userInput = ref('')
 const isStreaming = ref(false)
-const messages = ref([])
+const messages = ref<Message[]>([])
 
-const activeSessionId = ref(null)
-const sessions = ref([])
+interface Session {
+  id: number
+  topic: string
+  agentId?: number
+  createdAt?: string
+  updatedAt?: string
+  userId?: number
+  isDeleted?: boolean
+}
+
+const activeSessionId = ref<number | null>(null)
+const sessions = ref<Session[]>([])
 const sessionSearch = ref('')
 
 // 处理 URL 中的 sessionId 参数
 const initFromUrl = () => {
   const sessionId = route.query.sessionId
-  if (sessionId) {
-    activeSessionId.value = sessionId
+  if (sessionId && typeof sessionId === 'string') {
+    const num = Number(sessionId)
+    if (!isNaN(num)) {
+      activeSessionId.value = num
+    }
   }
 }
 
@@ -164,7 +213,7 @@ const commonPrompts = ref(['生成一份教案', '批改一段作业', '帮我�
 
 const createNewSession = async () => {
   try {
-    const data = await sessionApi.createSession()
+    const data = await sessionApi.createSession(agentId.value ?? Number(DEFAULT_AGENT_ID))
     if (data.success) {
       await loadSessions()
       activeSessionId.value = data.data.id
@@ -178,7 +227,7 @@ const createNewSession = async () => {
   }
 }
 
-const selectSession = (id) => {
+const selectSession = (id: number) => {
   if (editingSessionId.value !== null) {
     confirmEditSession()
   }
@@ -186,7 +235,7 @@ const selectSession = (id) => {
   messages.value = []
 }
 
-const deleteSession = async (id) => {
+const deleteSession = async (id: number) => {
   try {
     const data = await sessionApi.deleteSession(id)
     if (data.success) {
@@ -260,7 +309,7 @@ const handleSend = async () => {
 const handleChatInitSend = async ({ content, attachments }) => {
   try {
     // 1. 新建会话
-    const sessionResult = await sessionApi.createSession()
+    const sessionResult = await sessionApi.createSession(agentId.value ?? Number(DEFAULT_AGENT_ID))
     if (!sessionResult.success) {
       ElMessage.error('创建会话失败')
       return
@@ -272,8 +321,10 @@ const handleChatInitSend = async ({ content, attachments }) => {
     messages.value.push({ role: 'user', content, attachments })
 
     // 3. 创建一个空的 AI 消息（用于显示"思考中"状态）
+
     const aiMsg = { role: 'assistant', content: '', isThinking: true }
     messages.value.push(aiMsg)
+
     isStreaming.value = true
 
     // 4. 加载会话列表并切换到新会话
@@ -406,6 +457,15 @@ const handleGlobalClick = (e: MouseEvent) => {
     confirmEditSession()
   }
 }
+
+// 监听 agentId 变化
+watch(() => route.params.agentId, (newAgentId) => {
+  if (newAgentId) {
+    // 当切换到新的智能体时，重置聊天状态
+    activeSessionId.value = null
+    messages.value = []
+  }
+})
 
 // 组件挂载时加载会话列表
 onMounted(() => {

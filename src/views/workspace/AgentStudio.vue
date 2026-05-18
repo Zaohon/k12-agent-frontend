@@ -263,13 +263,12 @@ const editAgent = (agent) => {
 }
 
 const goTest = (agent) => {
-  router.push(`/workspace/chat?agentId=${agent.id}`)
+  router.push(`/workspace/chat/${agent.id}`)
 }
 
 const toChat = (agent) => {
-  ElMessage.success('点击了智能体' + agent.title)
-  ElMessage.warning('跳转开发中')
-  router.push(`/workspace/chat?agentId=${agent.id}`)
+  ElMessage.success('进入对话: ' + agent.title)
+  router.push(`/workspace/chat/${agent.id}`)
 }
 
 const deleteAgent = (agent) => {

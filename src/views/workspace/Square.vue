@@ -10,7 +10,7 @@
               :key="index"
               :id="'tab-' + index"
               class="cursor-pointer group flex items-center justify-center mx-4"
-              @click="activeTab = index"
+              @click="handleTabClick(index)"
             >
               <span
                 :id="'tab-text-' + index"
@@ -28,7 +28,7 @@
         </div>
       </div>
 
-      <div class="max-w-[1600px] mx-auto px-6 py-8 min-w-[1200px]">
+      <div v-if="tabs[activeTab] == '精选页'" class="max-w-[1600px] mx-auto px-6 py-4 min-w-[1200px]">
         <!-- Hero Banner Cards -->
         <div class="grid grid-cols-3 gap-6 mb-10">
           <!-- Card 1 - 智能教案生成 -->
@@ -89,7 +89,7 @@
                 <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
                 <h2 class="text-xl font-bold text-gray-800">学科提效神器</h2>
               </div>
-              <div class="flex items-center space-x-2">
+              <!-- <div class="flex items-center space-x-2">
                 <span class="text-sm text-gray-500">排序：</span>
                 <el-dropdown size="small">
                   <span class="text-sm text-blue-600 cursor-pointer flex items-center">
@@ -103,7 +103,7 @@
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
-              </div>
+              </div> -->
             </div>
 
             <!-- Agent Cards Grid -->
@@ -115,10 +115,8 @@
                 @click="goChat(item.id)"
               >
                 <div class="flex items-start justify-between mb-4">
-                  <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <el-icon :size="24" color="#667eea">
-                      <img :src="item.iconUrl" alt="">
-                    </el-icon>
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-colors">
+                    <img :src="item.iconUrl" alt="" class="w-12 h-12">
                   </div>
                   <el-tag v-if="item.isFeatured" size="small" class="bg-purple-50 text-purple-600 border-purple-100">精选</el-tag>
                 </div>
@@ -187,6 +185,83 @@
           </div>
         </div>
       </div>
+      <div v-else class="max-w-[1600px] mx-auto px-6 py-4 min-w-[1200px]">
+        <!-- 顶部标题和排序 -->
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-gray-800">{{ tabs[activeTab] }}</h2>
+          <!-- <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">排序：</span>
+            <el-dropdown size="small">
+              <span class="text-sm text-blue-600 cursor-pointer flex items-center">
+                最常使用 <el-icon class="ml-1"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item>最常使用</el-dropdown-item>
+                  <el-dropdown-item>最新发布</el-dropdown-item>
+                  <el-dropdown-item>最多点赞</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div> -->
+        </div>
+
+        <!-- 智能体卡片区域 -->
+        <div class="agent-card-container mb-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div
+              v-for="(item, index) in paginatedAgents"
+              :key="item.id"
+              class="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-lg hover:border-blue-100 transition-all cursor-pointer group flex flex-col h-full"
+              @click="goChat(item.id)"
+            >
+              <div class="flex items-start justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-colors">
+                  <img :src="item.iconUrl" alt="" class="w-12 h-12">
+                </div>
+                <el-tag v-if="item.isFeatured" size="small" class="bg-purple-50 text-purple-600 border-purple-100">精选</el-tag>
+              </div>
+              <div class="flex-1 mb-4">
+                <h3 class="agent-card-title mb-2">{{ item.title }}</h3>
+                <p class="agent-card-description">{{ item.description || '暂无描述' }}</p>
+              </div>
+              <div class="border-t border-[#EBEEF4] pt-4 mt-auto">
+                <div v-if="item.isLabels" class="flex items-center space-x-2">
+                  <span
+                    v-for="(label, idx) in item.labels"
+                    :key="label"
+                    class="px-3 py-1 text-xs font-medium"
+                    :style="{
+                      backgroundColor: labelBgColors[Number(idx) % labelBgColors.length],
+                      color: labelTextColors[Number(idx) % labelTextColors.length],
+                      border: `1px solid ${labelBorderColors[Number(idx) % labelBorderColors.length]}`,
+                      borderRadius: '50px'
+                    }"
+                  >{{ label }}</span>
+                </div>
+                <div v-else class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400">{{ item.usageCount || '0' }}k 使用</span>
+                  <span class="text-xs text-gray-400">@{{ item.creatorName || '小龙老师' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分页控制区域 -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-500">第 {{ currentPage }} 页，共 {{ Math.ceil(totalItems / pageSize) }} 页</span>
+          <div class="flex items-center space-x-2">
+            <el-pagination
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :total="totalItems"
+              layout="prev, pager, next"
+              @current-change="handlePageChange"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -200,6 +275,7 @@ import {
   User,
   ArrowDown
 } from '@element-plus/icons-vue'
+import { categoryApi, agentApi } from '@/api/api'
 
 export default {
   name: 'Square',
@@ -211,7 +287,8 @@ export default {
       MagicStick,
       User,
       ArrowDown,
-      tabs: ['精选', '全部应用', '教学助手', '学科助教', '行政工具'],
+      tabs: [] as string[],
+      categories: [] as any[],
       activeTab: 0,
       underlineLeft: 0,
       underlineWidth: 0,
@@ -225,133 +302,96 @@ export default {
       labelBgColors: ['#EFF6FF', '#F5F3FF', '#F0FDF4', '#FFFAEB', '#FDF2F8'],
       labelTextColors: ['#2563EB', '#7C3AED', '#16A34A', '#EA580C', '#DB2777'],
       labelBorderColors: ['#BFDBFE', '#DDD6FE', '#BBF7D0', '#FED7AA', '#FBCFE8'],
-      agentList: [
-        {
-          id: 1,
-          title: '作文批改助手',
-          description: '深度解析学生习作，提供多维度点评与改进建议。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: true,
-          isLabels: true,
-          labels: ['联网上传', '深度思考'],
-        },
-        {
-          id: 2,
-          title: '教研计划专家',
-          description: '制定长短期教学研究目标，自动化生成进度表。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          isLabels: true,
-          labels: ['联网上传', '深度思考'],
-        },
-        {
-          id: 3,
-          title: '英语口语陪练',
-          description: '实时语音交互，模拟多种真实教学场景对话。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 8.1,
-          creatorName: '小龙老师'
-        },
-        {
-          id: 4,
-          title: '口碑批改',
-          description: '快速扫描并批改客观题，生成班级共性错误分析报告。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 12,
-          creatorName: '小龙老师'
-        },
-        {
-          id: 5,
-          title: '学生学情分析',
-          description: '多源数据采集，构建学生个体与班级群体画像。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 2.4,
-          creatorName: '小龙老师'
-        },
-        {
-          id: 6,
-          title: '班主任助手',
-          description: '处理班级琐事，自动生成评语、家长信及活动通知。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 6.7,
-          creatorName: '小龙老师'
-        },
-        {
-          id: 7,
-          title: '作文批改助手',
-          description: '深度解析学生习作，提供多维度点评与改进建议。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: true,
-          isLabels: true,
-          labels: ['联网上传', '深度思考'],
-        },
-        {
-          id: 8,
-          title: '教研计划专家',
-          description: '制定长短期教学研究目标，自动化生成进度表。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          isLabels: true,
-          labels: ['联网上传', '深度思考'],
-        },
-        {
-          id: 9,
-          title: '英语口语陪练',
-          description: '实时语音交互，模拟多种真实教学场景对话。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 8.1,
-          creatorName: '小龙老师'
-        },
-        {
-          id: 10,
-          title: '口碑批改',
-          description: '快速扫描并批改客观题，生成班级共性错误分析报告。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 12,
-          creatorName: '小龙老师'
-        },
-        {
-          id: 11,
-          title: '学生学情分析',
-          description: '多源数据采集，构建学生个体与班级群体画像。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 2.4,
-          creatorName: '小龙老师'
-        },
-        {
-          id: 12,
-          title: '班主任助手',
-          description: '处理班级琐事，自动生成评语、家长信及活动通知。',
-          iconUrl: new URL('@/images/Icon.png', import.meta.url).href,
-          isFeatured: false,
-          usageCount: 6.7,
-          creatorName: '小龙老师'
-        }
-      ],
-      recommendedList: [
-        { id: 1, title: '李华老师的数学教案', likes: 1.2 },
-        { id: 2, title: '张教授的英语词根解析', likes: 856 }
-      ]
+      agentList: [] as any[],
+      filteredAgents: [] as any[],
+      recommendedList: [] as any[],
+      currentPage: 1,
+      pageSize: 12
     }
   },
   computed: {
-    filteredAgents(): any[] {
-      return this.agentList
+    currentCategoryId() {
+      if (this.activeTab === 0) return null
+      const categoryName = this.tabs[this.activeTab]
+      const category = this.categories.find((c: any) => c.name === categoryName)
+      return category?.id
+    },
+    paginatedAgents() {
+      const start = (this.currentPage - 1) * this.pageSize
+      const end = start + this.pageSize
+      return this.agentList.slice(start, end)
+    },
+    totalItems() {
+      return this.agentList.length
+    },
+    startItem() {
+      if (this.totalItems === 0) return 0
+      return (this.currentPage - 1) * this.pageSize + 1
+    },
+    endItem() {
+      const end = this.currentPage * this.pageSize
+      return end > this.totalItems ? this.totalItems : end
     }
   },
   methods: {
+    handleTabClick(index: number) {
+      this.activeTab = index
+      this.currentPage = 1
+    },
+    handlePageChange(page: number) {
+      this.currentPage = page
+    },
+    async loadCategories() {
+      try {
+        const response = await categoryApi.getCategoryList()
+        if (response.success && response.data) {
+          this.categories = response.data
+          const categoryNames = response.data.map((item: any) => item.name)
+          // 过滤掉"推荐页"，然后在前面添加"精选"和"全部应用"
+          const filteredNames = categoryNames.filter((name: string) => name !== '推荐页')
+          this.tabs = [...filteredNames]
+          
+          // 根据当前 activeTab 加载对应数据
+          this.$nextTick(() => {
+            if (this.activeTab === 0) {
+              this.loadFeaturedAgents()
+            } else {
+              this.loadCategoryAgents(this.currentCategoryId)
+            }
+          })
+        }
+      } catch (error) {
+        console.error('加载分类列表失败:', error)
+        // 失败时使用默认分类
+        this.tabs = ['精选', '教学助手', '学科助教', '行政工具']
+      }
+    },
+    async loadFeaturedAgents() {
+      try {
+        const response = await agentApi.getFeaturedAgents()
+        if (response.success && response.data) {
+          this.filteredAgents = response.data
+        }
+      } catch (error) {
+        console.error('加载精选智能体失败:', error)
+      }
+    },
+    async loadCategoryAgents(categoryId?: number) {
+      try {
+        const response = await agentApi.getDiscoverAgents(categoryId)
+        if (response.success && response.data) {
+          this.agentList = response.data
+          this.currentPage = 1
+        }
+      } catch (error) {
+        console.error('加载分类智能体失败:', error)
+      }
+    },
     goChat(id: number) {
-      console.log('Navigate to chat:', id)
+      this.$router.push(`/workspace/chat/${id}`)
     },
     goCreate() {
-      console.log('Navigate to create agent')
+      this.$router.push('/workspace/agent/edit')
     },
     updateUnderline() {
       this.$nextTick(() => {
@@ -365,11 +405,30 @@ export default {
     }
   },
   mounted() {
-    this.updateUnderline()
+    this.loadCategories()
   },
   watch: {
     activeTab() {
       this.updateUnderline()
+      if (this.activeTab === 0) {
+        // 精选页
+        this.loadFeaturedAgents()
+      } else if (this.activeTab === 1) {
+        // 全部应用
+        this.loadCategoryAgents()
+      } else {
+        // 分类页
+        this.loadCategoryAgents(this.currentCategoryId)
+      }
+    },
+    tabs() {
+      this.$nextTick(() => {
+        this.updateUnderline()
+        // 初始加载全部应用数据
+        if (this.activeTab === 1) {
+          this.loadCategoryAgents()
+        }
+      })
     }
   }
 }
@@ -394,6 +453,61 @@ export default {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Agent card container with fixed height (3 rows) */
+.agent-card-container {
+  height: 720px;
+  padding-right: 8px;
+}
+
+/* Pagination styles */
+:deep(.el-pagination) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 0 8px;
+  min-width: 28px;
+  height: 28px;
+}
+
+:deep(.el-pagination .btn-prev:hover),
+:deep(.el-pagination .btn-next:hover) {
+  color: #314DE2;
+}
+
+:deep(.el-pagination .el-pager li) {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  min-width: 28px;
+  height: 28px;
+  line-height: 28px;
+  margin: 0 2px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
+  color: #314DE2;
+}
+
+:deep(.el-pagination .el-pager li.is-active) {
+  background: #314DE2;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+:deep(.el-pagination .el-pager li.is-active:hover) {
+  background: #1e40af;
+  color: #ffffff;
 }
 
 /* Page container */
