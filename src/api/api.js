@@ -705,6 +705,16 @@ export const knowledgeApi = {
   },
 
   /**
+   * 获取文件夹和文件列表（合并接口）
+   * @param {Object} [params] - 筛选参数 { parentId }
+   * @returns {Promise<any>} { folders: [], files: [] }
+   */
+  getEntries: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/knowledge/entries${query ? `?${query}` : ''}`);
+  },
+
+  /**
    * 获取文件列表
    * @param {Object} [params] - 筛选参数
    * @returns {Promise<any>} 文件列表
@@ -731,6 +741,19 @@ export const knowledgeApi = {
    */
   getFileById: async (fileId) => {
     return request(`/knowledge/files/${fileId}`);
+  },
+
+  /**
+   * 更新文件信息（重命名/移动）
+   * @param {number|string} fileId - 文件 ID
+   * @param {Object} fileData - 文件数据 {name, folderId}
+   * @returns {Promise<any>} 更新结果
+   */
+  updateFile: async (fileId, fileData) => {
+    return request(`/knowledge/files/${fileId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(fileData)
+    });
   },
 
   /**
@@ -765,6 +788,31 @@ export const knowledgeApi = {
   deleteFile: async (fileId) => {
     return request(`/knowledge/files/${fileId}`, {
       method: 'DELETE'
+    });
+  },
+
+  /**
+   * 批量移动文件
+   * @param {number[]} fileIds - 文件 ID 数组
+   * @param {number|string|null} targetFolderId - 目标文件夹 ID（null 表示根目录）
+   * @returns {Promise<any>} 移动结果
+   */
+  batchMoveFiles: async (fileIds, targetFolderId) => {
+    return request('/knowledge/files/batch-move', {
+      method: 'POST',
+      body: JSON.stringify({ fileIds, targetFolderId })
+    });
+  },
+
+  /**
+   * 批量删除文件
+   * @param {number[]} fileIds - 文件 ID 数组
+   * @returns {Promise<any>} 删除结果
+   */
+  batchDeleteFiles: async (fileIds) => {
+    return request('/knowledge/files/batch-delete', {
+      method: 'POST',
+      body: JSON.stringify({ fileIds })
     });
   },
 
