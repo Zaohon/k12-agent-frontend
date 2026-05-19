@@ -149,9 +149,9 @@
           </div>
 
           <!-- Right: Sidebar -->
-          <div class="lg:col-span-1 space-y-6">
+          <div class="lg:col-span-1 space-y-3">
             <!-- Create Assistant Card -->
-            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+            <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
               <div class="w-14 h-14 bg-[#B4BDFF] rounded-2xl flex items-center justify-center mb-4">
                 <img src="@/images/customize.png" alt="" class="h-6 w-6">
               </div>
@@ -163,21 +163,21 @@
             </div>
 
             <!-- Recommended List -->
-            <div class="bg-[#F2F4F8] rounded-2xl p-6 border border-gray-100">
+            <div class="bg-[#F2F4F8] rounded-xl p-4 border border-gray-100 h-60 shadow-sm">
               <h3 class="text-base font-bold text-[#5A6066] mb-4">推荐</h3>
-              <div class="space-y-4">
+              <div class="space-y-4 overflow-y-auto h-[calc(100%-50px)] pr-2">
                 <div
                   v-for="(rec, index) in recommendedList"
-                  :key="index"
+                  :key="rec.id || index"
                   class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition-colors"
                   @click="goChat(rec.id)"
                 >
-                  <div class="recommended-avatar">
-                    <img src="@/images/skull.png" alt="" class="h-5 w-5">
+                  <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <img :src="rec.iconUrl" alt="" class="w-5 h-5 object-contain">
                   </div>
                   <div class="flex-1">
                     <div class="text-sm font-medium text-[#2E3339]">{{ rec.title }}</div>
-                    <div class="text-xs text-[#5A6066]">获 {{ rec.likes }}k 点赞</div>
+                    <div class="text-xs text-[#5A6066]">获 {{ rec.likes || rec.usageCount || 0 }}k 点赞</div>
                   </div>
                 </div>
               </div>
@@ -387,6 +387,16 @@ export default {
         console.error('加载分类智能体失败:', error)
       }
     },
+    async loadRecommendedAgents() {
+      try {
+        const response = await agentApi.getDiscoverAgents(15)
+        if (response.success && response.data) {
+          this.recommendedList = response.data
+        }
+      } catch (error) {
+        console.error('加载推荐智能体失败:', error)
+      }
+    },
     goChat(id: number) {
       this.$router.push(`/workspace/chat/${id}`)
     },
@@ -406,6 +416,7 @@ export default {
   },
   mounted() {
     this.loadCategories()
+    this.loadRecommendedAgents()
   },
   watch: {
     activeTab() {
