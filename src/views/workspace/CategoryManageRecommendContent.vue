@@ -1,44 +1,44 @@
 <template>
-  <div class="category-content">
+  <div class="cm-category-content">
     <!-- 顶部卡片 -->
-    <div class="top-card">
-      <div class="top-left">
-        <div class="top-title-row">
+    <div class="cm-top-card">
+      <div class="cm-top-left">
+        <div class="cm-top-title-row">
           <img
             v-if="category?.name === '推荐页'"
             src="@/images/category-content-curated.png"
-            class="top-icon"
+            class="cm-top-icon"
           />
-          <div class="top-title">{{ category?.name }}</div>
+          <div class="cm-top-title">{{ category?.name }}</div>
         </div>
-        <div class="top-desc">
+        <div class="cm-top-desc">
           配置智能体集市推荐页面展示的智能体，所有人可见。
         </div>
       </div>
 
-      <div class="top-right">
-        <button class="btn-reset" @click="handleReset">重置</button>
-        <button class="btn-save" @click="handleSave">保存修改</button>
+      <div class="cm-top-right">
+        <button class="cm-btn-reset" @click="handleReset">重置</button>
+        <button class="cm-btn-save" @click="handleSave">保存修改</button>
       </div>
     </div>
 
     <!-- 卡片A：精选专题 -->
-    <div class="section-card">
-      <div class="section-header">
-        <div class="section-left">
-          <div class="section-title-row">
-            <img :src="iconCurated" class="section-icon" />
-            <div class="section-title">精选专题</div>
+    <div class="cm-section-card">
+      <div class="cm-section-header">
+        <div class="cm-section-left">
+          <div class="cm-section-title-row">
+            <img :src="iconCurated" class="cm-section-icon" />
+            <div class="cm-section-title">精选专题</div>
           </div>
-          <div class="section-desc">
+          <div class="cm-section-desc">
             管理推荐页下精选专题栏展示的智能体，最多展示3个。
           </div>
         </div>
 
-        <div class="section-right">
-          <button class="btn-delete" @click="handleDelete">删除</button>
-          <button class="btn-link" @click="openAgentDialog">
-            <div class="link-icon">
+        <div class="cm-section-right">
+          <button class="cm-btn-delete" @click="handleDelete">删除</button>
+          <button class="cm-btn-link" @click="openAgentDialog">
+            <div class="cm-link-icon">
               <span>+</span>
             </div>
             关联智能体
@@ -47,29 +47,29 @@
       </div>
 
       <!-- 智能体列表（可拖拽排序 + 空卡片） -->
-      <div class="agent-card-grid">
+      <div class="cm-agent-card-grid">
         <draggable
           v-model="section2Agents"
           item-key="id"
-          ghost-class="ghost"
+          ghost-class="cm-ghost"
           animation="200"
-          class="draggable-container"
+          class="cm-draggable-container"
           @end="handleDragEnd"
         >
           <template #item="{ element: agent }">
             <div
-              class="agent-card"
-              :class="{ selected: isAgentSelected(agent.id, selectedAgentIds) }"
+              class="cm-agent-card"
+              :class="{ 'cm-selected': isAgentSelected(agent.id, selectedAgentIds) }"
               @click="handleAgentCardClick(agent.id)"
             >
-              <div class="agent-left">
-                <img src="@/images/category-content-drag.png" class="agent-drag-icon" />
-                <img v-if="agent.iconUrl" :src="agent.iconUrl" class="agent-logo" />
-                <div v-else class="agent-logo"></div>
-                <div class="agent-info">
-                  <div class="agent-name">{{ agent.name }}</div>
-                  <div class="agent-id">ID: {{ agent.id }}</div>
-                  <div class="agent-desc">{{ agent.desc }}</div>
+              <div class="cm-agent-left">
+                <img src="@/images/category-content-drag.png" class="cm-agent-drag-icon" />
+                <img v-if="agent.iconUrl" :src="agent.iconUrl" class="cm-agent-logo" />
+                <div v-else class="cm-agent-logo"></div>
+                <div class="cm-agent-info">
+                  <div class="cm-agent-name">{{ agent.name }}</div>
+                  <div class="cm-agent-id">ID: {{ agent.id }}</div>
+                  <div class="cm-agent-desc">{{ agent.desc }}</div>
                 </div>
               </div>
             </div>
@@ -77,7 +77,7 @@
         </draggable>
 
         <!-- 空卡片（最多3个智能体） -->
-        <div v-if="section2Agents.length < 3" class="agent-card-empty" @click="openAgentDialog">
+        <div v-if="section2Agents.length < 3" class="cm-agent-card-empty" @click="openAgentDialog">
           <span>+ 关联智能体</span>
         </div>
       </div>

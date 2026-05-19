@@ -49,6 +49,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '知识库' }
       },
       {
+        path: 'knowledge/folder/:folderId/:folderName',
+        name: 'KnowledgeBaseFolder',
+        component: () => import('@/views/workspace/KnowledgeBaseFolder.vue'),
+        meta: { title: '文件夹详情' }
+      },
+      {
         path: 'org',
         name: 'OrgManage',
         component: () => import('@/views/workspace/OrgManage.vue'),

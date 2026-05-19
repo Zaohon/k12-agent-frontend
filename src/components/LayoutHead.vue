@@ -11,7 +11,7 @@
 
     <div class="head-right">
       <!-- 邀请活动按钮 -->
-      <button class="action-btn" @click="showInviteTip">
+      <button class="inv-action-btn" @click="showInviteTip">
         <img src="@/images/invite-gift.png" class="btn-icon" />
         <span>邀请活动</span>
       </button>
@@ -205,7 +205,7 @@ onUnmounted(() => {
 }
 
 /* 邀请活动按钮 */
-.action-btn {
+.inv-action-btn {
   display: flex;
   align-items: center;
   white-space: nowrap;

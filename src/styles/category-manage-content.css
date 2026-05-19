@@ -1,5 +1,7 @@
+/* 分类管理页面公共样式 - 使用 cm- 命名空间避免冲突 */
+
 /* 右侧内容整体 */
-.category-content {
+.cm-category-content {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,7 +14,7 @@
 }
 
 /* 顶部卡片 */
-.top-card {
+.cm-top-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -24,44 +26,44 @@
   border-radius: 12px;
 }
 
-.top-left {
+.cm-top-left {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.top-title-row {
+.cm-top-title-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.top-icon {
+.cm-top-icon {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
 }
 
-.top-title {
+.cm-top-title {
   font-family: "Noto Sans SC";
   font-weight: 700;
   font-size: 20px;
   color: #2e3339;
 }
 
-.top-desc {
+.cm-top-desc {
   font-family: "Noto Sans SC";
   font-weight: 400;
   font-size: 14px;
   color: #5a6066;
 }
 
-.top-right {
+.cm-top-right {
   display: flex;
   gap: 12px;
 }
 
-.btn-reset, .btn-save {
+.cm-btn-reset, .cm-btn-save {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -73,21 +75,113 @@
   cursor: pointer;
 }
 
-.btn-reset {
+.cm-btn-reset {
   background: transparent;
   border: 1px solid #adb2b9;
   color: #2e3339;
 }
 
-.btn-save {
+.cm-btn-save {
   background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
   border: 1px solid #314DE2;
   box-shadow: 0px 1px 2px 0px #0000000D;
   color: #fff;
 }
 
+/* Normal 内容页特有的顶部卡片样式 */
+.cm-top-card-normal {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.cm-top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cm-btn-delete-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: "Noto Sans SC";
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #D0435F;
+}
+
+.cm-divider-line {
+  width: 100%;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.cm-form-group {
+  display: flex;
+  gap: 24px;
+}
+
+.cm-form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.cm-form-label {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 14px;
+  color: #5a6066;
+}
+
+.cm-form-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-family: "Noto Sans SC";
+  font-size: 14px;
+  color: #2e3339;
+  background: #fff;
+}
+
+.cm-form-input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.cm-input-with-tip {
+  position: relative;
+  width: 100%;
+}
+
+.cm-form-input-with-tip {
+  width: 100%;
+  padding-right: 120px;
+  box-sizing: border-box;
+}
+
+.cm-input-tip {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 12px;
+  color: #8a8f96;
+  pointer-events: none;
+}
+
 /* 模块卡片 */
-.section-card {
+.cm-section-card {
   width: 100%;
   max-width: 1279px;
   background: #fff;
@@ -96,51 +190,51 @@
   padding: 24px;
 }
 
-.section-header {
+.cm-section-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
 }
 
-.section-left {
+.cm-section-left {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.section-title-row {
+.cm-section-title-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.section-icon {
+.cm-section-icon {
   width: 22px;
   height: 19px;
   flex-shrink: 0;
 }
 
-.section-title {
+.cm-section-title {
   font-family: "Noto Sans SC";
   font-weight: 700;
   font-size: 16px;
   color: #2e3339;
 }
 
-.section-desc {
+.cm-section-desc {
   font-family: "Noto Sans SC";
   font-weight: 400;
   font-size: 14px;
   color: #5a6066;
 }
 
-.section-right {
+.cm-section-right {
   display: flex;
   gap: 12px;
 }
 
-.btn-delete, .btn-link {
+.cm-btn-delete, .cm-btn-link {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -153,19 +247,19 @@
   gap: 6px;
 }
 
-.btn-delete {
+.cm-btn-delete {
   background: #FEF2F2;
   border: 1px solid #FECACA;
   color: #D0435F;
 }
 
-.btn-link {
+.cm-btn-link {
   background: #314de2;
   border: 1px solid #314de2;
   color: #fff;
 }
 
-.link-icon {
+.cm-link-icon {
   width: 16px;
   height: 16px;
   display: flex;
@@ -179,18 +273,18 @@
 }
 
 /* 智能体卡片布局 */
-.agent-card-grid {
+.cm-agent-card-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
 }
 
-.draggable-container {
+.cm-draggable-container {
   display: contents;
 }
 
-.agent-card {
+.cm-agent-card {
   display: flex;
   align-items: center;
   padding: 12px;
@@ -205,39 +299,39 @@
   transition: all 0.2s ease;
 }
 
-.agent-card:hover {
+.cm-agent-card:hover {
   border-color: #314de2;
 }
 
-.agent-card.selected {
+.cm-agent-card.cm-selected {
   border-color: #ff4d4f;
   background: rgba(255, 77, 79, 0.05);
 }
 
-.agent-card.ghost {
+.cm-agent-card.cm-ghost {
   opacity: 0.5;
   background: #e8f4ff;
   border: 2px dashed #314de2;
 }
 
-.agent-left {
+.cm-agent-left {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.agent-drag-icon {
+.cm-agent-drag-icon {
   width: 10px;
   height: 16px;
   flex-shrink: 0;
   cursor: grab;
 }
 
-.agent-drag-icon:active {
+.cm-agent-drag-icon:active {
   cursor: grabbing;
 }
 
-.agent-logo {
+.cm-agent-logo {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -246,34 +340,34 @@
   border-radius: 12px;
 }
 
-.agent-info {
+.cm-agent-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.agent-name {
+.cm-agent-name {
   font-family: "Noto Sans SC";
   font-weight: 700;
   font-size: 14px;
   color: #2e3339;
 }
 
-.agent-id {
+.cm-agent-id {
   font-family: "Noto Sans SC";
   font-weight: 400;
   font-size: 12px;
   color: #5a6066;
 }
 
-.agent-desc {
+.cm-agent-desc {
   font-family: "Noto Sans SC";
   font-weight: 400;
   font-size: 12px;
   color: #8a8f96;
 }
 
-.agent-card-empty {
+.cm-agent-card-empty {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -287,7 +381,7 @@
   box-sizing: border-box;
 }
 
-.agent-card-empty span {
+.cm-agent-card-empty span {
   font-family: "Noto Sans SC";
   font-weight: 400;
   font-size: 14px;
