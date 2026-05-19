@@ -97,6 +97,10 @@
               <span class="kb-file-name">{{ file.name }}</span>
               <span class="kb-file-meta">{{ formatFileSize(file.size) }} · {{ formatTime(file.createdAt) }}</span>
             </div>
+            <div class="kb-file-tag-wrapper">
+              <span class="kb-file-type-tag">文件</span>
+              <span class="kb-file-size-tag">{{ formatFileSize(file.size) }}</span>
+            </div>
             <div class="kb-file-actions">
               <button class="kb-action-btn" @click="handleDownload(file)">
                 <span class="kb-icon-download"></span>
@@ -165,12 +169,13 @@ const fetchFolderData = async () => {
   loading.value = true
   try {
     const folderId = route.params.folderId
-    currentFolderId.value = folderId ? Number(folderId) : null
+    const numericFolderId = folderId ? Number(folderId) : null
+    currentFolderId.value = numericFolderId
 
     // 强制获取路径
     const pathStr = route.query.path as string || ''
     const pathItems = parsePath(pathStr)
-    
+
     // 面包屑赋值
     breadcrumb.value = [{ id: null, name: '知识库' }, ...pathItems]
     log('最终面包屑:', breadcrumb.value)
@@ -183,10 +188,12 @@ const fetchFolderData = async () => {
     }
 
     // 请求数据
-    const res = await knowledgeApi.getEntries(folderId ? { parentId: folderId } : {})
+    log('获取文件夹内容, parentId:', numericFolderId)
+    const res = await knowledgeApi.getEntries(numericFolderId ? { parentId: numericFolderId } : {})
     if (res?.success && res.data) {
       folders.value = res.data.folders || []
       files.value = res.data.files || []
+      log('获取到文件数:', files.value.length)
     }
   } catch (err) {
     console.error(err)
@@ -284,7 +291,9 @@ const handleFileSelect = async (e) => {
   const files = e.target.files
   if (!files?.length) return
   const { validFiles } = validateFileSizes(files)
-  for (const f of validFiles) await uploadFile(f, currentFolderId.value)
+  const targetFolderId = route.params.folderId ? Number(route.params.folderId) : null
+  log('上传文件到文件夹:', targetFolderId)
+  for (const f of validFiles) await uploadFile(f, targetFolderId)
   fetchFolderData()
   e.target.value = ''
 }

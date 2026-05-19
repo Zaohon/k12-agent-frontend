@@ -402,6 +402,30 @@
   color: #8b9099;
 }
 
+.kb-file-tag-wrapper {
+  display: flex;
+  gap: 8px;
+  margin-right: 12px;
+}
+
+.kb-file-type-tag {
+  padding: 2px 8px;
+  background: rgba(74, 144, 226, 0.1);
+  color: #4a90e2;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.kb-file-size-tag {
+  padding: 2px 8px;
+  background: rgba(144, 147, 153, 0.1);
+  color: #8b9099;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
 .kb-file-actions {
   display: flex;
   gap: 8px;

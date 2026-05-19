@@ -42,30 +42,27 @@
         </div>
       </div>
 
-      <!-- 文件夹卡片（响应式网格） -->
-      <div v-if="folderList.length > 0" class="kb-folder-grid">
-        <div 
-          class="kb-folder-card" 
-          v-for="item in folderList" 
-          :key="item.id"
-          @click="handleFolderClick(item.id, item.name)"
+      <!-- 文件夹网格 -->
+      <div v-if="folders.length > 0" class="kb-folder-grid">
+        <div
+          class="kb-folder-card"
+          v-for="folder in folders"
+          :key="folder.id"
+          @click="handleFolderClick(folder.id, folder.name)"
         >
           <div class="kb-folder-header">
-            <div class="kb-folder-icon-wrapper" :style="{ background: item.iconBg }">
-                <span class="kb-icon-folder"></span>
-              </div>
+            <div class="kb-folder-icon-wrapper kb-default-bg">
+              <span class="kb-icon-folder"></span>
+            </div>
             <div class="kb-more-wrapper">
-              <img 
-                src="@/images/more.png" 
-                alt="更多" 
-                class="kb-more-icon" 
-                @click="openFolderDialog($event, item)"
-              />
+              <button class="kb-folder-more-btn" @click="openFolderDialog($event, folder)">
+                <img src="@/images/more.png" class="kb-more-icon" alt="更多" />
+              </button>
             </div>
           </div>
 
-          <div v-if="renamingFolder && renamingFolder.id === item.id" class="kb-rename-input-wrapper">
-            <input 
+          <div v-if="renamingFolder && renamingFolder.id === folder.id" class="kb-rename-input-wrapper">
+            <input
               ref="renameInputRef"
               v-model="renameInput"
               type="text"
@@ -76,21 +73,46 @@
             />
           </div>
 
-          <h3 v-else class="kb-folder-title">{{ item.name }}</h3>
-          <div class="kb-folder-tag">{{ item.name }}</div>
+          <h3 v-else class="kb-folder-title">{{ folder.name }}</h3>
+          <div class="kb-folder-tag">文件夹</div>
 
           <div class="kb-folder-footer">
-            <span>{{ item.itemCount }} 个项目</span>
-            <img src="@/images/vector2.png" alt="展开" class="kb-arrow-icon-img" />
+            <span>{{ folder.folderCount + folder.fileCount }} 个项目</span>
+            <span class="kb-arrow-icon"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文件列表 -->
+      <div v-if="files.length > 0" class="kb-files-section">
+        <h2 class="kb-section-title">文件</h2>
+        <div class="kb-files-list">
+          <div class="kb-file-item" v-for="file in files" :key="file.id">
+            <div class="kb-file-icon-wrapper">
+              <img src="@/images/chatinit-1.png" alt="" class="kb-file-img" />
+            </div>
+            <div class="kb-file-info">
+              <span class="kb-file-name">{{ file.name }}</span>
+              <span class="kb-file-meta">{{ formatFileSize(file.size) }} · {{ formatTime(file.createdAt) }}</span>
+            </div>
+            <div class="kb-file-tag-wrapper">
+              <span class="kb-file-type-tag">文件</span>
+              <span class="kb-file-size-tag">{{ formatFileSize(file.size) }}</span>
+            </div>
+            <div class="kb-file-actions">
+              <button class="kb-action-btn" @click="handleDownload(file)">
+                <span class="kb-icon-download"></span>
+              </button>
+              <button class="kb-action-btn" @click="handleDelete(file)">
+                <span class="kb-icon-delete"></span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 空状态 -->
-      <div v-if="!loading && folderList.length === 0" class="kb-empty-state">
-        <!--<div class="kb-empty-icon">
-          <span class="kb-icon-empty"></span>
-        </div>-->
+      <div v-if="!loading && folders.length === 0 && files.length === 0" class="kb-empty-state">
         <p class="kb-empty-text">暂无文件</p>
         <p class="kb-empty-hint">请新建文件夹</p>
       </div>
@@ -197,7 +219,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { knowledgeApi } from '@/api/api'
-import { formatFileSize, generateUniqueFolderName, MAX_FILE_SIZE, validateFileSizes, uploadFile, appendToPath, ENABLE_LOG } from '@/utils/knowledge'
+import { formatFileSize, formatTime, generateUniqueFolderName, MAX_FILE_SIZE, validateFileSizes, uploadFile, appendToPath, ENABLE_LOG } from '@/utils/knowledge'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
 
 const router = useRouter()
@@ -210,10 +232,10 @@ const logError = (...args) => ENABLE_LOG && console.error('[知识库]', ...args
 const searchKey = ref('')
 
 // 文件夹列表
-const folderList = ref([])
+const folders = ref([])
 
-// 最近文件
-const recentFiles = ref([])
+// 文件列表
+const files = ref([])
 
 // 存储信息
 const storage = ref({
@@ -241,25 +263,11 @@ const renameInputRef = ref(null)
 const fetchData = async () => {
   loading.value = true
   try {
-    // 获取根目录下的文件夹
+    // 获取根目录下的文件夹和文件
     const entriesRes = await knowledgeApi.getEntries()
     if (entriesRes && entriesRes.success && entriesRes.data) {
-      const colors = [
-        'rgba(180, 189, 255, 0.3)',
-        'rgba(230, 222, 255, 0.3)',
-        'rgba(222, 229, 253, 0.3)',
-        'rgba(83, 52, 197, 0.1)',
-        'rgba(247, 106, 128, 0.2)',
-        'rgba(100, 200, 150, 0.3)',
-        'rgba(255, 200, 100, 0.3)',
-        'rgba(200, 150, 255, 0.3)'
-      ]
-      folderList.value = entriesRes.data.folders.map((folder, index) => ({
-        id: folder.id,
-        name: folder.name,
-        itemCount: folder.folderCount + folder.fileCount,
-        iconBg: colors[index % colors.length]
-      }))
+      folders.value = entriesRes.data.folders || []
+      files.value = entriesRes.data.files || []
     }
 
     // 获取存储统计
@@ -341,7 +349,7 @@ const confirmRename = async () => {
     })
     
     if (res && res.success) {
-      const folder = folderList.value.find(f => f.id === renamingFolder.value.id)
+      const folder = folders.value.find(f => f.id === renamingFolder.value.id)
       if (folder) {
         folder.name = renameInput.value.trim()
       }
@@ -376,7 +384,7 @@ const handleDialogDelete = async (folderId) => {
     const res = await knowledgeApi.deleteFolder(folder.id || folderId)
     
     if (res && res.success) {
-      folderList.value = folderList.value.filter(f => f.id !== folder.id)
+      folders.value = folders.value.filter(f => f.id !== folder.id)
     }
   } catch (err) {
     logError('删除文件夹失败', err)
@@ -388,12 +396,11 @@ const handleDialogDelete = async (folderId) => {
 // 新建文件夹
 const handleCreateFolder = async () => {
   try {
-    const existingNames = folderList.value.map(f => f.name)
+    const existingNames = folders.value.map(f => f.name)
     const folderName = generateUniqueFolderName(existingNames)
     const res = await knowledgeApi.createFolder({ name: folderName })
-    
+
     if (res && res.success) {
-      // 刷新文件夹列表
       fetchData()
     }
   } catch (err) {
@@ -422,14 +429,29 @@ const handleFileSelect = async (event) => {
   // 上传有效文件
   if (validFiles.length > 0) {
     for (const file of validFiles) {
-      await uploadFile(file, null) // 上传到根目录
+      await uploadFile(file, null)
     }
-    // 刷新数据
     fetchData()
   }
 
   // 重置文件输入
   event.target.value = ''
+}
+
+// 下载文件
+const handleDownload = (file) => file.url && window.open(file.url, '_blank')
+
+// 删除文件
+const handleDelete = async (file) => {
+  if (!confirm(`确定要删除文件「${file.name}」吗？`)) return
+  try {
+    const res = await knowledgeApi.deleteFile(file.id)
+    if (res && res.success) {
+      files.value = files.value.filter(f => f.id !== file.id)
+    }
+  } catch (err) {
+    logError('删除文件失败', err)
+  }
 }
 
 onMounted(() => {

@@ -134,7 +134,7 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
     // 3. 创建文件记录
     const fileData = {
       name: file.name,
-      key: fileKey,
+      ossKey: fileKey,
       size: file.size,
       folderId
     }
