@@ -4,7 +4,7 @@
     <div class="kb-main-content">
       <!-- 工具栏 -->
       <div class="kb-toolbar">
-        <div class="title-group">
+        <div class="kb-title-group">
           <h1 class="kb-main-title">知识库</h1>
           <div class="kb-divider-vertical"></div>
           <span class="kb-subtitle">管理您的教育资源</span>
@@ -28,10 +28,17 @@
             <img src="@/images/new-folder.png" alt="" />
             新建文件夹
           </button>
-          <button class="kb-btn-primary">
+          <button class="kb-btn-primary" @click="triggerFileUpload">
             <img src="@/images/upLoad2.png" alt="" />
             上传文件
           </button>
+          <input 
+            ref="fileInputRef"
+            type="file" 
+            multiple 
+            class="kb-file-input" 
+            @change="handleFileSelect"
+          />
         </div>
       </div>
 
@@ -45,8 +52,8 @@
         >
           <div class="kb-folder-header">
             <div class="kb-folder-icon-wrapper" :style="{ background: item.iconBg }">
-              <img src="@/images/chatinit-1.png" alt="" class="kb-folder-img" />
-            </div>
+                <span class="kb-icon-folder"></span>
+              </div>
             <div class="kb-more-wrapper">
               <img 
                 src="@/images/more.png" 
@@ -190,10 +197,14 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { knowledgeApi } from '@/api/api'
-import { formatFileSize, generateUniqueFolderName } from '@/utils/knowledge'
+import { formatFileSize, generateUniqueFolderName, MAX_FILE_SIZE, validateFileSizes, uploadFile, appendToPath, ENABLE_LOG } from '@/utils/knowledge'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
 
 const router = useRouter()
+
+// 日志辅助函数
+const log = (...args) => ENABLE_LOG && console.log('[知识库]', ...args)
+const logError = (...args) => ENABLE_LOG && console.error('[知识库]', ...args)
 
 // 搜索
 const searchKey = ref('')
@@ -217,6 +228,9 @@ const loading = ref(false)
 const showFolderDialog = ref(false)
 const currentDialogFolder = ref(null)
 const triggerPosition = ref({ x: 0, y: 0 })
+
+// 文件上传相关
+const fileInputRef = ref(null)
 
 // 重命名相关
 const renamingFolder = ref(null)
@@ -259,7 +273,7 @@ const fetchData = async () => {
       }
     }
   } catch (err) {
-    console.error('数据加载失败', err)
+    logError('数据加载失败', err)
   } finally {
     loading.value = false
   }
@@ -267,10 +281,14 @@ const fetchData = async () => {
 
 // 点击文件夹跳转
 const handleFolderClick = (folderId, folderName) => {
-  if (activeMenu.value || renamingFolder.value) return
+  if (showFolderDialog.value || renamingFolder.value) return
+
   router.push({
     name: 'KnowledgeBaseFolder',
-    params: { folderId, folderName }
+    params: { folderId },
+    query: {
+      path: appendToPath('', folderId, folderName)
+    }
   })
 }
 
@@ -329,7 +347,7 @@ const confirmRename = async () => {
       }
     }
   } catch (err) {
-    console.error('重命名失败', err)
+    logError('重命名失败', err)
   } finally {
     renamingFolder.value = null
     renameInput.value = ''
@@ -344,7 +362,7 @@ const cancelRename = () => {
 
 // Dialog 替换图标
 const handleDialogReplaceIcon = (folderId) => {
-  console.log('替换图标', folderId || currentDialogFolder.value?.id)
+  log('替换图标', folderId || currentDialogFolder.value?.id)
   closeFolderDialog()
 }
 
@@ -361,7 +379,7 @@ const handleDialogDelete = async (folderId) => {
       folderList.value = folderList.value.filter(f => f.id !== folder.id)
     }
   } catch (err) {
-    console.error('删除文件夹失败', err)
+    logError('删除文件夹失败', err)
   } finally {
     closeFolderDialog()
   }
@@ -379,24 +397,47 @@ const handleCreateFolder = async () => {
       fetchData()
     }
   } catch (err) {
-    console.error('创建文件夹失败', err)
+    logError('创建文件夹失败', err)
   }
+}
+
+// 触发文件选择
+const triggerFileUpload = () => {
+  fileInputRef.value?.click()
+}
+
+// 处理文件选择
+const handleFileSelect = async (event) => {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+
+  // 使用工具函数验证文件大小
+  const { validFiles, tooLargeFiles } = validateFileSizes(files)
+
+  // 显示超过大小限制的文件
+  if (tooLargeFiles.length > 0) {
+    alert(`以下文件超过大小限制(10MB)，无法上传：\n${tooLargeFiles.join('\n')}`)
+  }
+
+  // 上传有效文件
+  if (validFiles.length > 0) {
+    for (const file of validFiles) {
+      await uploadFile(file, null) // 上传到根目录
+    }
+    // 刷新数据
+    fetchData()
+  }
+
+  // 重置文件输入
+  event.target.value = ''
 }
 
 onMounted(() => {
   fetchData()
 })
 </script>
-
 <style scoped>
-/* KnowledgeBase 页面特定样式 - 页面独有的样式 */
-
-/* 标题组 */
-.title-group {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+/* KnowledgeBase 页面特有样式 - 不在公共样式中的样式 */
 
 /* 头部操作区域 */
 .title-info .section-title {
@@ -411,464 +452,18 @@ onMounted(() => {
   color: #5a6066;
 }
 
-/* 搜索框 */
-.search-box {
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  height: 36px;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  width: 240px;
-  background: #fff;
-}
-
-.search-icon-img {
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  flex-shrink: 0;
-}
-
-.search-input-field {
-  border: none;
-  outline: none;
-  flex: 1;
-  font-size: 14px;
-  background: transparent;
-}
-
-/* 文件夹卡片特定样式 */
+/* 文件夹卡片特有样式（当使用 img 标签时） */
 .kb-folder-img {
   width: 24px;
   height: 24px;
   object-fit: contain;
 }
 
-.kb-more-icon {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-  cursor: pointer;
-}
-
-.kb-arrow-icon-img {
-  width: 12px;
-  height: 12px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-/* AI + 存储 响应式行 */
-.kb-ai-storage-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.kb-ai-card {
-  flex: 1;
-  min-width: 320px;
-  position: relative;
-  background: linear-gradient(135deg, #314de2, #6144d3);
-  border-radius: 24px;
-  padding: 32px;
-  color: #fff;
-  overflow: hidden;
-}
-
-.kb-ai-blur {
-  position: absolute;
-  right: -50px;
-  bottom: -50px;
-  width: 240px;
-  height: 240px;
-  background: rgba(255, 255, 255, 0.1);
-  filter: blur(30px);
-  border-radius: 50%;
-}
-
-.kb-ai-bg-icon {
-  position: absolute;
-  right: 30px;
-  top: 15%;
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
-  opacity: 0.2;
-}
-
-.kb-ai-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.kb-ai-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  font-size: 12px;
-  white-space: nowrap;
-  width: fit-content;
-}
-
-.kb-ai-dot {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.kb-ai-title {
-  font-size: 22px;
-  font-weight: 500;
-  margin-top: 8px;
-}
-
-.kb-ai-desc {
-  font-size: 15px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
-  max-width: 460px;
-}
-
-.kb-ai-button {
-  margin-top: 8px;
-  width: 160px;
-  height: 46px;
-  border-radius: 12px;
-  border: none;
-  background: #fff;
-  color: #314de2;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-/* 存储卡片 */
-.kb-storage-card {
-  width: 100%;
-  max-width: 320px;
-  background: #e4e8ef;
-  border-radius: 24px;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.kb-storage-header h4 {
-  font-size: 16px;
-  font-weight: 500;
-  color: #2e3339;
-  margin-bottom: 8px;
-}
-
-.kb-progress-bar {
-  width: 100%;
-  height: 12px;
-  background: #ebeef4;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.kb-progress {
-  height: 100%;
-  background: #314de2;
-  border-radius: 999px;
-  transition: width 0.3s;
-}
-
-.kb-storage-info {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #2e3339;
-}
-
-.kb-storage-info span:last-child {
-  color: #5a6066;
-}
-
-.kb-quote {
-  margin-top: 24px;
-}
-
-.kb-quote p {
-  font-size: 12px;
-  line-height: 1.8;
-  color: #5a6066;
-}
-
-.kb-author {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #2e3339;
-}
-
-.kb-line {
-  width: 20px;
-  height: 2px;
-  background: #314de2;
-}
-
-/* 最近文件（注释掉的部分） */
-.recent-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.recent-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.view-all {
-  background: none;
-  border: none;
-  color: #314de2;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.table-container {
-  background: #f2f4f8;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.file-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.file-table th {
-  padding: 16px 20px;
-  text-align: left;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #5a6066;
-  background: rgba(235, 238, 244, 0.6);
-  vertical-align: middle;
-  line-height: 1.2;
-}
-
-.file-table td {
-  padding: 16px 20px;
-  font-size: 14px;
-  color: #2e3339;
-  border-top: 1px solid rgba(222, 227, 234, 0.2);
-  vertical-align: middle;
-}
-
-.file-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.align-right {
-  text-align: right;
-  vertical-align: middle;
-}
-
-/* AI + 存储 响应式行 */
-.ai-storage-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.ai-card {
-  flex: 1;
-  min-width: 320px;
-  position: relative;
-  background: linear-gradient(135deg, #314de2, #6144d3);
-  border-radius: 24px;
-  padding: 32px;
-  color: #fff;
-  overflow: hidden;
-}
-
-.ai-blur {
-  position: absolute;
-  right: -50px;
-  bottom: -50px;
-  width: 240px;
-  height: 240px;
-  background: rgba(255, 255, 255, 0.1);
-  filter: blur(30px);
-  border-radius: 50%;
-}
-
-.ai-bg-icon {
-  position: absolute;
-  right: 30px;
-  top: 15%;
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
-  opacity: 0.2;
-}
-
-.ai-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.ai-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  font-size: 12px;
-  white-space: nowrap;
-  width: fit-content;
-}
-
-.ai-dot {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.ai-title {
-  font-size: 22px;
-  font-weight: 500;
-  margin-top: 8px;
-}
-
-.ai-desc {
-  font-size: 15px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
-  max-width: 460px;
-}
-
-.ai-button {
-  margin-top: 8px;
-  width: 160px;
-  height: 46px;
-  border-radius: 12px;
-  border: none;
-  background: #fff;
-  color: #314de2;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-/* 存储卡片 */
-.storage-card {
-  width: 100%;
-  max-width: 320px;
-  background: #e4e8ef;
-  border-radius: 24px;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.storage-header h4 {
-  font-size: 16px;
-  font-weight: 500;
-  color: #2e3339;
-  margin-bottom: 8px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 12px;
-  background: #ebeef4;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress {
-  height: 100%;
-  background: #314de2;
-  border-radius: 999px;
-  transition: width 0.3s;
-}
-
-.storage-info {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #2e3339;
-}
-
-.storage-info span:last-child {
-  color: #5a6066;
-}
-
-.quote {
-  margin-top: 24px;
-}
-
-.quote p {
-  font-size: 12px;
-  line-height: 1.8;
-  color: #5a6066;
-}
-
-.author {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #2e3339;
-}
-
-.line {
-  width: 20px;
-  height: 2px;
-  background: #314de2;
-}
-
 /* 响应式 */
 @media (max-width: 768px) {
-  .ai-card {
-    min-width: 100%;
-  }
-
-  .storage-card {
-    max-width: 100%;
-  }
-
   .kb-folder-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
 </style>
+

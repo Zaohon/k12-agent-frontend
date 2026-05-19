@@ -49,10 +49,10 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '知识库' }
       },
       {
-        path: 'knowledge/folder/:folderId/:folderName',
+        path: 'knowledge/folder/:folderId',
         name: 'KnowledgeBaseFolder',
         component: () => import('@/views/workspace/KnowledgeBaseFolder.vue'),
-        meta: { title: '文件夹详情' }
+        meta: { title: '知识库文件夹' }
       },
       {
         path: 'org',
@@ -93,14 +93,15 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const token = localStorage.getItem('k12_token');
+  
   if (to.path !== '/login' && to.path !== '/' && !token) {
-    next('/login');
-  } else if (to.path === '/login' && token) {
-    next('/workspace');
-  } else {
-    next();
+    return '/login';
+  }
+  
+  if (to.path === '/login' && token) {
+    return '/workspace';
   }
 });
 
