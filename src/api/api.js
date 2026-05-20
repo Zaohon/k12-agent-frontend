@@ -600,11 +600,11 @@ export const orgApi = {
   },
 
   /**
-   * 创建组织管理员
-   * @param {Object} adminData - 管理员数据
-   * @returns {Promise<any>} 创建结果
+   * 替换/移交指定组织管理员
+   * @param {Object} adminData - 管理员数据 { orgId, userId }
+   * @returns {Promise<any>} 替换结果
    */
-  createOrgAdmin: async (adminData) => {
+  replaceOrgAdmin: async (adminData) => {
     return request('/org/admin', {
       method: 'POST',
       body: JSON.stringify(adminData)

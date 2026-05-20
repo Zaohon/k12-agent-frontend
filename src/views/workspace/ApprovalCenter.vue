@@ -139,15 +139,14 @@
             </el-table-column>
           </el-table>
         </div>
-        <div class="flex justify-end px-8 py-4 border-t border-gray-100 shrink-0 items-center gap-4">
-          <span class="text-sm text-gray-600">共 {{ filteredList.length }} 条记录</span>
+        <div class="flex items-center justify-between px-8 py-4 border-t border-gray-100 shrink-0">
+          <span class="text-sm text-gray-500">第 {{ currentPage }} 页，共 {{ Math.ceil(filteredList.length / pageSize) }} 页</span>
           <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
+            :current-page="currentPage"
+            :page-size="pageSize"
             :total="filteredList.length"
-            layout="prev, pager, next, jumper"
-            background
-            small
+            layout="prev, pager, next"
+            @current-change="(page: number) => currentPage = page"
           />
         </div>
       </div>
@@ -1094,57 +1093,52 @@ onMounted(() => {
   background: #DC2626;
 }
 
-/* 分页组件样式 */
-:deep(.el-pagination.is-background .el-pager li) {
-  border-radius: 5px !important;
-  background-color: #FFFFFF !important;
-  border: 2px solid hsl(231, 75%, 54%) !important;
-  color: #314DE2 !important;
+/* Pagination styles */
+:deep(.el-pagination) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-:deep(.el-pagination.is-background .el-pager li.is-active) {
-  background-color: #314DE2 !important;
-  color: #FFFFFF !important;
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 0 8px;
+  min-width: 28px;
+  height: 28px;
 }
 
-:deep(.el-pagination.is-background .el-pager li.is-active:hover) {
-  background-color: #F0F4FF !important;
-  color: #314DE2 !important;
+:deep(.el-pagination .btn-prev:hover),
+:deep(.el-pagination .btn-next:hover) {
+  color: #314DE2;
 }
 
-:deep(.el-pagination.is-background .el-pager li:hover) {
-  background-color: #314DE2 !important;
-  color: #F0F4FF !important;
+:deep(.el-pagination .el-pager li) {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  min-width: 28px;
+  height: 28px;
+  line-height: 28px;
+  margin: 0 2px;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
-:deep(.el-pagination.is-background .btn-prev),
-:deep(.el-pagination.is-background .btn-next) {
-  border-radius: 5px !important;
-  background-color: #FFFFFF !important;
-  border: 2px solid #314DE2 !important;
-  color: #314DE2 !important;
+:deep(.el-pagination .el-pager li:hover) {
+  color: #314DE2;
 }
 
-:deep(.el-pagination.is-background .btn-prev:hover),
-:deep(.el-pagination.is-background .btn-next:hover) {
-  background-color: #314DE2 !important;
-  color: #FFFFFF !important;
+:deep(.el-pagination .el-pager li.is-active) {
+  background: #314DE2;
+  color: #ffffff;
+  font-weight: 500;
 }
 
-:deep(.el-pagination .el-pagination__jump) {
-  color: #314DE2 !important;
-}
-
-:deep(.el-pagination .el-pagination__jump .el-input__wrapper) {
-  border: 2px solid #314DE2 !important;
-}
-
-:deep(.el-pagination .el-pagination__jump .el-input__wrapper:hover) {
-  border: 2px solid #314DE2 !important;
-}
-
-:deep(.el-pagination .el-pagination__jump .el-input__wrapper.is-focus) {
-  border: 2px solid #314DE2 !important;
-  box-shadow: 0 0 0 1px #314DE2 inset !important;
+:deep(.el-pagination .el-pager li.is-active:hover) {
+  background: #1e40af;
+  color: #ffffff;
 }
 </style>

@@ -43,7 +43,7 @@
     </aside>
 
     <!-- Right: Organization Details & Management -->
-    <main class="flex-1 overflow-y-auto p-8 bg-gray-50">
+    <main class="flex-1 overflow-y-auto p-8 bg-[#F2F4F8]">
       <div v-if="selectedOrg" class="main-content-wrapper">
         <!-- Stats Header -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex items-center justify-between">
@@ -60,136 +60,158 @@
           <div class="admin-switch-wrapper">
             <div class="admin-info">
               <div class="admin-label">专属管理员</div>
-              <div class="admin-id">ADM-{{ selectedOrg.id }}</div>
+              <div class="admin-username">{{ selectedOrgAdmin ? selectedOrgAdmin.username : '未指定' }}</div>
             </div>
             <div class="switch-divider"></div>
             <div class="replace-btn-wrapper">
-              <el-button type="primary" size="small" class="replace-btn">
-              <img src="@/images/switch.png" class="w-3 h-auto mr-2" alt="switch" />
-              替换
-            </el-button>
+              <el-button type="primary" size="small" class="replace-btn" @click="showReplaceAdminDialog = true">
+                <img src="@/images/switch.png" class="w-3 h-auto mr-2" alt="switch" />
+                替换
+              </el-button>
             </div>
-
           </div>
         </div>
 
-        <!-- Tab Navigation -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-          <el-radio-group v-model="activeTab" size="large" fill="#314DE2" text-color="#fff">
-            <el-radio-button label="profile">组织概况</el-radio-button>
-            <el-radio-button label="accounts">账户管理</el-radio-button>
-          </el-radio-group>
-        </div>
-
-        <!-- Profile Tab -->
-        <div v-if="activeTab === 'profile'" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="font-bold text-lg text-gray-800 flex items-center">
-              <el-icon class="mr-2 text-indigo-500"><UserFilled /></el-icon>
-              组织专员 (SCHOOL_ADMIN)
+        <!-- Account Management -->
+        <div class="account-management-wrapper">
+          <div class="flex justify-between items-center" style="padding: 20px; background: #F8F9FD;">
+            <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+              <img src="@/images/change_admin_icon.png" class="w-5 h-atuo" alt="change_admin" />
+              账号管理
             </h3>
-            <el-button type="primary" plain size="small" :icon="Plus" @click="showAdminDialog = true">添加管理员</el-button>
-          </div>
-          
-          <div class="space-y-3">
-             <div v-if="!selectedOrg.users || selectedOrg.users.length === 0" class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-lg">
-                该组织暂无专属管理员，将由系统超管代管
-             </div>
-             <div v-for="u in selectedOrg.users" :key="u.username" class="flex items-center justify-between bg-indigo-50/50 p-4 border border-indigo-100 rounded-xl">
-                <div class="flex items-center">
-                   <el-avatar :size="32" class="bg-indigo-500 text-white font-bold mr-3">{{ u.username.charAt(0).toUpperCase() }}</el-avatar>
-                   <div>
-                     <div class="font-bold text-gray-800 text-sm">{{ u.username }}</div>
-                     <div class="text-xs text-indigo-500 mt-0.5">学校管理员 (全权管理内部AI大厅)</div>
-                   </div>
-                </div>
-                <el-button type="danger" text size="small">移除权限</el-button>
-             </div>
-          </div>
-        </div>
-
-        <!-- Accounts Tab -->
-        <div v-if="activeTab === 'accounts'" class="space-y-6">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="font-bold text-lg text-gray-800">所有成员</h3>
-              <div class="flex items-center space-x-3">
-                <el-button :icon="Download" @click="downloadTemplate">下载导入模版</el-button>
-                <el-upload
-                  action="#"
-                  :auto-upload="false"
-                  :show-file-list="false"
-                  :on-change="handleUpload"
-                  accept=".xlsx, .xls"
-                >
-                  <el-button type="primary" :icon="Upload" :loading="batchProcessing">批量上传账号</el-button>
-                </el-upload>
-              </div>
+            <div class="flex items-center gap-3">
+              <el-button size="small" class="download-template-btn" @click="downloadTemplate">
+                <img src="@/images/download-black.png" class="w-3 h-auto mr-[10px]" alt="download" />
+                下载导入模板
+              </el-button>
+              <el-upload
+                action="#"
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="handleUpload"
+                accept=".xlsx, .xls"
+              >
+                <el-button type="primary" size="small" class="batch-upload-btn" :loading="batchProcessing">
+                  <img src="@/images/upload-white.png" class="w-3 h-auto mr-[10px]" alt="upload" />
+                  批量上传账号
+                </el-button>
+              </el-upload>
             </div>
-
-            <el-table :data="orgUsers" style="width: 100%" v-loading="loadingUsers">
-              <el-table-column prop="username" label="账号名" />
-              <el-table-column label="身份" width="120">
-                <template #default="scope">
-                  <el-tag :type="getRoleTag(scope.row.role)">{{ getRoleText(scope.row.role) }}</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="createdAt" label="加入时间">
-                <template #default="scope">
-                  {{ new Date(scope.row.createdAt).toLocaleDateString() }}
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="100">
-                <template #default="scope">
-                  <el-button type="danger" text size="small">注销</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
+          </div>
+          <el-table :data="pagedOrgUsers" style="width: 100%" v-loading="loadingUsers" class="account-table">
+            <el-table-column prop="id" label="账号ID" />
+            <el-table-column prop="username" label="用户名" />
+            <el-table-column label="角色">
+              <template #default="scope">
+                <el-tag :type="getRoleTag(scope.row.role)" size="small">{{ getRoleText(scope.row.role) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="加入时间">
+              <template #default="scope">
+                {{ formatTime(scope.row.createdAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="注销时间">
+              <template #default="scope">
+                {{ scope.row.deletedAt ? formatTime(scope.row.deletedAt) : '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="状态">
+              <template #default="scope">
+                <span class="status-indicator" :class="scope.row.deletedAt ? 'status-disabled' : 'status-active'">
+                  <span class="status-dot"></span>
+                  {{ scope.row.deletedAt ? '已注销' : '正常' }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作">
+              <template #default="scope">
+                <el-button
+                  v-if="!scope.row.deletedAt"
+                  class="delete-user-btn"
+                  size="small"
+                  @click="handleDeleteUser(scope.row)"
+                >注销</el-button>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div class="flex items-center justify-between p-4 bg-[#F8F9FD]" v-if="orgUsers.length > 0">
+            <span class="text-sm text-gray-500">第 {{ userPage }} 页，共 {{ Math.ceil(orgUsers.length / userPageSize) }} 页</span>
+            <el-pagination
+              :current-page="userPage"
+              :page-size="userPageSize"
+              :total="orgUsers.length"
+              layout="prev, pager, next"
+              small
+              @current-change="(page: number) => userPage = page"
+            />
           </div>
         </div>
       </div>
-      <div v-else class="h-full flex items-center justify-center">
-         <el-empty description="在左侧选择一个组织节点" />
-      </div>
+
     </main>
 
     <!-- Dialogs -->
-    <el-dialog v-model="showCreateDialog" title="新增组织单位" width="400px" center>
-      <el-form label-position="top">
-        <el-form-item label="组织名称">
-          <el-input v-model="newOrgName" placeholder="如：北京实验第二小学" />
-        </el-form-item>
-      </el-form>
+    <el-dialog v-model="showReplaceAdminDialog" width="480px">
+      <template #header>
+        <div class="dialog-header">
+          <img src="@/images/change_admin_icon.png" class="w-5 h-auto" alt="change_admin" />
+          <span class="dialog-header-title">指定机构管理员</span>
+        </div>
+      </template>
+      <div class="replace-admin-body">
+        <el-input
+          v-model="replaceAdminSearch"
+          placeholder="搜索用户名或者ID"
+          clearable
+          class="replace-admin-search"
+        >
+          <template #prefix>
+            <img src="@/images/search.png" class="w-3 h-auto" alt="search" />
+          </template>
+        </el-input>
+        <div class="user-list-wrapper" v-loading="replaceAdminLoading">
+          <div
+            v-for="user in filteredReplaceAdminUsers"
+            :key="user.id"
+            class="user-item"
+            :class="{
+              'user-item-selected': selectedReplaceAdmin?.id === user.id,
+              'user-item-admin': user.role === 'SCHOOL_ADMIN'
+            }"
+            @click="selectedReplaceAdmin = user"
+          >
+            <div class="user-item-left">
+              <el-avatar :size="32" :style="getAvatarStyle(user.role)" class="font-bold shrink-0">
+                {{ user.username.charAt(0).toUpperCase() }}
+              </el-avatar>
+              <div class="user-item-info">
+                <div class="user-item-name-row">
+                  <span class="user-item-name">{{ user.username }}</span>
+                  <el-tag v-if="user.role === 'SCHOOL_ADMIN'" size="small" type="warning" class="ml-1">当前</el-tag>
+                </div>
+                <span class="user-item-meta">ID: {{ user.id }} | {{ getRoleText(user.role) }}</span>
+              </div>
+            </div>
+            <span class="user-item-dot" :class="{ 'user-item-dot-active': selectedReplaceAdmin?.id === user.id }"></span>
+          </div>
+          <div v-if="!replaceAdminLoading && filteredReplaceAdminUsers.length === 0" class="empty-tip">
+            无匹配用户
+          </div>
+        </div>
+      </div>
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showCreateDialog = false">取消</el-button>
-          <el-button type="primary" @click="createOrganization" :loading="saving">确认登记</el-button>
-        </span>
+        <el-button class="cancel-admin-btn" @click="showReplaceAdminDialog = false">取消</el-button>
+        <el-button type="primary" class="confirm-admin-btn" @click="confirmReplaceAdmin" :disabled="!selectedReplaceAdmin" :loading="saving">确认指定</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showAdminDialog" title="绑定单位管理员" width="400px" center>
-      <el-form label-position="top">
-        <el-form-item label="管理员账号名">
-          <el-input v-model="adminForm.username" placeholder="建议使用姓名或教工号" />
-        </el-form-item>
-        <el-form-item label="初始密码">
-          <el-input v-model="adminForm.password" placeholder="请输入临时密码" type="password" show-password />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showAdminDialog = false">取消</el-button>
-          <el-button type="primary" @click="createAdmin" :loading="saving">立即赋予</el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { Plus, UserFilled, Download, Upload } from '@element-plus/icons-vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useUserStore } from '../../store/user'
 import { ElMessage, ElNotification } from 'element-plus'
 import { orgApi } from '../../api/api'
@@ -204,17 +226,94 @@ const saving = ref(false)
 const batchProcessing = ref(false)
 
 const selectedOrg = ref<any>(null)
-const activeTab = ref('profile')
 const showCreateDialog = ref(false)
-const showAdminDialog = ref(false)
+const showReplaceAdminDialog = ref(false)
 const newOrgName = ref('')
-const adminForm = ref({ username: '', password: '' })
+
+const selectedOrgAdmin = computed(() => {
+  return selectedOrg.value?.users?.[0] || null
+})
+
+const userPage = ref(1)
+const userPageSize = ref(10)
+
+const pagedOrgUsers = computed(() => {
+  const start = (userPage.value - 1) * userPageSize.value
+  return orgUsers.value.slice(start, start + userPageSize.value)
+})
+
+const replaceAdminUsers = ref<any[]>([])
+const replaceAdminSearch = ref('')
+const replaceAdminLoading = ref(false)
+const selectedReplaceAdmin = ref<any>(null)
+
+const roleOrder: Record<string, number> = {
+  SUPER_ADMIN: 1,
+  SCHOOL_ADMIN: 2,
+  TEACHER: 3,
+  STUDENT: 4,
+  PARENT: 5
+}
+
+const sortByRole = (users: any[]) => {
+  return [...users].sort((a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99))
+}
+
+const filteredReplaceAdminUsers = computed(() => {
+  const keyword = replaceAdminSearch.value.toLowerCase()
+  const filtered = keyword
+    ? replaceAdminUsers.value.filter(u => u.username.toLowerCase().includes(keyword))
+    : replaceAdminUsers.value
+  return sortByRole(filtered)
+})
+
+const fetchReplaceAdminUsers = async () => {
+  if (!selectedOrg.value) return
+  replaceAdminLoading.value = true
+  replaceAdminSearch.value = ''
+  selectedReplaceAdmin.value = null
+  try {
+    const res = await orgApi.getOrgUsers(selectedOrg.value.id)
+    if (res.success) {
+      replaceAdminUsers.value = (res.data || []).filter((u: any) => u.role !== 'SUPER_ADMIN')
+      selectedReplaceAdmin.value = replaceAdminUsers.value.find((u: any) => u.role === 'SCHOOL_ADMIN') || null
+    }
+  } catch {
+    ElMessage.error('获取用户列表失败')
+  } finally {
+    replaceAdminLoading.value = false
+  }
+}
+
+const confirmReplaceAdmin = async () => {
+  if (!selectedReplaceAdmin.value || !selectedOrg.value) return
+  saving.value = true
+  try {
+    const res = await orgApi.replaceOrgAdmin({
+      orgId: selectedOrg.value.id,
+      userId: selectedReplaceAdmin.value.id
+    })
+    if (res.success) {
+      ElMessage.success('管理员替换成功')
+      showReplaceAdminDialog.value = false
+      fetchOrgs()
+      fetchOrgUsers(selectedOrg.value.id)
+    } else {
+      ElMessage.error(res.message || '替换失败')
+    }
+  } catch {
+    ElMessage.error('网络异常')
+  } finally {
+    saving.value = false
+  }
+}
 
 const fetchOrgs = async () => {
   loading.value = true
   try {
     const res = await orgApi.getOrgList()
     if (res.success) {
+      console.log(res.data)
       orgList.value = (res.data || []).map((item: any) => ({
         ...item,
         orgName: item.orgName || item.name || ''
@@ -235,7 +334,7 @@ const fetchOrgUsers = async (orgId: number) => {
   try {
     const res = await orgApi.getOrgUsers(orgId)
     if (res.success) {
-      orgUsers.value = res.data
+      orgUsers.value = (res.data || []).sort((a: any, b: any) => a.id - b.id)
     }
   } catch (err) {
     ElMessage.error('无法同步账户列表')
@@ -246,21 +345,20 @@ const fetchOrgUsers = async (orgId: number) => {
 
 const selectOrg = (org: any) => {
   selectedOrg.value = org
-  if (activeTab.value === 'accounts') {
-    fetchOrgUsers(org.id)
-  }
+  userPage.value = 1
+  fetchOrgUsers(org.id)
 }
 
-watch(activeTab, (val) => {
-  if (val === 'accounts' && selectedOrg.value) {
-    fetchOrgUsers(selectedOrg.value.id)
+watch(showReplaceAdminDialog, (val) => {
+  if (val) {
+    fetchReplaceAdminUsers()
   }
 })
 
 const getRoleText = (role: string) => {
   const map: Record<string, string> = {
-    'SUPER_ADMIN': '超级管理',
-    'SCHOOL_ADMIN': '管理员',
+    'SUPER_ADMIN': '超级管理员',
+    'SCHOOL_ADMIN': '组织管理员',
     'TEACHER': '老师',
     'STUDENT': '学生',
     'PARENT': '家长'
@@ -272,8 +370,40 @@ const getRoleTag = (role: string) => {
   if (role === 'SUPER_ADMIN') return 'danger'
   if (role === 'SCHOOL_ADMIN') return 'warning'
   if (role === 'TEACHER') return 'success'
-  if (role === 'PARENT') return 'info'
-  return ''
+  if (role === 'PARENT' || role === 'STUDENT') return 'info'
+  return undefined
+}
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+const getAvatarStyle = (role: string) => {
+  const colorMap: Record<string, string> = {
+    SUPER_ADMIN: '#7C3AED',
+    SCHOOL_ADMIN: '#DC2626',
+    TEACHER: '#16A34A',
+    STUDENT: '#2563EB',
+    PARENT: '#6B7280'
+  }
+  const color = colorMap[role] || '#6366F1'
+  return {
+    background: hexToRgba(color, 0.2),
+    border: `2px solid ${hexToRgba(color, 0.5)}`,
+    color
+  }
+}
+
+const formatTime = (time: string) => {
+  if (!time) return '-'
+  return new Date(time).toLocaleDateString()
+}
+
+const handleDeleteUser = (user: any) => {
+  ElMessage.info('注销功能开发中')
 }
 
 const createOrganization = async () => {
@@ -296,29 +426,6 @@ const createOrganization = async () => {
   }
 }
 
-const createAdmin = async () => {
-  if (!adminForm.value.username || !adminForm.value.password) return ElMessage.warning('账号与密码必填')
-  saving.value = true
-  try {
-    const res = await orgApi.createOrgAdmin({
-       orgId: selectedOrg.value.id,
-       username: adminForm.value.username,
-       password: adminForm.value.password
-    })
-    if (res.success) {
-      ElMessage.success('成功派遣专属管理员')
-      showAdminDialog.value = false
-      adminForm.value = { username: '', password: '' }
-      fetchOrgs()
-    } else {
-      ElMessage.error(res.message || '创建失败')
-    }
-  } catch(e) {
-    ElMessage.error('网络异常')
-  } finally {
-    saving.value = false
-  }
-}
 
 const downloadTemplate = () => {
   const data = [
@@ -492,7 +599,7 @@ onMounted(() => {
   color: #666;
 }
 
-.admin-id {
+.admin-username {
   width: 100%;
   text-align: center;
   font-size: 16px;
@@ -521,5 +628,317 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   color: #314DE2;
+}
+
+.replace-admin-body {
+  min-height: 300px;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dialog-header-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.replace-admin-dialog :deep(.el-dialog__footer) {
+  width: 448px;
+  height: 71px;
+  border-top: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  gap: 12px;
+}
+
+.replace-admin-search {
+  width: 94%;
+  margin-left: 2%;
+  margin-bottom: 12px;
+}
+
+.replace-admin-search :deep(.el-input__wrapper) {
+  width: 100%;
+  height: 37px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #EBEEF4;
+  box-shadow: none;
+}
+
+.replace-admin-search :deep(.el-input__inner) {
+  background: transparent;
+}
+
+.user-list-wrapper {
+  height: 300px;
+  overflow-y: auto;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.account-management-wrapper {
+  width: 1280px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1px solid #ADB2B94D;
+  overflow: hidden;
+}
+
+.account-table {
+  width: 100%;
+  table-layout: auto;
+  height: 572px;
+}
+
+.account-table :deep(.el-table__body-wrapper) {
+  overflow-y: auto;
+}
+
+.account-table :deep(.el-table__cell) {
+  white-space: nowrap;
+  height: 52px;
+  text-align: center;
+}
+
+.account-table :deep(.el-table__header-wrapper .el-table__cell) {
+  background: #F2F4F8;
+  text-align: center;
+}
+
+.account-table :deep(.el-table__body .el-table__row) {
+  background: #FFFFFF;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-active .status-dot {
+  background: #22C55E;
+}
+
+.status-disabled .status-dot {
+  background: #5A6066;
+}
+
+.delete-user-btn {
+  width: 68px;
+  height: 27px;
+  gap: 10px;
+  border-radius: 15px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+}
+
+.delete-user-btn:hover {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+}
+
+/* Pagination styles */
+:deep(.el-pagination) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 0 8px;
+  min-width: 28px;
+  height: 28px;
+}
+
+:deep(.el-pagination .btn-prev:hover),
+:deep(.el-pagination .btn-next:hover) {
+  color: #314DE2;
+}
+
+:deep(.el-pagination .el-pager li) {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  min-width: 28px;
+  height: 28px;
+  line-height: 28px;
+  margin: 0 2px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
+  color: #314DE2;
+}
+
+:deep(.el-pagination .el-pager li.is-active) {
+  background: #314DE2;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+:deep(.el-pagination .el-pager li.is-active:hover) {
+  background: #1e40af;
+  color: #ffffff;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  width: 98%;
+  height: 66px;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ADB2B9;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin: 10px auto 0 auto;
+}
+
+.user-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.user-item:hover {
+  background: #f3f4f6;
+}
+
+.user-item-selected {
+  background: #314de20d;
+  border: 1px solid #314de240;
+}
+
+.user-item-admin {
+  width: 98%;
+  height: 68px;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px dashed #314DE266;
+  background: #B4BDFF1A;
+  margin: 10px auto 0 auto;
+}
+
+.user-item-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.user-item-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2E3339;
+  line-height: 1.3;
+}
+
+.user-item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.user-item-meta {
+  font-size: 12px;
+  color: #5A6066;
+  line-height: 1.3;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 32px 0;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.user-item-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  border: 1px solid #ADB2B9;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.user-item-dot-active {
+  width: 22px;
+  height: 22px;
+  background: #314DE2;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-item-dot-active::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFFFFF;
+}
+
+.confirm-admin-btn {
+  width: 104px;
+  height: 38px;
+  padding: 9px 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+  box-shadow: 0px 1px 2px 0px #0000000D;
+  border: none;
+}
+
+.cancel-admin-btn {
+  width: 62px;
+  height: 38px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #ADB2B9;
+}
+
+.download-template-btn {
+  width: 138px;
+  height: 38px;
+  padding: 8px 16px;
+  gap: 8px;
+  border-radius: 8px;
+  background: #F8F9FD;
+  border: 1px solid #ADB2B9;
+}
+
+.batch-upload-btn {
+  width: 136px;
+  height: 38px;
+  padding: 9px 16px;
+  gap: 8px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+  box-shadow: 0px 1px 2px 0px #0000000D;
+  border: none;
 }
 </style>
