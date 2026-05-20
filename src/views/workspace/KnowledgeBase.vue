@@ -227,24 +227,43 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { knowledgeApi } from '@/api/api'
-import { formatFileSize, formatTime, generateUniqueFolderName, MAX_FILE_SIZE, validateFileSizes, uploadFile, appendToPath } from '@/utils/knowledge'
-import { knowledgeLog as log, knowledgeLogError as logError } from '@/utils/logManage'
+import { formatFileSize, formatTime, generateUniqueFolderName, validateFileSizes, uploadFile, appendToPath } from '@/utils/knowledge'
+import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
 
 const router = useRouter()
+const route = useRoute()
+
+interface Folder {
+  id: number
+  name: string
+  folderCount: number
+  fileCount: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+interface File {
+  id: number
+  name: string
+  size: number
+  url?: string
+  createdAt: string
+  updatedAt?: string
+}
 
 // 搜索
-const searchKey = ref('')
+//const searchKey = ref('')
 
 // 文件夹列表
-const folders = ref([])
+const folders = ref<Folder[]>([])
 
 // 文件列表
-const files = ref([])
+const files = ref<File[]>([])
 
 // 存储信息
 const storage = ref({
@@ -257,16 +276,16 @@ const loading = ref(false)
 
 // 文件夹设置 Dialog
 const showFolderDialog = ref(false)
-const currentDialogFolder = ref(null)
+const currentDialogFolder = ref<Folder | null>(null)
 const triggerPosition = ref({ x: 0, y: 0 })
 
 // 文件上传相关
-const fileInputRef = ref(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
 
 // 重命名相关
-const renamingFolder = ref(null)
+const renamingFolder = ref<Folder | null>(null)
 const renameInput = ref('')
-const renameInputRef = ref(null)
+const renameInputRef = ref<HTMLInputElement | null>(null)
 
 // 获取数据
 const fetchData = async () => {
@@ -278,11 +297,11 @@ const fetchData = async () => {
       // 确保数据是数组
       folders.value = Array.isArray(entriesRes.data.folders) ? entriesRes.data.folders : []
       files.value = Array.isArray(entriesRes.data.files) ? entriesRes.data.files : []
-      log('数据加载成功 - 文件夹数:', folders.value.length, '文件数:', files.value.length)
+      knowledgeLog('数据加载成功 - 文件夹数:', folders.value.length, '文件数:', files.value.length)
     } else {
       folders.value = []
       files.value = []
-      log('数据结构异常，重置为空数组')
+      knowledgeLog('数据结构异常，重置为空数组')
     }
 
     // 获取存储统计
@@ -296,7 +315,7 @@ const fetchData = async () => {
       }
     }
   } catch (err) {
-    logError('数据加载失败', err)
+    knowledgeLogError('数据加载失败', err)
     folders.value = []
     files.value = []
   } finally {
@@ -305,7 +324,7 @@ const fetchData = async () => {
 }
 
 // 点击文件夹跳转
-const handleFolderClick = (folderId, folderName) => {
+const handleFolderClick = (folderId: number, folderName: string) => {
   if (showFolderDialog.value || renamingFolder.value) return
 
   router.push({
@@ -325,12 +344,12 @@ const goToAgentEdit = () => {
 }
 
 // 打开文件夹设置 Dialog
-const openFolderDialog = (event, folder) => {
+const openFolderDialog = (event: MouseEvent, folder: Folder) => {
   event.stopPropagation()
   currentDialogFolder.value = folder
   
   // 获取触发按钮的位置
-  const target = event.currentTarget
+  const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
   triggerPosition.value = {
     x: rect.left + rect.width / 2,
@@ -347,17 +366,21 @@ const closeFolderDialog = () => {
 }
 
 // Dialog 重命名
-const handleDialogRename = (folderId, folderName) => {
+const handleDialogRename = (folderName: string) => {
   renamingFolder.value = currentDialogFolder.value
   renameInput.value = currentDialogFolder.value?.name || folderName || ''
   closeFolderDialog()
   
-  nextTick(() => {
-    if (renameInputRef.value) {
-      renameInputRef.value.focus()
-      renameInputRef.value.select()
+  // 使用 setTimeout 确保 DOM 完全更新后再聚焦
+  setTimeout(() => {
+    const input = renameInputRef.value
+    if (input && typeof input.focus === 'function') {
+      input.focus()
+      input.select()
+    } else {
+      knowledgeLog('重命名输入框未就绪或不是有效的 DOM 元素')
     }
-  })
+  }, 100)
 }
 
 // 确认重命名
@@ -366,20 +389,22 @@ const confirmRename = async () => {
     cancelRename()
     return
   }
+  const folderId = renamingFolder.value.id
+  const newName = renameInput.value.trim()
   
   try {
-    const res = await knowledgeApi.updateFolder(renamingFolder.value.id, {
-      name: renameInput.value.trim()
+    const res = await knowledgeApi.updateFolder(folderId, {
+      name: newName
     })
     
     if (res && res.success) {
-      const folder = folders.value.find(f => f.id === renamingFolder.value.id)
+      const folder = folders.value.find(f => f.id === folderId)
       if (folder) {
-        folder.name = renameInput.value.trim()
+        folder.name = newName
       }
     }
   } catch (err) {
-    logError('重命名失败', err)
+    knowledgeLogError('重命名失败', err)
   } finally {
     renamingFolder.value = null
     renameInput.value = ''
@@ -393,13 +418,13 @@ const cancelRename = () => {
 }
 
 // Dialog 替换图标
-const handleDialogReplaceIcon = (folderId) => {
-  log('替换图标', folderId || currentDialogFolder.value?.id)
+const handleDialogReplaceIcon = (folderId: number) => {
+  knowledgeLog('替换图标', folderId || currentDialogFolder.value?.id)
   closeFolderDialog()
 }
 
 // Dialog 删除文件夹
-const handleDialogDelete = async (folderId) => {
+const handleDialogDelete = async (folderId: number) => {
   const folder = currentDialogFolder.value
   if (!folder) return
   if (!confirm(`确定要删除文件夹「${folder.name}」吗？`)) return
@@ -411,7 +436,7 @@ const handleDialogDelete = async (folderId) => {
       folders.value = folders.value.filter(f => f.id !== folder.id)
     }
   } catch (err) {
-    logError('删除文件夹失败', err)
+    knowledgeLogError('删除文件夹失败', err)
   } finally {
     closeFolderDialog()
   }
@@ -428,7 +453,7 @@ const handleCreateFolder = async () => {
       fetchData()
     }
   } catch (err) {
-    logError('创建文件夹失败', err)
+    knowledgeLogError('创建文件夹失败', err)
   }
 }
 
@@ -438,38 +463,34 @@ const triggerFileUpload = () => {
 }
 
 // 处理文件选择
-const handleFileSelect = async (event) => {
-  const selectedFiles = event.target.files
-  if (!selectedFiles || selectedFiles.length === 0) return
+const handleFileSelect = async (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const selectedFiles = target.files
+  if (!selectedFiles?.length) return
+  const { validFiles } = validateFileSizes(selectedFiles)
+  const targetFolderId = route.params.folderId ? Number(route.params.folderId) : null
 
-  // 使用工具函数验证文件大小
-  const { validFiles, tooLargeFiles } = validateFileSizes(selectedFiles)
+  if (!files.value) files.value = []
 
-  // 显示超过大小限制的文件
-  if (tooLargeFiles.length > 0) {
-    alert(`以下文件超过大小限制(10MB)，无法上传：\n${tooLargeFiles.join('\n')}`)
-  }
-
-  // 上传有效文件
-  if (validFiles.length > 0) {
-    for (const file of validFiles) {
-      const uploadedFile = await uploadFile(file, null)
+  for (const f of validFiles) {
+    try {
+      const uploadedFile = await uploadFile(f, targetFolderId)
       if (uploadedFile) {
         files.value.push(uploadedFile)
       }
+    } catch (err) {
+      knowledgeLogError('上传失败', err)
     }
-    fetchData() // 刷新确保数据一致
   }
 
-  // 重置文件输入
-  event.target.value = ''
+  fetchData()
+  target.value = ''
 }
-
 // 下载文件
-const handleDownload = (file) => file.url && window.open(file.url, '_blank')
+const handleDownload = (file: File) => file.url && window.open(file.url, '_blank')
 
 // 删除文件
-const handleDelete = async (file) => {
+const handleDelete = async (file: File) => {
   if (!confirm(`确定要删除文件「${file.name}」吗？`)) return
   try {
     const res = await knowledgeApi.deleteFile(file.id)
@@ -477,7 +498,7 @@ const handleDelete = async (file) => {
       files.value = files.value.filter(f => f.id !== file.id)
     }
   } catch (err) {
-    logError('删除文件失败', err)
+    knowledgeLogError('删除文件失败', err)
   }
 }
 

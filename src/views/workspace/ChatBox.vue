@@ -11,11 +11,7 @@
 
       <div class="horizontal-border search-border">
         <div class="search-input-container">
-          <input
-            v-model="sessionSearch"
-            placeholder="搜索历史记录"
-            class="search-input"
-          />
+          <input v-model="sessionSearch" placeholder="搜索历史记录" class="search-input" />
           <img src="@/images/search.png" class="search-icon" />
         </div>
       </div>
@@ -24,42 +20,25 @@
         <div class="session-list-section">
           <div class="section-title">最近对话</div>
           <div class="session-items">
-            <div
-              v-for="s in filteredSessions"
-              :key="s.id"
-              class="session-item"
-              :class="activeSessionId === s.id ? 'active' : ''"
-              @click="selectSession(s.id)"
-            >
-              <img
-                class="session-icon"
-                :src="activeSessionId === s.id
-                  ? '@/images/chatbox-selected.png'
-                  : '@/images/chatbox-unselected.png'"
-              />
-              <input
-                v-if="editingSessionId === s.id"
-                v-model="editSessionName"
-                class="common-edit-input"
-                @blur="confirmEditSession"
-                @keydown.enter.prevent="confirmEditSession"
-                @click.stop
-                ref="editInputRef"
-              />
-              <div v-else class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0,12) + '...' : s.topic) : '新对话' }}</div>
-                <div
-                  v-if="editingSessionId !== s.id"
-                  class="common-edit-btn"
-                  @click.stop="openEditDialog(s)"
-                >
-                  <el-icon><Edit /></el-icon>
-                </div>
-                <div
-                  class="common-delete-btn"
-                  @click.stop="deleteSession(s.id)"
-                >
-                  <el-icon><Delete /></el-icon>
-                </div>
+            <div v-for="s in filteredSessions" :key="s.id" class="session-item"
+              :class="activeSessionId === s.id ? 'active' : ''" @click="selectSession(s.id)">
+              <img class="session-icon" :src="activeSessionId === s.id
+                ? '@/images/chatbox-selected.png'
+                : '@/images/chatbox-unselected.png'" />
+              <input v-if="editingSessionId === s.id" v-model="editSessionName" class="common-edit-input"
+                @blur="confirmEditSession" @keydown.enter.prevent="confirmEditSession" @click.stop ref="editInputRef" />
+              <div v-else class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0, 12) + '...' :
+                s.topic) : '新对话' }}</div>
+              <div v-if="editingSessionId !== s.id" class="common-edit-btn" @click.stop="openEditDialog(s)">
+                <el-icon>
+                  <Edit />
+                </el-icon>
+              </div>
+              <div class="common-delete-btn" @click.stop="deleteSession(s.id)">
+                <el-icon>
+                  <Delete />
+                </el-icon>
+              </div>
             </div>
           </div>
         </div>
@@ -69,20 +48,10 @@
     <!-- 中间窗口：动态切换 -->
     <main class="chat-main-content">
       <ChatInit v-if="!activeSessionId" @send-message="handleChatInitSend" />
-      <Chating
-        v-else
-        :agentId="agentId"
-        :agentInfo="agentInfo"
-        :messages="messages"
-        :isStreaming="isStreaming"
-        :userInput="userInput"
-        :activeSession="activeSession"
-        :commonPrompts="commonPrompts"
-        @send-message="handleSend"
-        @refreshSessions="refreshSessions"
-        @updateMessages="messages = $event"
-        @updateStreaming="isStreaming = $event"
-      />
+      <Chating v-else :agentId="agentId" :agentInfo="agentInfo" :messages="messages" :isStreaming="isStreaming"
+        :userInput="userInput" :activeSession="activeSession" :commonPrompts="commonPrompts" @send-message="handleSend"
+        @refreshSessions="refreshSessions" @updateMessages="messages = $event"
+        @updateStreaming="isStreaming = $event" />
     </main>
 
     <!-- 右侧配置 -->
@@ -105,18 +74,18 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Plus, Search, ChatDotSquare, Cpu, User, Monitor, Promotion, Setting, Delete, Edit } from '@element-plus/icons-vue'
-import { useUserStore } from '../../store/user'
+import { Delete, Edit } from '@element-plus/icons-vue'
+//import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
-import { sessionApi } from '../../api/api'
 import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
-import { chatLog as log } from '../../utils/logManage'
+import { chatLog, chatLogError } from '../../utils/logManage'
 import ChatInit from './ChatInit.vue'
 import Chating from './Chating.vue'
 import { DEFAULT_AGENT_ID } from '../../costants/costant'
+import { sessionApi, type Session } from '../../api/api'
 
 const route = useRoute()
-const userStore = useUserStore()
+//const userStore = useUserStore()
 
 const agentId = computed(() => {
   const param = route.params.agentId
@@ -136,17 +105,17 @@ interface AgentInfo {
   [key: string]: any
 }
 
-interface FormConfigItem {
-  key: string
-  label: string
-  type: 'input' | 'textarea'
-  placeholder?: string
-  required?: boolean
-}
+//interface FormConfigItem {
+//  key: string
+//  label: string
+//  type: 'input' | 'textarea'
+//  placeholder?: string
+//  required?: boolean
+//}
 
 const agentInfo = ref<AgentInfo | null>(null)
-const formConfig = ref<FormConfigItem[]>([])
-const formData = ref<Record<string, any>>({})
+//const formConfig = ref<FormConfigItem[]>([])
+//const formData = ref<Record<string, any>>({})
 
 interface Message {
   role: 'user' | 'assistant'
@@ -159,16 +128,6 @@ interface Message {
 const userInput = ref('')
 const isStreaming = ref(false)
 const messages = ref<Message[]>([])
-
-interface Session {
-  id: number
-  topic: string
-  agentId?: number
-  createdAt?: string
-  updatedAt?: string
-  userId?: number
-  isDeleted?: boolean
-}
 
 const activeSessionId = ref<number | null>(null)
 const sessions = ref<Session[]>([])
@@ -195,7 +154,7 @@ const loadSessions = async () => {
       ElMessage.error('加载会话列表失败')
     }
   } catch (error) {
-    logError('加载会话列表失败:', error)
+    chatLogError('加载会话列表失败:', error)
   }
 }
 
@@ -215,7 +174,7 @@ const commonPrompts = ref(['生成一份教案', '批改一段作业', '帮我�
 const createNewSession = async () => {
   try {
     const data = await sessionApi.createSession(agentId.value ?? Number(DEFAULT_AGENT_ID))
-    if (data.success) {
+    if (data.success && data.data) {
       await loadSessions()
       activeSessionId.value = data.data.id
       messages.value = []
@@ -224,7 +183,7 @@ const createNewSession = async () => {
       ElMessage.error('创建会话失败')
     }
   } catch (error) {
-    logError('创建会话失败:', error)
+    chatLogError('创建会话失败:', error)
   }
 }
 
@@ -250,7 +209,7 @@ const deleteSession = async (id: number) => {
       ElMessage.error('删除会话失败')
     }
   } catch (error) {
-    logError('删除会话失败:', error)
+    chatLogError('删除会话失败:', error)
   }
 }
 
@@ -258,7 +217,7 @@ const editSessionName = ref('')
 const editingSessionId = ref<number | null>(null)
 const editInputRef = ref<HTMLInputElement | null>(null)
 
-const openEditDialog = (session) => {
+const openEditDialog = (session: Session) => {
   editingSessionId.value = session.id
   editSessionName.value = session.topic || ''
   nextTick(() => {
@@ -275,6 +234,7 @@ const confirmEditSession = async () => {
     ElMessage.warning('对话名称不能为空')
     return
   }
+  if (editingSessionId.value === null) return
   try {
     const data = await sessionApi.updateSessionTopic(editingSessionId.value, editSessionName.value)
     if (data.success) {
@@ -285,7 +245,7 @@ const confirmEditSession = async () => {
       ElMessage.error('修改会话失败')
     }
   } catch (error) {
-    logError('修改会话失败:', error)
+    chatLogError('修改会话失败:', error)
   }
 }
 
@@ -312,11 +272,11 @@ const updateMessages = () => {
 }
 
 // 处理 ChatInit 发送消息（与 Chating 发送逻辑一致）
-const handleChatInitSend = async ({ content, attachments }) => {
+const handleChatInitSend = async ({ content, attachments }: { content: string; attachments?: any[] }) => {
   try {
     // 1. 新建会话
     const sessionResult = await sessionApi.createSession(agentId.value ?? Number(DEFAULT_AGENT_ID))
-    if (!sessionResult.success) {
+    if (!sessionResult.success || !sessionResult.data) {
       ElMessage.error('创建会话失败')
       return
     }
@@ -342,16 +302,16 @@ const handleChatInitSend = async ({ content, attachments }) => {
 
     try {
       // 6. 调用 API 发送消息
-      log('sending message:', { sessionId, content, attachments })
+      chatLog('sending message:', { sessionId, content, attachments })
       const response = await sessionApi.sendMessage(sessionId, content, attachments)
-      log('received response:', response)
-      
+      chatLog('received response:', response)
+
       const contentType = response.headers.get('content-type') || ''
-      
+
       if (contentType.includes('application/json')) {
         // 普通 JSON 响应
         const result = await response.json()
-        
+
         let responseContent = ''
         if (result.success && result.data) {
           responseContent = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
@@ -370,30 +330,40 @@ const handleChatInitSend = async ({ content, attachments }) => {
         } else {
           responseContent = JSON.stringify(result)
         }
-        
+
         // 更新消息（替换整个对象以触发响应式）
-        messages.value[aiMsgIndex] = { 
-          role: 'assistant', 
-          content: responseContent, 
-          isThinking: false 
+        messages.value[aiMsgIndex] = {
+          role: 'assistant',
+          content: responseContent,
+          isThinking: false
         }
         updateMessages()
       } else if (contentType.includes('text/event-stream')) {
         // SSE 流式响应（根据 API 文档格式）
-        log('Processing SSE stream...')
+        chatLog('Processing SSE stream...')
+        if (!response.body) {
+          messages.value[aiMsgIndex] = {
+            role: 'assistant',
+            content: '抱歉，服务器未返回响应内容，请稍后重试。',
+            isThinking: false
+          }
+          updateMessages()
+          isStreaming.value = false
+          return
+        }
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
         let receivedContent = false
         let currentContent = ''
-        
+
         while (true) {
           const { done, value } = await reader.read()
-          
+
           if (value) {
             buffer += decoder.decode(value, { stream: true })
           }
-          
+
           if (done) {
             // 流结束时处理剩余数据
             if (buffer.trim()) {
@@ -416,13 +386,13 @@ const handleChatInitSend = async ({ content, attachments }) => {
             }
             break
           }
-          
+
           // 处理完整的行
           const lines = buffer.split('\n')
           for (let i = 0; i < lines.length - 1; i++) {
             const line = lines[i].trim()
             if (!line) continue
-            
+
             // 检查是否是错误格式（直接返回JSON错误）
             if (line.startsWith('{')) {
               try {
@@ -433,56 +403,56 @@ const handleChatInitSend = async ({ content, attachments }) => {
                   reader.releaseLock()
                   break
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
-            
+
             const tempMsg = { content: currentContent }
             processSSELine(lines[i], tempMsg)
             currentContent = tempMsg.content
-            
+
             // 实时更新消息
-            messages.value[aiMsgIndex] = { 
-              role: 'assistant', 
-              content: currentContent, 
-              isThinking: true 
+            messages.value[aiMsgIndex] = {
+              role: 'assistant',
+              content: currentContent,
+              isThinking: true
             }
             updateMessages()
           }
           buffer = lines[lines.length - 1]
-          
+
           if (receivedContent) break
         }
-        
+
         // 如果没有收到任何内容，显示错误提示
         if (!receivedContent && !currentContent) {
           currentContent = '抱歉，服务器没有返回有效内容，请稍后重试。'
         }
-        
+
         // 最终更新（结束思考状态）
-        messages.value[aiMsgIndex] = { 
-          role: 'assistant', 
-          content: currentContent, 
-          isThinking: false 
+        messages.value[aiMsgIndex] = {
+          role: 'assistant',
+          content: currentContent,
+          isThinking: false
         }
         updateMessages()
       } else {
         // 其他格式
         const text = await response.text()
-        messages.value[aiMsgIndex] = { 
-          role: 'assistant', 
-          content: text, 
-          isThinking: false 
+        messages.value[aiMsgIndex] = {
+          role: 'assistant',
+          content: text,
+          isThinking: false
         }
         updateMessages()
       }
-      
+
       isStreaming.value = false
     } catch (apiError) {
-      logError('API 调用失败:', apiError)
-      messages.value[aiMsgIndex] = { 
-        role: 'assistant', 
-        content: '抱歉，服务器暂时无法响应，请稍后重试。', 
-        isThinking: false 
+      chatLogError('API 调用失败:', apiError)
+      messages.value[aiMsgIndex] = {
+        role: 'assistant',
+        content: '抱歉，服务器暂时无法响应，请稍后重试。',
+        isThinking: false
       }
       updateMessages()
       isStreaming.value = false
@@ -492,13 +462,13 @@ const handleChatInitSend = async ({ content, attachments }) => {
     // 7. 刷新会话列表以更新标题
     await loadSessions()
   } catch (error) {
-    logError('发送消息失败:', error)
+    chatLogError('发送消息失败:', error)
     isStreaming.value = false
     ElMessage.error('发送失败，请稍后重试')
   }
 }
 
-const handleGlobalClick = (e: MouseEvent) => {
+const handleGlobalClick = (_e: MouseEvent) => {
   if (editingSessionId.value !== null) {
     confirmEditSession()
   }
@@ -553,7 +523,8 @@ onUnmounted(() => {
   border-right: 1px solid rgba(173, 178, 185, 0.1);
   backdrop-filter: blur(6px);
   flex: none;
-  order: 0; /* 确保在最左 */
+  order: 0;
+  /* 确保在最左 */
   align-self: stretch;
   flex-grow: 0;
   z-index: 2;
@@ -569,11 +540,12 @@ onUnmounted(() => {
   position: absolute;
   width: 24px;
   height: 48px;
-  left: 288px; /* 紧贴侧边栏右侧 */
+  left: 288px;
+  /* 紧贴侧边栏右侧 */
   top: calc(50% - 24px);
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(173, 178, 185, 0.2);
-  box-shadow: 0px 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
   border-radius: 0 8px 8px 0;
   z-index: 0;
   cursor: pointer;
@@ -607,7 +579,7 @@ onUnmounted(() => {
   width: 255px;
   height: 41px;
   background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
-  box-shadow: 0px 8px 20px rgba(49,77,226,0.2);
+  box-shadow: 0px 8px 20px rgba(49, 77, 226, 0.2);
   border-radius: 12px;
   border: none;
   font-family: "Noto Sans SC";
@@ -696,7 +668,7 @@ onUnmounted(() => {
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: rgba(90,96,102,0.6);
+  color: rgba(90, 96, 102, 0.6);
 }
 
 .session-items {
@@ -778,7 +750,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   z-index: 10;
   position: sticky;
@@ -821,7 +793,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .user-avatar {
@@ -845,14 +817,14 @@ onUnmounted(() => {
   background: #3B82F6;
   color: #fff;
   border-top-right-radius: 4px;
-  box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 .assistant-bubble {
   background: #F9FAFB;
   color: #111827;
   border-top-left-radius: 4px;
-  border: 1px solid rgba(173,178,185,0.1);
+  border: 1px solid rgba(173, 178, 185, 0.1);
 }
 
 .streaming-loading {
@@ -877,7 +849,7 @@ onUnmounted(() => {
   background: #F9FAFB;
   padding: 8px;
   border-radius: 16px;
-  border: 1px solid rgba(173,178,185,0.2);
+  border: 1px solid rgba(173, 178, 185, 0.2);
 }
 
 .chat-textarea :deep(.el-textarea__inner) {
@@ -894,7 +866,7 @@ onUnmounted(() => {
 .agent-config-sidebar {
   width: 320px;
   background: #fff;
-  border-left: 1px solid rgba(173,178,185,0.1);
+  border-left: 1px solid rgba(173, 178, 185, 0.1);
   padding: 32px;
   flex-shrink: 0;
   display: flex;

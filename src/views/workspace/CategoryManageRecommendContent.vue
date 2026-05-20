@@ -114,9 +114,8 @@ interface Category {
   name: string
   weight?: number
 }
-
-// 日志输出开关，设置为 false 可关闭所有日志
-import { categoryLog } from './CategoryManageList.vue'
+//@ts-ignore
+import { categoryLog, categoryLogError} from '@/utils/logManage'
 
 const props = defineProps<{
   category?: Category
@@ -128,11 +127,11 @@ const availableAgents = ref<Agent[]>([])
 const agentDialogVisible = ref(false)
 const originalAgentIds = ref<(string | number)[]>([])
 
-const hasChanges = computed(() => {
-  const currentIds = section2Agents.value.map(a => a.id).sort()
-  const originalIds = originalAgentIds.value.sort()
-  return JSON.stringify(currentIds) !== JSON.stringify(originalIds)
-})
+//const hasChanges = computed(() => {
+//  const currentIds = section2Agents.value.map(a => a.id).sort()
+//  const originalIds = originalAgentIds.value.sort()
+//  return JSON.stringify(currentIds) !== JSON.stringify(originalIds)
+//})
 
 const filteredAvailableAgents = computed(() => {
   const addedIds = new Set(section2Agents.value.map(a => a.id))

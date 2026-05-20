@@ -33,7 +33,7 @@
     <div class="menu-list">
       <template v-if="filteredCategories.length > 0">
         <div
-          v-for="(item, index) in filteredCategories"
+          v-for="(item) in filteredCategories"
           :key="item.id"
           class="menu-item item-container"
           :class="{ active: activeCategory === item.name }"
@@ -112,12 +112,7 @@ interface Category {
   name: string
   weight?: number
 }
-import { categoryLog as log, categoryLogError as logError } from '@/utils/logManage'
-
-export const ENABLE_LOG = false
-
-export const categoryLog = log
-export const categoryLogError = logError
+import { categoryLog, categoryLogError} from '@/utils/logManage'
 
 const searchQuery = ref('')
 const editingId = ref<number | null>(null)
@@ -294,7 +289,7 @@ const loadCategories = async () => {
   }
 }
 
-const handleGlobalClick = (e: MouseEvent) => {
+const handleGlobalClick = () => {
   if (editingId.value !== null) {
     confirmEdit()
   }

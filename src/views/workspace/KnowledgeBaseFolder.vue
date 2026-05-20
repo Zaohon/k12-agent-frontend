@@ -113,30 +113,49 @@ import { knowledgeApi } from '@/api/api'
 import {
   formatFileSize, formatTime, generateUniqueFolderName,
   validateFileSizes, uploadFile,
-  parsePath, appendToPath, getPathBeforeIndex, buildPath
+  parsePath, appendToPath, getPathBeforeIndex,
+  type BreadcrumbItem
 } from '@/utils/knowledge'
-import { knowledgeLog as log, knowledgeLogError as logError } from '@/utils/logManage'
+import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
+
+interface Folder {
+  id: number
+  name: string
+  folderCount: number
+  fileCount: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+interface File {
+  id: number
+  name: string
+  size: number
+  url?: string
+  createdAt: string
+  updatedAt?: string
+}
 
 const router = useRouter()
 const route = useRoute()
 
-const currentFolderId = ref(null)
+const currentFolderId = ref<number | null>(null)
 const currentFolderName = ref('根目录')
-const breadcrumb = ref([{ id: null, name: '知识库' }])
+const breadcrumb = ref<(BreadcrumbItem | { id: number | null; name: string })[]>([{ id: null, name: '知识库' }])
 
-const folders = ref([])
-const files = ref([])
+const folders = ref<Folder[]>([])
+const files = ref<File[]>([])
 const loading = ref(false)
 
 const showFolderDialog = ref(false)
-const currentDialogFolder = ref(null)
+const currentDialogFolder = ref<Folder | null>(null)
 const triggerPosition = ref({ x: 0, y: 0 })
 
-const fileInputRef = ref(null)
-const renamingFolder = ref(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const renamingFolder = ref<Folder | null>(null)
 const renameInput = ref('')
-const renameInputRef = ref(null)
+//const renameInputRef = ref(null)
 
 // 加载数据
 const fetchFolderData = async () => {
@@ -152,7 +171,7 @@ const fetchFolderData = async () => {
 
     // 面包屑赋值
     breadcrumb.value = [{ id: null, name: '知识库' }, ...pathItems]
-    log('最终面包屑:', breadcrumb.value)
+    knowledgeLog('最终面包屑:', breadcrumb.value)
 
     // 设置当前文件夹名称
     if (pathItems.length) {
@@ -162,20 +181,20 @@ const fetchFolderData = async () => {
     }
 
     // 请求数据
-    log('获取文件夹内容, parentId:', numericFolderId)
+    knowledgeLog('获取文件夹内容, parentId:', numericFolderId)
     const res = await knowledgeApi.getEntries(numericFolderId ? { parentId: numericFolderId } : {})
     if (res?.success && res.data) {
       // 确保数据是数组
       folders.value = Array.isArray(res.data.folders) ? res.data.folders : []
       files.value = Array.isArray(res.data.files) ? res.data.files : []
-      log('获取到文件数:', files.value.length)
+      knowledgeLog('获取到文件数:', files.value.length)
     } else {
       folders.value = []
       files.value = []
-      log('数据结构异常，重置为空数组')
+      knowledgeLog('数据结构异常，重置为空数组')
     }
   } catch (err) {
-    logError(err)
+    knowledgeLogError(err)
     folders.value = []
     files.value = []
   } finally {
@@ -217,10 +236,10 @@ const navigateToFolder = (item: any, index: number) => {
 
 const goBack = () => router.back()
 
-const openFolderDialog = (event, folder) => {
+const openFolderDialog = (event: MouseEvent, folder: Folder) => {
   event.stopPropagation()
   currentDialogFolder.value = folder
-  const rect = event.currentTarget.getBoundingClientRect()
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
   triggerPosition.value = { x: rect.left + rect.width / 2, y: rect.bottom }
   showFolderDialog.value = true
 }
@@ -248,9 +267,10 @@ const handleDialogDelete = async () => {
 
 const confirmRename = async () => {
   if (!renamingFolder.value || !renameInput.value.trim()) return
-  const res = await knowledgeApi.updateFolder(renamingFolder.value.id, { name: renameInput.value.trim() })
+  const renameId = renamingFolder.value.id
+  const res = await knowledgeApi.updateFolder(renameId, { name: renameInput.value.trim() })
   if (res?.success) {
-    const f = folders.value.find(x => x.id === renamingFolder.value.id)
+    const f = folders.value.find(x => x.id === renameId)
     if (f) f.name = renameInput.value.trim()
   }
   renamingFolder.value = null
@@ -261,7 +281,7 @@ const cancelRename = () => renamingFolder.value = null
 const handleCreateFolder = async () => {
   const names = folders.value.map(f => f.name)
   const name = generateUniqueFolderName(names)
-  const data = { name }
+  const data: { name: string; parentId?: number | null } = { name }
   if (currentFolderId.value) data.parentId = currentFolderId.value
   const res = await knowledgeApi.createFolder(data)
   if (res?.success) fetchFolderData()
@@ -269,24 +289,42 @@ const handleCreateFolder = async () => {
 
 const triggerFileUpload = () => fileInputRef.value?.click()
 
-const handleFileSelect = async (e) => {
-  const selectedFiles = e.target.files
+const handleFileSelect = async (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const selectedFiles = target.files
   if (!selectedFiles?.length) return
   const { validFiles } = validateFileSizes(selectedFiles)
   const targetFolderId = route.params.folderId ? Number(route.params.folderId) : null
-  log('上传文件到文件夹:', targetFolderId)
+
+  if (!files.value) files.value = []
+
   for (const f of validFiles) {
-    const uploadedFile = await uploadFile(f, targetFolderId)
-    if (uploadedFile) {
-      files.value.push(uploadedFile)
+    try {
+      const uploadedFile = await uploadFile(f, targetFolderId)
+      if (uploadedFile) {
+        files.value.push(uploadedFile)
+      }
+    } catch (err) {
+      knowledgeLogError('上传失败', err)
     }
   }
-  fetchFolderData() // 刷新确保数据一致
-  e.target.value = ''
+
+  fetchFolderData()
+  target.value = ''
 }
 
-const handleDownload = (file) => file.url && window.open(file.url, '_blank')
-const handleDelete = (file) => log('删除文件', file.id)
+const handleDownload = (file: File) => file.url && window.open(file.url, '_blank')
+const handleDelete = async (file: File) => {
+  if (!confirm(`确定要删除文件「${file.name}」吗？`)) return
+  try {
+    const res = await knowledgeApi.deleteFile(file.id)
+    if (res && res.success) {
+      files.value = files.value.filter(f => f.id !== file.id)
+    }
+  } catch (err) {
+    knowledgeLogError('删除文件失败', err)
+  }
+}
 
 // 监听路由
 watch(

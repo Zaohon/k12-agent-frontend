@@ -211,7 +211,7 @@ import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } fro
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
 import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
-import { chatLog as log, chatLogError as logError } from '../../utils/logManage'
+import { chatLog, chatLogError } from '../../utils/logManage'
 import { useAttachment } from '@/hooks/useAttachment'
 import { largeChatData } from '@/mock/large-chat-data'
 import ChatMessage from '@/components/ChatMessage.vue'
@@ -377,9 +377,9 @@ const loadSessionHistory = async () => {
 
 // 发送消息
 const handleSend = async () => {
-  log('handleSend called')
-  log('inputVal:', inputVal.value)
-  log('activeSession:', props.activeSession)
+  chatLog('handleSend called')
+  chatLog('inputVal:', inputVal.value)
+  chatLog('activeSession:', props.activeSession)
   
   if (!inputVal.value.trim() && attachments.value.length === 0) return
   if (!props.activeSession?.id) return
@@ -426,16 +426,16 @@ const handleSend = async () => {
   }
 
   try {
-    log('Calling sessionApi.sendMessage...')
+    chatLog('Calling sessionApi.sendMessage...')
     const response = await sessionApi.sendMessage(props.activeSession.id, content, currentAttachments)
-    log('Response received:', response)
+    chatLog('Response received:', response)
     
     const contentType = response.headers.get('content-type') || ''
-    log('Content-Type:', contentType)
+    chatLog('Content-Type:', contentType)
     
     if (contentType.includes('application/json')) {
       const result = await response.json()
-      log('JSON response:', result)
+      chatLog('JSON response:', result)
       
       let responseContent = ''
       if (result.success && result.data) {
@@ -455,7 +455,7 @@ const handleSend = async () => {
       }
       await updateMessage(responseContent, false)
     } else if (contentType.includes('text/event-stream')) {
-      log('Processing SSE stream...')
+      chatLog('Processing SSE stream...')
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
@@ -508,7 +508,7 @@ const handleSend = async () => {
           if (result.hasNewContent) {
             // 保持思考状态直到流结束，即时更新内容
             if (hasStartedThinking) {
-              log('收到第一块内容，开始更新思考中内容:', tempMsg.content)
+              chatLog('收到第一块内容，开始更新思考中内容:', tempMsg.content)
               hasStartedThinking = false
             }
             // 保持 isThinking 为 true，直到流完全结束
@@ -526,7 +526,7 @@ const handleSend = async () => {
       await updateMessage(text, false)
     }
   } catch (error) {
-    logError('Send message error:', error)
+    chatLogError('Send message error:', error)
     await updateMessage('抱歉，服务器暂时无法响应，请稍后重试。', false)
   } finally {
     isStreaming.value = false
@@ -566,7 +566,7 @@ const confirmUpdateTopic = async () => {
       ElMessage.error('标题修改失败')
     }
   } catch (error) {
-    logError('修改标题失败:', error)
+    chatLogError('修改标题失败:', error)
   }
 }
 
@@ -583,7 +583,7 @@ const deleteSession = async () => {
       ElMessage.error('会话删除失败')
     }
   } catch (error) {
-    logError('删除会话失败:', error)
+    chatLogError('删除会话失败:', error)
   }
 }
 

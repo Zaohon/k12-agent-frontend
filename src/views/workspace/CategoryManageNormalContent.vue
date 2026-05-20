@@ -30,8 +30,8 @@
         <div class="cm-form-column">
           <label class="cm-form-label">排序权重</label>
           <div class="cm-input-with-tip">
-            <input type="text" class="cm-form-input cm-form-input-with-tip" v-model="sortWeight" @input="validateSortWeight($event.target.value)" />
-            <span class="cm-input-tip">数值越小越靠前（1-99）</span>
+            <input type="text" class="cm-form-input cm-form-input-with-tip" v-model="sortWeight" @input="validateSortWeight($event.target)" />
+            <span class="cm-input-tip">数值越大越靠前（1-99）</span>
           </div>
         </div>
       </div>
@@ -150,8 +150,9 @@ import iconRecommend from '@/images/category-content-recommend.png'
 import '@/styles/category-manage-content.css'
 import AgentSelectDialog from '@/views/dialog/AgentSelectDialog.vue'
 import { ElMessage } from 'element-plus'
+//import { useUserStore } from '@/store/user'
+//@ts-ignore
 import { categoryApi } from '@/api/api'
-import { useUserStore } from '@/store/user'
 import {
   loadCategoryAgents,
   saveCategoryAgents,
@@ -176,7 +177,7 @@ interface Category {
   visible_roles?: string[]
 }
 
-import { categoryLog, categoryLogError } from './CategoryManageList.vue'
+import { categoryLog, categoryLogError } from '@/utils/logManage'
 
 const emit = defineEmits(['delete-success', 'update-success'])
 
@@ -194,7 +195,8 @@ const sortWeight = ref('')
 const originalCategoryName = ref('')
 const originalSortWeight = ref('')
 
-const validateSortWeight = (value: string) => {
+const validateSortWeight = (target: EventTarget | null) => {
+  const value = (target as HTMLInputElement)?.value || ''
   // 只保留数字
   let cleaned = value.replace(/\D/g, '')
   // 如果为空或0，保持为空
@@ -227,21 +229,21 @@ const originalPermissions = ref({
   visitor: false
 })
 
-const userStore = useUserStore()
+//const userStore = useUserStore()
 
-const isSuperAdmin = computed(() => {
-  return userStore.userInfo?.role === 'SUPER_ADMIN'
-})
+//const isSuperAdmin = computed(() => {
+//  return userStore.userInfo?.role === 'SUPER_ADMIN'
+//})
 
-const hasChanges = computed(() => {
-  const currentIds = sectionAgents.value.map(a => a.id).sort()
-  const originalIds = originalAgentIds.value.sort()
-  const idsChanged = JSON.stringify(currentIds) !== JSON.stringify(originalIds)
-  const nameChanged = categoryName.value !== originalCategoryName.value
-  const weightChanged = sortWeight.value !== originalSortWeight.value
-  const permChanged = JSON.stringify(permissions.value) !== JSON.stringify(originalPermissions.value)
-  return idsChanged || nameChanged || weightChanged || permChanged
-})
+//const hasChanges = computed(() => {
+//  const currentIds = sectionAgents.value.map(a => a.id).sort()
+//  const originalIds = originalAgentIds.value.sort()
+//  const idsChanged = JSON.stringify(currentIds) !== JSON.stringify(originalIds)
+//  const nameChanged = categoryName.value !== originalCategoryName.value
+//  const weightChanged = sortWeight.value !== originalSortWeight.value
+//  const permChanged = JSON.stringify(permissions.value) !== JSON.stringify(originalPermissions.value)
+//  return idsChanged || nameChanged || weightChanged || permChanged
+//})
 
 const filteredAvailableAgents = computed(() => {
   const addedIds = new Set(sectionAgents.value.map(a => a.id))
@@ -297,16 +299,16 @@ const handleAgentSelect = (selectedIds: (string | number)[]) => {
   sectionAgents.value = [...sectionAgents.value, ...newAgents]
 }
 
-const togglePermission = (key: 'teacher' | 'admin' | 'student' | 'parent') => {
-  if (props.category?.name === '精选页' || props.category?.name === '推荐页') {
-    return
-  }
-  // 只有 SUPER_ADMIN 可以修改管理员权限
-  if (key === 'admin' && !isSuperAdmin.value) {
-    return
-  }
-  permissions.value[key] = !permissions.value[key]
-}
+//const togglePermission = (key: 'teacher' | 'admin' | 'student' | 'parent') => {
+//  if (props.category?.name === '精选页' || props.category?.name === '推荐页') {
+//    return
+//  }
+//  // 只有 SUPER_ADMIN 可以修改管理员权限
+//  if (key === 'admin' && !isSuperAdmin.value) {
+//    return
+//  }
+//  permissions.value[key] = !permissions.value[key]
+//}
 
 const handleReset = () => {
   categoryLog('普通分类 - 重置所有变更')

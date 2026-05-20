@@ -90,6 +90,7 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
     log('开始上传文件:', file.name)
 
     // 动态导入 API
+    // @ts-ignore
     const { knowledgeApi } = await import('@/api/api')
 
     // 1. 获取上传凭证

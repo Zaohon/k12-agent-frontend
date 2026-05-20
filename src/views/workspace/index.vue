@@ -15,11 +15,11 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '../../store/user'
+//import { useUserStore } from '../../store/user'
 import LayoutSidebar from '../../components/LayoutSidebar.vue'
 import LayoutHead from '../../components/LayoutHead.vue'
 
-const userStore = useUserStore()
+//const userStore = useUserStore()
 </script>
 
 <style scoped>
