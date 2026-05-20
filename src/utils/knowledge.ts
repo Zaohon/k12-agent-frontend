@@ -1,7 +1,5 @@
 import { MAX_FILE_SIZE } from '@/costants/costant'
-import { knowledgeLog as log, knowledgeLogError as logError, ENABLE_ALL_LOG } from './logManage'
-
-export const ENABLE_LOG = ENABLE_ALL_LOG
+import { knowledgeLog, knowledgeLogError } from './logManage'
 
 /**
  * 格式化文件大小
@@ -57,25 +55,42 @@ export const generateUniqueFolderName = (
 }
 
 /**
- * 验证文件大小
+ * 验证文件大小和剩余空间
  * @param files - FileList 对象
- * @returns { validFiles: File[], tooLargeFiles: string[] }
+ * @param remainingBytes - 剩余空间容量（字节），可选
+ * @returns { validFiles: File[], tooLargeFiles: string[], insufficientSpaceFiles: string[] }
  */
-export const validateFileSizes = (files: FileList): { validFiles: File[], tooLargeFiles: string[] } => {
+export const validateFileSizes = (
+  files: FileList,
+  remainingBytes?: number | null
+): { validFiles: File[], tooLargeFiles: string[], insufficientSpaceFiles: string[] } => {
+  knowledgeLog('开始验证文件，文件数量:', files.length)
+  knowledgeLog('单个文件大小限制:', MAX_FILE_SIZE !== null ? formatFileSize(MAX_FILE_SIZE) : '无限制')
+  knowledgeLog('剩余空间:', remainingBytes !== null && remainingBytes !== undefined ? formatFileSize(remainingBytes) : '未知')
+
   const validFiles: File[] = []
   const tooLargeFiles: string[] = []
+  const insufficientSpaceFiles: string[] = []
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
+    knowledgeLog(`验证文件 [${i + 1}/${files.length}]:`, file.name, '大小:', formatFileSize(file.size))
 
     if (MAX_FILE_SIZE !== null && file.size > MAX_FILE_SIZE) {
+      knowledgeLog('文件过大，超出单个文件限制:', file.name)
       tooLargeFiles.push(file.name)
+    } else if (remainingBytes !== null && remainingBytes !== undefined && file.size > remainingBytes) {
+      knowledgeLog('空间不足，无法上传:', file.name, '需要:', formatFileSize(file.size), '剩余:', formatFileSize(remainingBytes))
+      insufficientSpaceFiles.push(file.name)
     } else {
+      knowledgeLog('文件验证通过:', file.name)
       validFiles.push(file)
     }
   }
 
-  return { validFiles, tooLargeFiles }
+  knowledgeLog('验证完成 - 有效文件:', validFiles.length, '过大文件:', tooLargeFiles.length, '空间不足:', insufficientSpaceFiles.length)
+
+  return { validFiles, tooLargeFiles, insufficientSpaceFiles }
 }
 
 
@@ -87,14 +102,14 @@ export const validateFileSizes = (files: FileList): { validFiles: File[], tooLar
  */
 export const uploadFile = async (file: File, folderId: string | number | null = null): Promise<any> => {
   try {
-    log('开始上传文件:', file.name)
+    knowledgeLog('开始上传文件:', file.name)
 
     // 动态导入 API
     // @ts-ignore
     const { knowledgeApi } = await import('@/api/api')
 
     // 1. 获取上传凭证
-    log('步骤1: 获取上传凭证')
+    knowledgeLog('步骤1: 获取上传凭证')
     const policyRes = await knowledgeApi.getUploadPolicy({
       fileName: file.name,
       contentType: file.type || 'application/octet-stream',
@@ -102,16 +117,16 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
     })
 
     if (!policyRes || !policyRes.success) {
-      logError('获取上传凭证失败')
+      knowledgeLogError('获取上传凭证失败')
       return null
     }
 
     const { uploadUrl, key, publicUrl: policyPublicUrl } = policyRes.data
-    log('获取上传凭证成功:', { uploadUrl, key, publicUrl: policyPublicUrl })
+    knowledgeLog('获取上传凭证成功:', { uploadUrl, key, publicUrl: policyPublicUrl })
     
     // 检查必要字段，如果 fileKey 缺失，尝试从 uploadUrl 中提取
     if (!uploadUrl) {
-      logError('上传凭证缺少必要字段 uploadUrl')
+      knowledgeLogError('上传凭证缺少必要字段 uploadUrl')
       return null
     }
     
@@ -119,32 +134,32 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
     let finalFileKey = key
     let publicUrl = policyPublicUrl || ''
     if (!finalFileKey && uploadUrl) {
-      log('fileKey 缺失，尝试从 uploadUrl 中提取')
+      knowledgeLog('fileKey 缺失，尝试从 uploadUrl 中提取')
       const url = new URL(uploadUrl)
       const keyParam = url.searchParams.get('key')
       if (keyParam) {
         finalFileKey = decodeURIComponent(keyParam)
-        log('从 URL 参数中提取 fileKey:', finalFileKey)
+        knowledgeLog('从 URL 参数中提取 fileKey:', finalFileKey)
       } else {
         // 提取完整路径作为 ossKey（去掉开头的 '/'）
         finalFileKey = url.pathname.substring(1)
-        log('从 URL 路径中提取 fileKey:', finalFileKey)
+        knowledgeLog('从 URL 路径中提取 fileKey:', finalFileKey)
       }
       // 构建公开访问 URL（去掉查询参数）
       publicUrl = url.origin + url.pathname
-      log('构建公开访问 URL:', publicUrl)
+      knowledgeLog('构建公开访问 URL:', publicUrl)
     }
     
     if (!finalFileKey) {
-      logError('无法获取 fileKey，上传失败')
+      knowledgeLogError('无法获取 fileKey，上传失败')
       return null
     }
 
     // 2. 上传文件到存储服务
-    log('步骤2: 上传文件到存储服务')
-    log('上传URL:', uploadUrl)
-    log('开始发送 OSS 上传请求...')
-    log('文件大小:', file.size, '文件类型:', file.type)
+    knowledgeLog('步骤2: 上传文件到存储服务')
+    knowledgeLog('上传URL:', uploadUrl)
+    knowledgeLog('开始发送 OSS 上传请求...')
+    knowledgeLog('文件大小:', file.size, '文件类型:', file.type)
 
     const uploadTimeout = 30000
     const controller = new AbortController()
@@ -161,27 +176,27 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
       })
 
       clearTimeout(timer)
-      log('OSS上传响应状态:', uploadRes.status, uploadRes.statusText)
+      knowledgeLog('OSS上传响应状态:', uploadRes.status, uploadRes.statusText)
       
       if (!uploadRes.ok) {
         const errorText = await uploadRes.text()
-        logError('文件上传OSS失败:', uploadRes.status, uploadRes.statusText, errorText)
+        knowledgeLogError('文件上传OSS失败:', uploadRes.status, uploadRes.statusText, errorText)
         return null
       }
-      log('文件上传到OSS成功')
+      knowledgeLog('文件上传到OSS成功')
     } catch (ossErr: any) {
       clearTimeout(timer)
-      logError('OSS上传请求异常:', ossErr.message || ossErr)
+      knowledgeLogError('OSS上传请求异常:', ossErr.message || ossErr)
       if (ossErr.name === 'TypeError') {
-        logError('大概率跨域CORS异常，请配置OSS跨域规则')
+        knowledgeLogError('大概率跨域CORS异常，请配置OSS跨域规则')
       } else if (ossErr.name === 'AbortError') {
-        logError('OSS上传请求超时')
+        knowledgeLogError('OSS上传请求超时')
       }
       return null
     }
 
     // 3. 创建文件记录
-    log('步骤3: 创建文件记录')
+    knowledgeLog('步骤3: 创建文件记录')
     const fileData: any = {
       name: file.name,
       ossKey: finalFileKey,
@@ -194,22 +209,22 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
       fileData.folderId = folderId
     }
 
-    log('创建文件记录数据:', fileData)
+    knowledgeLog('创建文件记录数据:', fileData)
     const createRes = await knowledgeApi.createFile(fileData)
 
     if (createRes && createRes.success) {
-      log('文件记录创建成功:', file.name)
+      knowledgeLog('文件记录创建成功:', file.name)
       return createRes.data
     } else {
-      logError('文件记录创建失败:', createRes?.message || '未知错误')
+      knowledgeLogError('文件记录创建失败:', createRes?.message || '未知错误')
       if (createRes) {
-        logError('完整响应:', JSON.stringify(createRes))
+        knowledgeLogError('完整响应:', JSON.stringify(createRes))
       }
       return null
     }
   } catch (err: any) {
-    logError('上传文件全局异常:', err.message || err)
-    logError('异常类型:', err.name)
+    knowledgeLogError('上传文件全局异常:', err.message || err)
+    knowledgeLogError('异常类型:', err.name)
     return null
   }
 }

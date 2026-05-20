@@ -109,6 +109,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { knowledgeApi } from '@/api/api'
 import {
   formatFileSize, formatTime, generateUniqueFolderName,
@@ -293,7 +294,30 @@ const handleFileSelect = async (e: Event) => {
   const target = e.target as HTMLInputElement
   const selectedFiles = target.files
   if (!selectedFiles?.length) return
-  const { validFiles } = validateFileSizes(selectedFiles)
+
+  // 获取存储空间信息
+  let remainingBytes: number | null = null
+  try {
+    const storageRes = await knowledgeApi.getStorageStats()
+    if (storageRes?.success && storageRes.data) {
+      const { usedBytes, totalBytes } = storageRes.data
+      remainingBytes = totalBytes - usedBytes
+      knowledgeLog('存储空间 - 已用:', usedBytes, '总计:', totalBytes, '剩余:', remainingBytes)
+    }
+  } catch (err) {
+    knowledgeLogError('获取存储空间信息失败', err)
+  }
+
+  const { validFiles, tooLargeFiles, insufficientSpaceFiles } = validateFileSizes(selectedFiles, remainingBytes)
+
+  // 显示错误提示
+  if (tooLargeFiles.length > 0) {
+    ElMessage.warning(`以下文件超出大小限制：${tooLargeFiles.join('、')}`)
+  }
+  if (insufficientSpaceFiles.length > 0) {
+    ElMessage.warning(`空间不足，无法上传：${insufficientSpaceFiles.join('、')}`)
+  }
+
   const targetFolderId = route.params.folderId ? Number(route.params.folderId) : null
 
   if (!files.value) files.value = []

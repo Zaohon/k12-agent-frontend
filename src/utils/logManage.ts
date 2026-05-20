@@ -3,10 +3,7 @@
  * 统一管理所有模块的日志输出，支持按模块开关和总开关控制
  */
 
-/**
- * 总开关 - 设置为 false 可关闭所有日志
- */
-export const ENABLE_ALL_LOG = true
+import { ENABLE_ALL_LOG } from '../costants/costant'
 
 /**
  * 各模块开关
