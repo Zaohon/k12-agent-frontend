@@ -110,6 +110,7 @@ import { useUserStore } from '../../store/user'
 import { ElMessage } from 'element-plus'
 import { sessionApi } from '../../api/api'
 import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
+import { chatLog as log } from '../../utils/logManage'
 import ChatInit from './ChatInit.vue'
 import Chating from './Chating.vue'
 import { DEFAULT_AGENT_ID } from '../../costants/costant'
@@ -194,7 +195,7 @@ const loadSessions = async () => {
       ElMessage.error('加载会话列表失败')
     }
   } catch (error) {
-    console.error('加载会话列表失败:', error)
+    logError('加载会话列表失败:', error)
   }
 }
 
@@ -223,7 +224,7 @@ const createNewSession = async () => {
       ElMessage.error('创建会话失败')
     }
   } catch (error) {
-    console.error('创建会话失败:', error)
+    logError('创建会话失败:', error)
   }
 }
 
@@ -249,7 +250,7 @@ const deleteSession = async (id: number) => {
       ElMessage.error('删除会话失败')
     }
   } catch (error) {
-    console.error('删除会话失败:', error)
+    logError('删除会话失败:', error)
   }
 }
 
@@ -284,7 +285,7 @@ const confirmEditSession = async () => {
       ElMessage.error('修改会话失败')
     }
   } catch (error) {
-    console.error('修改会话失败:', error)
+    logError('修改会话失败:', error)
   }
 }
 
@@ -341,9 +342,9 @@ const handleChatInitSend = async ({ content, attachments }) => {
 
     try {
       // 6. 调用 API 发送消息
-      console.log('ChatBox sending message:', { sessionId, content, attachments })
+      log('sending message:', { sessionId, content, attachments })
       const response = await sessionApi.sendMessage(sessionId, content, attachments)
-      console.log('ChatBox received response:', response)
+      log('received response:', response)
       
       const contentType = response.headers.get('content-type') || ''
       
@@ -379,7 +380,7 @@ const handleChatInitSend = async ({ content, attachments }) => {
         updateMessages()
       } else if (contentType.includes('text/event-stream')) {
         // SSE 流式响应（根据 API 文档格式）
-        console.log('Processing SSE stream...')
+        log('Processing SSE stream...')
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
@@ -477,7 +478,7 @@ const handleChatInitSend = async ({ content, attachments }) => {
       
       isStreaming.value = false
     } catch (apiError) {
-      console.error('API 调用失败:', apiError)
+      logError('API 调用失败:', apiError)
       messages.value[aiMsgIndex] = { 
         role: 'assistant', 
         content: '抱歉，服务器暂时无法响应，请稍后重试。', 
@@ -491,7 +492,7 @@ const handleChatInitSend = async ({ content, attachments }) => {
     // 7. 刷新会话列表以更新标题
     await loadSessions()
   } catch (error) {
-    console.error('发送消息失败:', error)
+    logError('发送消息失败:', error)
     isStreaming.value = false
     ElMessage.error('发送失败，请稍后重试')
   }

@@ -1,6 +1,7 @@
 import { ElMessage } from 'element-plus';
 import { translateAIError } from '../utils/error';
 import { API_BASE } from '../costants/costant';
+import { apiLog } from '../utils/logManage';
 
 /**
  * 从 localStorage 获取认证 token
@@ -17,18 +18,16 @@ const getToken = () => {
  * @param {Object} options - 请求配置选项
  * @returns {Promise<any>} 请求响应数据
  */
-const ENABLE_LOG = true;
-
 const request = async (url, options = {}) => {
   const token = getToken();
   const fullUrl = `${API_BASE}${url}`;
   
-  ENABLE_LOG && console.log('[API] 请求 URL:', fullUrl);
-  ENABLE_LOG && console.log('[API] 请求方法:', options.method || 'GET');
+  apiLog('请求 URL:', fullUrl);
+  apiLog('请求方法:', options.method || 'GET');
   if (options.body) {
-    ENABLE_LOG && console.log('[API] 请求体:', options.body);
+    apiLog('请求体:', options.body);
   }
-  ENABLE_LOG && console.log('[API] 是否有 token:', !!token);
+  apiLog('是否有 token:', !!token);
 
   const config = {
     ...options,
@@ -42,21 +41,21 @@ const request = async (url, options = {}) => {
   try {
     const response = await fetch(fullUrl, config);
     
-    ENABLE_LOG && console.log('[API] 响应状态:', response.status);
-    ENABLE_LOG && console.log('[API] 响应状态文本:', response.statusText);
+    apiLog('响应状态:', response.status);
+    apiLog('响应状态文本:', response.statusText);
 
     if (response.ok) {
       const data = await response.json();
-      ENABLE_LOG && console.log('[API] 响应数据:', data);
+      apiLog('响应数据:', data);
       return data;
     } else {
       // 尝试解析错误响应
       let errorData = null;
       try {
         errorData = await response.json();
-        ENABLE_LOG && console.log('[API] 错误响应数据:', errorData);
+        apiLog('错误响应数据:', errorData);
       } catch (e) {
-        ENABLE_LOG && console.log('[API] 无法解析错误响应');
+        apiLog('无法解析错误响应');
       }
       
       if (response.status === 401) {
@@ -346,10 +345,10 @@ export const sessionApi = {
   sendMessage: async (sessionId, prompt, attachments = []) => {
     const token = getToken();
     
-    console.log('=== sendMessage Debug ===');
-    console.log('Token from localStorage:', token);
-    console.log('Token length:', token ? token.length : 0);
-    console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'null');
+    apiLog('=== sendMessage Debug ===');
+    apiLog('Token from localStorage:', token);
+    apiLog('Token length:', token ? token.length : 0);
+    apiLog('Token preview:', token ? token.substring(0, 20) + '...' : 'null');
     
     if (!token) {
       ElMessage.error('未登录或登录已过期，请重新登录');
@@ -357,8 +356,8 @@ export const sessionApi = {
     }
 
     try {
-      console.log('Sending request to:', `${API_BASE}/session/chat/${sessionId}`);
-      console.log('Authorization header:', `Bearer ${token}`);
+      apiLog('Sending request to:', `${API_BASE}/session/chat/${sessionId}`);
+      apiLog('Authorization header:', `Bearer ${token}`);
       
       const response = await fetch(`${API_BASE}/session/chat/${sessionId}`, {
         method: 'POST',
@@ -372,8 +371,8 @@ export const sessionApi = {
         })
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', [...response.headers.entries()]);
+      apiLog('Response status:', response.status);
+      apiLog('Response headers:', [...response.headers.entries()]);
 
       if (response.ok) {
         return response;
@@ -381,24 +380,24 @@ export const sessionApi = {
         let errorText = '';
         try {
           errorText = await response.text();
-          console.log('Error response body:', errorText);
+          apiLog('Error response body:', errorText);
           
           try {
             const errorJson = JSON.parse(errorText);
-            console.log('Parsed error JSON:', errorJson);
+            apiLog('Parsed error JSON:', errorJson);
             
             if (errorJson.error && errorJson.error.code) {
-              console.error('AI API Error:', errorJson.error.code, errorJson.error.message);
+              apiLog('AI API Error:', errorJson.error.code, errorJson.error.message);
               ElMessage.error(translateAIError(errorJson.error.code, errorJson.error.message));
             } else if (errorJson.code && errorJson.message) {
-              console.error('API Error:', errorJson.code, errorJson.message);
+              apiLog('API Error:', errorJson.code, errorJson.message);
               ElMessage.error(translateAIError(errorJson.code, errorJson.message));
             }
           } catch (parseError) {
-            console.log('Error response is not JSON:', errorText);
+            apiLog('Error response is not JSON:', errorText);
           }
         } catch (e) {
-          console.error('Failed to read error response:', e);
+          apiLog('Failed to read error response:', e);
         }
         
         if (response.status === 401) {

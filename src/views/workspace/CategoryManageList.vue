@@ -112,9 +112,12 @@ interface Category {
   name: string
   weight?: number
 }
+import { categoryLog as log, categoryLogError as logError } from '@/utils/logManage'
 
-// 日志输出开关，设置为 false 可关闭所有日志
-const ENABLE_LOG = false
+export const ENABLE_LOG = false
+
+export const categoryLog = log
+export const categoryLogError = logError
 
 const searchQuery = ref('')
 const editingId = ref<number | null>(null)
@@ -172,11 +175,11 @@ const confirmEdit = async () => {
       
       try {
         loading.value = true
-        ENABLE_LOG && console.log('=== 开始更新分类 ===')
-        ENABLE_LOG && console.log('请求参数: categoryId=', editingId.value, ', name=', newName)
+        categoryLog('=== 开始更新分类 ===')
+        categoryLog('请求参数: categoryId=', editingId.value, ', name=', newName)
         const response = await categoryApi.updateCategory(editingId.value!, { name: newName })
-        ENABLE_LOG && console.log('=== 更新分类成功 ===')
-        ENABLE_LOG && console.log('返回数据:', JSON.stringify(response, null, 2))
+        categoryLog('=== 更新分类成功 ===')
+        categoryLog('返回数据:', JSON.stringify(response, null, 2))
         const data = response && response.data ? response.data : {}
         categories.value = categories.value.map((cat, i) => 
           i === index ? { ...cat, name: data.name || newName } : cat
@@ -188,8 +191,8 @@ const confirmEdit = async () => {
         emit('category-updated', updatedCategory)
         ElMessage.success('修改成功')
       } catch (error) {
-        ENABLE_LOG && console.error('=== 更新分类失败 ===')
-        ENABLE_LOG && console.error('错误信息:', error)
+        categoryLogError('=== 更新分类失败 ===')
+        categoryLogError('错误信息:', error)
         ElMessage.error('修改失败')
       } finally {
         loading.value = false
@@ -203,11 +206,11 @@ const confirmEdit = async () => {
 const deleteItem = async (item: { id: number; name: string }) => {
   try {
     loading.value = true
-    ENABLE_LOG && console.log('=== 开始删除分类 ===')
-    ENABLE_LOG && console.log('请求参数: categoryId=', item.id, ', name=', item.name)
+    categoryLog('=== 开始删除分类 ===')
+    categoryLog('请求参数: categoryId=', item.id, ', name=', item.name)
     const response = await categoryApi.deleteCategory(item.id)
-    ENABLE_LOG && console.log('=== 删除分类成功 ===')
-    ENABLE_LOG && console.log('返回数据:', JSON.stringify(response, null, 2))
+    categoryLog('=== 删除分类成功 ===')
+    categoryLog('返回数据:', JSON.stringify(response, null, 2))
     const index = categories.value.findIndex(c => c.id === item.id)
     if (index !== -1) {
       categories.value = categories.value.filter(c => c.id !== item.id)
@@ -217,8 +220,8 @@ const deleteItem = async (item: { id: number; name: string }) => {
     }
     ElMessage.success('删除成功')
   } catch (error) {
-    ENABLE_LOG && console.error('=== 删除分类失败 ===')
-    ENABLE_LOG && console.error('错误信息:', error)
+    categoryLogError('=== 删除分类失败 ===')
+    categoryLogError('错误信息:', error)
     ElMessage.error('删除失败')
   } finally {
     loading.value = false
@@ -229,11 +232,11 @@ const createCategory = async () => {
   try {
     loading.value = true
     const newName = `分类文件${categories.value.length + 1}`
-    ENABLE_LOG && console.log('=== 开始创建分类 ===')
-    ENABLE_LOG && console.log('请求参数: name=', newName)
+    categoryLog('=== 开始创建分类 ===')
+    categoryLog('请求参数: name=', newName)
     const response = await categoryApi.createCategory({ name: newName })
-    ENABLE_LOG && console.log('=== 创建分类成功 ===')
-    ENABLE_LOG && console.log('返回数据:', JSON.stringify(response, null, 2))
+    categoryLog('=== 创建分类成功 ===')
+    categoryLog('返回数据:', JSON.stringify(response, null, 2))
 
     const data = response && response.data ? response.data : {}
     const newCategory = { id: data.id, name: data.name || newName }
@@ -249,8 +252,8 @@ const createCategory = async () => {
       }, 100)
     })
   } catch (error) {
-    ENABLE_LOG && console.error('=== 创建分类失败 ===')
-    ENABLE_LOG && console.error('错误信息:', error)
+    categoryLogError('=== 创建分类失败 ===')
+    categoryLogError('错误信息:', error)
     ElMessage.error('创建失败')
   } finally {
     loading.value = false
@@ -260,10 +263,10 @@ const createCategory = async () => {
 const loadCategories = async () => {
   try {
     loading.value = true
-    ENABLE_LOG && console.log('=== 开始请求分类列表 ===')
+    categoryLog('=== 开始请求分类列表 ===')
     const response = await categoryApi.getCategoryList()
-    ENABLE_LOG && console.log('=== 分类列表请求成功 ===')
-    ENABLE_LOG && console.log('返回数据:', JSON.stringify(response, null, 2))
+    categoryLog('=== 分类列表请求成功 ===')
+    categoryLog('返回数据:', JSON.stringify(response, null, 2))
     // 兼容两种响应格式：{ success, data } 和直接返回数组
     const data = (response && response.data) ? response.data : (Array.isArray(response) ? response : [])
     const seenNames = new Set<string>()

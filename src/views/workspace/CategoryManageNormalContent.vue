@@ -176,7 +176,7 @@ interface Category {
   visible_roles?: string[]
 }
 
-const ENABLE_LOG = false
+import { categoryLog, categoryLogError } from './CategoryManageList.vue'
 
 const emit = defineEmits(['delete-success', 'update-success'])
 
@@ -250,18 +250,18 @@ const filteredAvailableAgents = computed(() => {
 
 const loadAgents = async () => {
   if (!props.category?.id) return
-  ENABLE_LOG && console.log('普通分类 - 加载分类智能体, categoryId=', props.category?.id)
+  categoryLog('普通分类 - 加载分类智能体, categoryId=', props.category?.id)
   const agents = await loadCategoryAgents(props.category?.id)
   sectionAgents.value = agents
   originalAgentIds.value = agents.map(a => a.id)
-  ENABLE_LOG && console.log('普通分类 - 加载完成, 智能体数量=', agents.length)
+  categoryLog('普通分类 - 加载完成, 智能体数量=', agents.length)
 }
 
 const loadAvailable = async () => {
-  ENABLE_LOG && console.log('普通分类 - 加载可用智能体列表')
+  categoryLog('普通分类 - 加载可用智能体列表')
   const agents = await loadAvailableAgents()
   availableAgents.value = agents
-  ENABLE_LOG && console.log('普通分类 - 可用智能体列表加载完成, 数量=', agents.length)
+  categoryLog('普通分类 - 可用智能体列表加载完成, 数量=', agents.length)
 }
 
 const handleAgentCardClick = (agentId: string | number) => {
@@ -269,8 +269,8 @@ const handleAgentCardClick = (agentId: string | number) => {
 }
 
 const handleDragEnd = () => {
-  ENABLE_LOG && console.log('普通分类 - 用户拖动完成')
-  ENABLE_LOG && console.log('普通分类 - 拖动后的智能体顺序:', sectionAgents.value.map((a, index) => ({
+  categoryLog('普通分类 - 用户拖动完成')
+  categoryLog('普通分类 - 拖动后的智能体顺序:', sectionAgents.value.map((a, index) => ({
     index: index + 1,
     id: a.id,
     name: a.name
@@ -280,19 +280,19 @@ const handleDragEnd = () => {
 const handleDelete = () => {
   const idsToDelete = Array.from(selectedAgentIds.value)
   if (idsToDelete.length === 0) return
-  ENABLE_LOG && console.log('普通分类 - 删除智能体, ids=', idsToDelete)
+  categoryLog('普通分类 - 删除智能体, ids=', idsToDelete)
 
   sectionAgents.value = deleteSelectedAgents(idsToDelete, sectionAgents.value)
   selectedAgentIds.value = new Set()
 }
 
 const openAgentDialog = () => {
-  ENABLE_LOG && console.log('普通分类 - 打开智能体选择弹窗')
+  categoryLog('普通分类 - 打开智能体选择弹窗')
   agentDialogVisible.value = true
 }
 
 const handleAgentSelect = (selectedIds: (string | number)[]) => {
-  ENABLE_LOG && console.log('普通分类 - 选择智能体, ids=', selectedIds)
+  categoryLog('普通分类 - 选择智能体, ids=', selectedIds)
   const newAgents = availableAgents.value.filter(a => selectedIds.includes(a.id))
   sectionAgents.value = [...sectionAgents.value, ...newAgents]
 }
@@ -309,7 +309,7 @@ const togglePermission = (key: 'teacher' | 'admin' | 'student' | 'parent') => {
 }
 
 const handleReset = () => {
-  ENABLE_LOG && console.log('普通分类 - 重置所有变更')
+  categoryLog('普通分类 - 重置所有变更')
   categoryName.value = originalCategoryName.value
   sortWeight.value = originalSortWeight.value
   permissions.value = { ...originalPermissions.value }
@@ -319,16 +319,16 @@ const handleReset = () => {
 const handleDeleteGroup = async () => {
   if (!props.category?.id || !props.category?.name) return
   try {
-    ENABLE_LOG && console.log('普通分类 - 开始删除该组')
-    ENABLE_LOG && console.log('请求参数: categoryId=', props.category?.id, ', name=', props.category?.name)
+    categoryLog('普通分类 - 开始删除该组')
+    categoryLog('请求参数: categoryId=', props.category?.id, ', name=', props.category?.name)
     const response = await categoryApi.deleteCategory(props.category?.id)
-    ENABLE_LOG && console.log('普通分类 - 删除该组成功')
-    ENABLE_LOG && console.log('返回数据:', JSON.stringify(response, null, 2))
+    categoryLog('普通分类 - 删除该组成功')
+    categoryLog('返回数据:', JSON.stringify(response, null, 2))
     emit('delete-success')
     ElMessage.success('删除成功')
   } catch (error) {
-    ENABLE_LOG && console.error('普通分类 - 删除该组失败')
-    ENABLE_LOG && console.error('错误信息:', error)
+    categoryLogError('普通分类 - 删除该组失败')
+    categoryLogError('错误信息:', error)
     ElMessage.error('删除失败')
   }
 }
@@ -337,7 +337,7 @@ const handleSave = async () => {
   if (!props.category?.id) return
 
   try {
-    ENABLE_LOG && console.log('普通分类 - 开始保存所有变更')
+    categoryLog('普通分类 - 开始保存所有变更')
 
     // 1. 保存分类信息（名称、权重）- 权限字段后端暂不支持
     const categoryData: any = {
@@ -345,17 +345,17 @@ const handleSave = async () => {
       weight: sortWeight.value ? parseInt(sortWeight.value) : 0
     }
 
-    ENABLE_LOG && console.log('普通分类 - 保存分类信息, categoryId=', props.category?.id)
-    ENABLE_LOG && console.log('普通分类 - 分类数据:', JSON.stringify(categoryData, null, 2))
+    categoryLog('普通分类 - 保存分类信息, categoryId=', props.category?.id)
+    categoryLog('普通分类 - 分类数据:', JSON.stringify(categoryData, null, 2))
 
     await categoryApi.updateCategory(props.category?.id, categoryData)
-    ENABLE_LOG && console.log('普通分类 - 分类信息保存成功')
+    categoryLog('普通分类 - 分类信息保存成功')
 
     // 2. 保存智能体关联
     const agentIds = sectionAgents.value.map(a => a.id)
-    ENABLE_LOG && console.log('普通分类 - 保存智能体关联, categoryId=', props.category?.id, ', agentIds=', agentIds)
+    categoryLog('普通分类 - 保存智能体关联, categoryId=', props.category?.id, ', agentIds=', agentIds)
     await saveCategoryAgents(props.category?.id, agentIds)
-    ENABLE_LOG && console.log('普通分类 - 智能体关联保存成功')
+    categoryLog('普通分类 - 智能体关联保存成功')
 
     // 3. 更新原始值
     originalAgentIds.value = agentIds
@@ -370,18 +370,18 @@ const handleSave = async () => {
       weight: sortWeight.value ? parseInt(sortWeight.value) : 0
     })
 
-    ENABLE_LOG && console.log('普通分类 - 保存所有变更成功')
+    categoryLog('普通分类 - 保存所有变更成功')
     ElMessage.success('保存成功')
   } catch (error) {
-    ENABLE_LOG && console.error('普通分类 - 保存所有变更失败')
-    ENABLE_LOG && console.error('错误信息:', error)
+    categoryLogError('普通分类 - 保存所有变更失败')
+    categoryLogError('错误信息:', error)
     ElMessage.error('保存失败')
   }
 }
 
 watch(() => props.category, (newCategory) => {
   if (newCategory?.id) {
-    ENABLE_LOG && console.log('普通分类 - category 变更, 重新加载数据, categoryId=', newCategory.id, ', name=', newCategory.name, ', weight=', newCategory.weight)
+    categoryLog('普通分类 - category 变更, 重新加载数据, categoryId=', newCategory.id, ', name=', newCategory.name, ', weight=', newCategory.weight)
     categoryName.value = newCategory.name || ''
     originalCategoryName.value = categoryName.value
     sortWeight.value = newCategory.weight !== undefined ? String(newCategory.weight) : ''

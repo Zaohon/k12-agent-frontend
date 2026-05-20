@@ -112,14 +112,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { knowledgeApi } from '@/api/api'
 import {
   formatFileSize, formatTime, generateUniqueFolderName,
-  validateFileSizes, uploadFile, ENABLE_LOG,
+  validateFileSizes, uploadFile,
   parsePath, appendToPath, getPathBeforeIndex, buildPath
 } from '@/utils/knowledge'
+import { knowledgeLog as log, knowledgeLogError as logError } from '@/utils/logManage'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
-const log = (...args) => ENABLE_LOG && console.log('[知识库]', ...args)
 
 const currentFolderId = ref(null)
 const currentFolderName = ref('根目录')
@@ -175,7 +175,7 @@ const fetchFolderData = async () => {
       log('数据结构异常，重置为空数组')
     }
   } catch (err) {
-    console.error(err)
+    logError(err)
     folders.value = []
     files.value = []
   } finally {
@@ -286,7 +286,7 @@ const handleFileSelect = async (e) => {
 }
 
 const handleDownload = (file) => file.url && window.open(file.url, '_blank')
-const handleDelete = (file) => console.log('删除文件', file.id)
+const handleDelete = (file) => log('删除文件', file.id)
 
 // 监听路由
 watch(

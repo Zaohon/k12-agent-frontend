@@ -1,20 +1,7 @@
 import { MAX_FILE_SIZE } from '@/costants/costant'
+import { knowledgeLog as log, knowledgeLogError as logError, ENABLE_ALL_LOG } from './logManage'
 
-/**
- * 日志开关
- */
-export const ENABLE_LOG = true
-
-/**
- * 带[知识库]前缀的日志输出
- */
-const log = (...args: any[]) => {
-  ENABLE_LOG && console.log('[知识库]', ...args)
-}
-
-const logError = (...args: any[]) => {
-  ENABLE_LOG && console.error('[知识库]', ...args)
-}
+export const ENABLE_LOG = ENABLE_ALL_LOG
 
 /**
  * 格式化文件大小
@@ -225,7 +212,6 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
     return null
   }
 }
-
 /**
  * URL安全的Base64编码（支持Unicode）
  */

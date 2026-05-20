@@ -116,7 +116,7 @@ interface Category {
 }
 
 // 日志输出开关，设置为 false 可关闭所有日志
-const ENABLE_LOG = false
+import { categoryLog } from './CategoryManageList.vue'
 
 const props = defineProps<{
   category?: Category
@@ -141,20 +141,20 @@ const filteredAvailableAgents = computed(() => {
 
 const loadAgents = async () => {
   if (!props.category?.id) return
-  ENABLE_LOG && console.log('推荐页 - 加载分类智能体, categoryId=', props.category?.id)
+  categoryLog('推荐页 - 加载分类智能体, categoryId=', props.category?.id)
   const agents = await loadCategoryAgents(props.category.id)
   section2Agents.value = agents
   originalAgentIds.value = agents.map(a => a.id)
-  ENABLE_LOG && console.log('推荐页 - 加载完成, 智能体数量=', agents.length)
+  categoryLog('推荐页 - 加载完成, 智能体数量=', agents.length)
 }
 
 const loadAvailable = async () => {
-  ENABLE_LOG && console.log('推荐页 - 加载可用智能体列表')
-  ENABLE_LOG && console.log('推荐页 - 请求数据: {}')
+  categoryLog('推荐页 - 加载可用智能体列表')
+  categoryLog('推荐页 - 请求数据: {}')
   const agents = await loadAvailableAgents()
   availableAgents.value = agents
-  ENABLE_LOG && console.log('推荐页 - 可用智能体列表加载完成, 数量=', agents.length)
-  ENABLE_LOG && console.log('推荐页 - 返回数据:', availableAgents.value.map((a, index) => ({
+  categoryLog('推荐页 - 可用智能体列表加载完成, 数量=', agents.length)
+  categoryLog('推荐页 - 返回数据:', availableAgents.value.map((a, index) => ({
     index: index + 1,
     id: a.id,
     name: a.name,
@@ -168,8 +168,8 @@ const handleAgentCardClick = (agentId: string | number) => {
 }
 
 const handleDragEnd = () => {
-  ENABLE_LOG && console.log('推荐页 - 用户拖动完成')
-  ENABLE_LOG && console.log('推荐页 - 拖动后的智能体顺序:', section2Agents.value.map((a, index) => ({
+  categoryLog('推荐页 - 用户拖动完成')
+  categoryLog('推荐页 - 拖动后的智能体顺序:', section2Agents.value.map((a, index) => ({
     index: index + 1,
     id: a.id,
     name: a.name
@@ -200,11 +200,11 @@ const handleReset = () => {
 const handleSave = async () => {
   if (!props.category?.id) return
   const agentIds = section2Agents.value.map(a => a.id)
-  ENABLE_LOG && console.log('推荐页 - 保存智能体, categoryId=', props.category?.id, ', agentIds=', agentIds)
+  categoryLog('推荐页 - 保存智能体, categoryId=', props.category?.id, ', agentIds=', agentIds)
   const success = await saveCategoryAgents(props.category.id, agentIds)
   if (success) {
     originalAgentIds.value = agentIds
-    ENABLE_LOG && console.log('推荐页 - 保存成功')
+    categoryLog('推荐页 - 保存成功')
   }
 }
 

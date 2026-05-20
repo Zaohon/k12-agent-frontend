@@ -100,6 +100,7 @@ import chatinit2 from '@/images/chatinit-2.png'
 import chatinit3 from '@/images/chatinit-3.png'
 import chatinit4 from '@/images/chatinit-4.png'
 import { useAttachment } from '@/hooks/useAttachment'
+import { chatLogError as logError } from '@/utils/logManage'
 
 const cards = ref([
   {
@@ -193,7 +194,7 @@ const handleSend = async () => {
     // 清空附件
     clearAttachments()
   } catch (error) {
-    console.error('发送消息失败:', error)
+    logError('发送消息失败:', error)
     ElMessage.error('发送失败，请稍后重试')
   } finally {
     isLoading.value = false

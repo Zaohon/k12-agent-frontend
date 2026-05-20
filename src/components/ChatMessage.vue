@@ -17,6 +17,13 @@
             <span class="thinking-text">{{ thinkingText }}</span>
           </div>
         </div>
+        <!-- AI消息显示复制按钮 -->
+        <div v-if="message.role === 'assistant' && message.content && !message.isThinking" class="message-actions">
+          <button class="copy-btn" @click="copyMessage">
+            <span class="copy-icon"></span>
+            <span class="copy-text">复制</span>
+          </button>
+        </div>
         <!-- 用户消息显示附件卡片 -->
         <div v-if="showAttachments && message.role === 'user' && message.attachments && message.attachments.length > 0" class="message-attachments">
           <div v-for="(item, index) in message.attachments" :key="index" class="message-attachment-card">
@@ -76,9 +83,11 @@ const props = withDefaults(defineProps<{
   attachmentStatus: '解析完成'
 })
 
+import { chatLog as log } from '@/utils/logManage'
+
 // 监听message变化
 watch(() => props.message, (newMsg) => {
-  console.log('ChatMessage收到新message:', {
+  log('收到新message:', {
     role: newMsg.role,
     content: newMsg.content,
     isThinking: newMsg.isThinking
@@ -92,6 +101,45 @@ const userIconComponent = computed(() => {
 const assistantIconComponent = computed(() => {
   return props.assistantIcon
 })
+
+// 复制消息内容
+import { ElMessage } from 'element-plus'
+
+const copyMessage = async () => {
+  try {
+    // 尝试使用 Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(props.message.content)
+      ElMessage.success('复制成功')
+    } else {
+      // 回退方案：创建临时文本区域
+      const textarea = document.createElement('textarea')
+      textarea.value = props.message.content
+      textarea.style.position = 'fixed'
+      textarea.style.left = '-9999px'
+      textarea.style.top = '-9999px'
+      document.body.appendChild(textarea)
+      textarea.select()
+      
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          ElMessage.success('复制成功')
+        } else {
+          ElMessage.error('复制失败，请手动复制')
+        }
+      } catch (e) {
+        ElMessage.error('复制失败，请手动复制')
+        console.error('复制失败:', e)
+      } finally {
+        document.body.removeChild(textarea)
+      }
+    }
+  } catch (err) {
+    ElMessage.error('复制失败，请手动复制')
+    console.error('复制失败:', err)
+  }
+}
 
 const getAttachmentIcon = (type: string): string => {
   const icons: Record<string, string> = {

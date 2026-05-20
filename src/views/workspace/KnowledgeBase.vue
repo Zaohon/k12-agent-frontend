@@ -231,14 +231,11 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { knowledgeApi } from '@/api/api'
-import { formatFileSize, formatTime, generateUniqueFolderName, MAX_FILE_SIZE, validateFileSizes, uploadFile, appendToPath, ENABLE_LOG } from '@/utils/knowledge'
+import { formatFileSize, formatTime, generateUniqueFolderName, MAX_FILE_SIZE, validateFileSizes, uploadFile, appendToPath } from '@/utils/knowledge'
+import { knowledgeLog as log, knowledgeLogError as logError } from '@/utils/logManage'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
 
 const router = useRouter()
-
-// 日志辅助函数
-const log = (...args) => ENABLE_LOG && console.log('[知识库]', ...args)
-const logError = (...args) => ENABLE_LOG && console.error('[知识库]', ...args)
 
 // 搜索
 const searchKey = ref('')
