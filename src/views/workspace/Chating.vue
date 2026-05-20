@@ -139,8 +139,36 @@
               <span class="tooltip-text">图片</span>
             </div>
           </button>
+          
+          <!-- 深度思考按钮 -->
+          <button 
+            class="chat-toggle-btn" 
+            :class="{ active: enableDeepThinking }"
+            @click="toggleDeepThinking"
+          >
+            <img 
+              :src="enableDeepThinking ? thinkBlueIcon : thinkGreyIcon" 
+              class="chat-toggle-icon" 
+              alt="深度思考"
+            />
+            <span class="chat-toggle-text">深度思考</span>
+          </button>
+          
+          <!-- 联网搜索按钮 -->
+          <button 
+            class="chat-toggle-btn" 
+            :class="{ active: enableWebSearch }"
+            @click="toggleWebSearch"
+          >
+            <img 
+              :src="enableWebSearch ? internalBlueIcon : internalGreyIcon" 
+              class="chat-toggle-icon" 
+              alt="联网搜索"
+            />
+            <span class="chat-toggle-text">联网搜索</span>
+          </button>
         </div>
-
+        
         <!-- 右下角底部栏 -->
         <div class="bottom-right-bar">
           <span class="hint-text">Enter 发送 / Shift+Enter 换行</span>
@@ -186,6 +214,10 @@ import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
 import { useAttachment } from '@/hooks/useAttachment'
 import { largeChatData } from '@/mock/large-chat-data'
 import ChatMessage from '@/components/ChatMessage.vue'
+import internalBlueIcon from '@/images/internal-blue.png'
+import internalGreyIcon from '@/images/internal-grey.png'
+import thinkBlueIcon from '@/images/think-bule.png'
+import thinkGreyIcon from '@/images/think-grey.png'
 
 const props = defineProps({
   agentId: {
@@ -232,6 +264,20 @@ const internalMessages = ref([])
 const isStreaming = ref(false)
 const msgContainer = ref(null)
 const showUpdateTopicDialog = ref(false)
+
+// 深度思考和联网搜索开关
+const enableDeepThinking = ref(false)
+const enableWebSearch = ref(false)
+
+// 切换深度思考
+const toggleDeepThinking = () => {
+  enableDeepThinking.value = !enableDeepThinking.value
+}
+
+// 切换联网搜索
+const toggleWebSearch = () => {
+  enableWebSearch.value = !enableWebSearch.value
+}
 const newTopic = ref('')
 const isFocused = ref(false)
 const useTestData = ref(false)
@@ -459,14 +505,13 @@ const handleSend = async () => {
           }
           
           if (result.hasNewContent) {
-            // 当收到第一块内容时，立即结束思考状态
+            // 保持思考状态直到流结束，即时更新内容
             if (hasStartedThinking) {
-              console.log('收到第一块内容，结束思考状态，当前内容:', tempMsg.content)
+              console.log('收到第一块内容，开始更新思考中内容:', tempMsg.content)
               hasStartedThinking = false
-              await updateMessage(tempMsg.content, false)
-            } else {
-              await updateMessage(tempMsg.content, false)
             }
+            // 保持 isThinking 为 true，直到流完全结束
+            await updateMessage(tempMsg.content, true)
           }
         }
         buffer = lines[lines.length - 1]
@@ -558,12 +603,36 @@ watch(() => props.activeSession, () => loadSessionHistory(), { immediate: true }
 
 // 监听外部传入的消息变化（来自 ChatInit）
 watch(() => props.messages, (newMessages) => {
-  // 只在内部消息为空且有外部消息时才合并
-  if (newMessages && newMessages.length > 0 && internalMessages.value.length === 0) {
+  if (!newMessages || newMessages.length === 0) return
+  
+  // 如果内部消息为空，直接使用外部消息
+  if (internalMessages.value.length === 0) {
+    internalMessages.value = [...newMessages]
+    nextTick(scrollToBottom)
+    return
+  }
+  
+  // 如果外部消息有更多内容（比如用户刚发送的消息），合并新增的消息
+  // 检查外部消息中是否有内部消息中没有的消息
+  const lastInternalMsgId = internalMessages.value.length > 0 
+    ? internalMessages.value[internalMessages.value.length - 1]?.content 
+    : null
+  
+  // 找到第一个不匹配的消息索引
+  let startIndex = 0
+  for (; startIndex < newMessages.length; startIndex++) {
+    if (startIndex >= internalMessages.value.length || 
+        newMessages[startIndex]?.content !== internalMessages.value[startIndex]?.content) {
+      break
+    }
+  }
+  
+  // 如果有新增的消息，添加到内部消息列表
+  if (startIndex < newMessages.length) {
     internalMessages.value = [...newMessages]
     nextTick(scrollToBottom)
   }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 // 监听智能体变化
 watch(() => props.agentId, (newAgentId, oldAgentId) => {
@@ -1206,5 +1275,66 @@ onMounted(() => {
   flex: none;
   order: 0;
   flex-grow: 0;
+}
+
+/* 深度思考和联网搜索按钮 */
+.chat-toggle-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 18px;
+  gap: 5px;
+  width: 84px;
+  height: 30px;
+  background: #F1F5F9;
+  border: 1px solid #DEE3EA;
+  border-radius: 16px;
+  flex: none;
+  order: 4;
+  flex-grow: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-toggle-btn:hover {
+  background: #E2E8F0;
+}
+
+.chat-toggle-btn.active {
+  background: #E0E7FF;
+  border-color: #B4BDFF;
+}
+
+.chat-toggle-icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  object-fit: contain;
+}
+
+
+
+.chat-toggle-text {
+  width: 40px;
+  height: 20px;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: #334155;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+}
+
+.chat-toggle-btn.active .chat-toggle-text {
+  color: #314DE2;
 }
 </style>

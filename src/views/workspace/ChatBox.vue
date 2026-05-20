@@ -86,7 +86,7 @@
     </main>
 
     <!-- 右侧配置 -->
-    <aside v-if="agentId" class="agent-config-sidebar">
+    <!--<aside v-if="agentId" class="agent-config-sidebar">
       <h3 class="font-bold text-gray-800 mb-6 flex items-center">
         <el-icon class="mr-2 text-primary"><Setting /></el-icon>
         任务执行参数
@@ -97,7 +97,7 @@
           <el-input v-else type="textarea" v-model="formData[f.key]" :placeholder="f.placeholder" :rows="3" />
         </el-form-item>
       </el-form>
-    </aside>
+    </aside>-->
 
   </div>
 </template>
@@ -305,6 +305,11 @@ const handleSend = async () => {
   }, 800)
 }
 
+// 更新消息的辅助函数（触发响应式更新）
+const updateMessages = () => {
+  messages.value = [...messages.value]
+}
+
 // 处理 ChatInit 发送消息（与 Chating 发送逻辑一致）
 const handleChatInitSend = async ({ content, attachments }) => {
   try {
@@ -321,9 +326,9 @@ const handleChatInitSend = async ({ content, attachments }) => {
     messages.value.push({ role: 'user', content, attachments })
 
     // 3. 创建一个空的 AI 消息（用于显示"思考中"状态）
-
-    const aiMsg = { role: 'assistant', content: '', isThinking: true }
-    messages.value.push(aiMsg)
+    const aiMsgIndex = messages.value.length
+    messages.value.push({ role: 'assistant', content: '', isThinking: true })
+    updateMessages() // 触发响应式更新
 
     isStreaming.value = true
 
@@ -346,23 +351,32 @@ const handleChatInitSend = async ({ content, attachments }) => {
         // 普通 JSON 响应
         const result = await response.json()
         
+        let responseContent = ''
         if (result.success && result.data) {
-          aiMsg.content = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
+          responseContent = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
         } else if (result.content) {
-          aiMsg.content = result.content
+          responseContent = result.content
         } else if (result.code === 'success' && result.result) {
           // 后端实际返回的格式
           if (result.result.content) {
-            aiMsg.content = result.result.content
+            responseContent = result.result.content
           } else if (result.result.id && !result.result.content) {
             // 只有任务ID，没有内容
-            aiMsg.content = '抱歉，服务器未返回消息内容，请稍后重试。'
+            responseContent = '抱歉，服务器未返回消息内容，请稍后重试。'
           } else {
-            aiMsg.content = JSON.stringify(result.result)
+            responseContent = JSON.stringify(result.result)
           }
         } else {
-          aiMsg.content = JSON.stringify(result)
+          responseContent = JSON.stringify(result)
         }
+        
+        // 更新消息（替换整个对象以触发响应式）
+        messages.value[aiMsgIndex] = { 
+          role: 'assistant', 
+          content: responseContent, 
+          isThinking: false 
+        }
+        updateMessages()
       } else if (contentType.includes('text/event-stream')) {
         // SSE 流式响应（根据 API 文档格式）
         console.log('Processing SSE stream...')
@@ -370,6 +384,7 @@ const handleChatInitSend = async ({ content, attachments }) => {
         const decoder = new TextDecoder()
         let buffer = ''
         let receivedContent = false
+        let currentContent = ''
         
         while (true) {
           const { done, value } = await reader.read()
@@ -386,14 +401,16 @@ const handleChatInitSend = async ({ content, attachments }) => {
                 const parsed = JSON.parse(buffer)
                 if (parsed.error) {
                   // 后端返回错误
-                  aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+                  currentContent = '错误：' + (parsed.error.message || '服务器错误')
                 } else {
                   // 尝试处理为普通内容
-                  processSSEBuffer(buffer, aiMsg)
+                  const tempMsg = { content: currentContent }
+                  processSSEBuffer(buffer, tempMsg)
+                  currentContent = tempMsg.content
                 }
               } catch (e) {
                 // 不是JSON，直接显示
-                aiMsg.content = buffer
+                currentContent = buffer
               }
             }
             break
@@ -410,35 +427,63 @@ const handleChatInitSend = async ({ content, attachments }) => {
               try {
                 const parsed = JSON.parse(line)
                 if (parsed.error) {
-                  aiMsg.content = '错误：' + (parsed.error.message || '服务器错误')
+                  currentContent = '错误：' + (parsed.error.message || '服务器错误')
                   receivedContent = true
                   reader.releaseLock()
-                  return
+                  break
                 }
               } catch (e) {}
             }
             
-            processSSELine(lines[i], aiMsg)
+            const tempMsg = { content: currentContent }
+            processSSELine(lines[i], tempMsg)
+            currentContent = tempMsg.content
+            
+            // 实时更新消息
+            messages.value[aiMsgIndex] = { 
+              role: 'assistant', 
+              content: currentContent, 
+              isThinking: true 
+            }
+            updateMessages()
           }
           buffer = lines[lines.length - 1]
+          
+          if (receivedContent) break
         }
         
         // 如果没有收到任何内容，显示错误提示
-        if (!receivedContent && !aiMsg.content) {
-          aiMsg.content = '抱歉，服务器没有返回有效内容，请稍后重试。'
+        if (!receivedContent && !currentContent) {
+          currentContent = '抱歉，服务器没有返回有效内容，请稍后重试。'
         }
+        
+        // 最终更新（结束思考状态）
+        messages.value[aiMsgIndex] = { 
+          role: 'assistant', 
+          content: currentContent, 
+          isThinking: false 
+        }
+        updateMessages()
       } else {
         // 其他格式
         const text = await response.text()
-        aiMsg.content = text
+        messages.value[aiMsgIndex] = { 
+          role: 'assistant', 
+          content: text, 
+          isThinking: false 
+        }
+        updateMessages()
       }
       
-      aiMsg.isThinking = false
       isStreaming.value = false
     } catch (apiError) {
       console.error('API 调用失败:', apiError)
-      aiMsg.content = '抱歉，服务器暂时无法响应，请稍后重试。'
-      aiMsg.isThinking = false
+      messages.value[aiMsgIndex] = { 
+        role: 'assistant', 
+        content: '抱歉，服务器暂时无法响应，请稍后重试。', 
+        isThinking: false 
+      }
+      updateMessages()
       isStreaming.value = false
       ElMessage.error('消息发送失败')
     }
