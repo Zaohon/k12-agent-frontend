@@ -29,7 +29,7 @@ const userStore = useUserStore()
   display: flex;
   flex-direction: column;
   background: linear-gradient(0deg, #f8f9fd, #f8f9fd), #f2f4f8;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .workspace-body {
@@ -76,7 +76,7 @@ const userStore = useUserStore()
 
 .page-content {
   flex: 1;
-  overflow: hidden;
+  overflow: auto;
   padding: 0;
   display: flex;
   flex-direction: column;

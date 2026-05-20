@@ -8,7 +8,7 @@
   padding: 32px;
   gap: 20px;
   flex: 1;
-  height: 1108px;
+  height: 100%;
   background: #f2f4f8;
   overflow-y: auto;
 }
@@ -20,10 +20,11 @@
   align-items: center;
   padding: 24px;
   width: 100%;
-  max-width: 1279px;
+  max-width: 90%;
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   border-radius: 12px;
+  overflow: auto;
 }
 
 .cm-top-left {
@@ -183,11 +184,13 @@
 /* 模块卡片 */
 .cm-section-card {
   width: 100%;
-  max-width: 1279px;
+  max-width: 90%;
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   padding: 24px;
+  overflow-x: auto;
+  box-sizing: border-box;
 }
 
 .cm-section-header {
@@ -278,6 +281,7 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .cm-draggable-container {
@@ -288,8 +292,9 @@
   display: flex;
   align-items: center;
   padding: 12px;
-  width: 48%;
-  min-width: 300px;
+  width: calc(50% - 6px);
+  min-width: 240px;
+  max-width: 100%;
   height: 80px;
   background: #f8f9fd;
   border: 1px solid rgba(173, 178, 185, 0.3);

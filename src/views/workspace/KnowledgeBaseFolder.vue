@@ -1,134 +1,108 @@
 <template>
-  <div class="kb-main-content-workspace">
-    <div class="kb-workspace-toolbar">
-      <div class="kb-nav-container">
-        <button class="kb-back-btn" @click="goBack">
-          <span class="kb-icon-back"></span>
-        </button>
-        <div class="kb-nav-path">
-          <span
-            v-for="(item, index) in breadcrumb"
-            :key="index"
-            class="kb-nav-item"
-            :class="{ 'kb-nav-item-clickable': item.id !== null || index === 0 }"
-            @click="navigateToFolder(item, index)"
-          >
-            {{ item.name }}
-            <span v-if="index < breadcrumb.length - 1" class="kb-nav-separator">/</span>
-          </span>
+  <div class="kb-page">
+    <div class="kb-main-content-workspace">
+      <div class="kb-workspace-toolbar">
+        <div class="kb-nav-container">
+          <button class="kb-back-btn" @click="goBack">
+            <span class="kb-icon-back"></span>
+          </button>
+          <div class="kb-nav-path">
+            <span v-for="(item, index) in breadcrumb" :key="index" class="kb-nav-item"
+              :class="{ 'kb-nav-item-clickable': item.id !== null || index === 0 }"
+              @click="navigateToFolder(item, index)">
+              {{ item.name }}
+              <span v-if="index < breadcrumb.length - 1" class="kb-nav-separator">/</span>
+            </span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="kb-header-actions">
-      <div class="kb-title-section">
-        <h1 class="kb-main-title">{{ currentFolderName }}</h1>
-        <p class="kb-subtitle">查看并整理您的系统文件与教案。</p>
+      <div class="kb-header-actions">
+        <div class="kb-title-section">
+          <h1 class="kb-main-title">{{ currentFolderName }}</h1>
+          <p class="kb-subtitle">查看并整理您的系统文件与教案。</p>
+        </div>
+
+        <div class="kb-action-buttons">
+          <button class="kb-btn-outline" @click="handleCreateFolder">
+            <span class="kb-icon-add"></span>新建文件夹
+          </button>
+          <button class="kb-btn-primary" @click="triggerFileUpload">
+            <span class="kb-icon-upload"></span>上传文件
+          </button>
+          <input ref="fileInputRef" type="file" multiple class="kb-file-input" @change="handleFileSelect" />
+        </div>
       </div>
 
-      <div class="kb-action-buttons">
-        <button class="kb-btn-outline" @click="handleCreateFolder">
-          <span class="kb-icon-add"></span>新建文件夹
-        </button>
-        <button class="kb-btn-primary" @click="triggerFileUpload">
-          <span class="kb-icon-upload"></span>上传文件
-        </button>
-        <input
-          ref="fileInputRef"
-          type="file"
-          multiple
-          class="kb-file-input"
-          @change="handleFileSelect"
-        />
-      </div>
-    </div>
-
-    <div class="kb-content-area">
-      <div v-if="folders.length > 0" class="kb-folders-section">
-        <h2 class="kb-section-title">子文件夹</h2>
-        <div class="kb-folders-grid">
-          <div
-            class="kb-folder-card"
-            v-for="folder in folders"
-            :key="folder.id"
-            @click="handleFolderClick(folder.id, folder.name)"
-          >
-            <div class="kb-folder-header">
-              <div class="kb-folder-icon-wrapper kb-default-bg">
-                <span class="kb-icon-folder"></span>
+      <div class="kb-content-area">
+        <div v-if="folders.length > 0" class="kb-folders-section">
+          <h2 class="kb-section-title">子文件夹</h2>
+          <div class="kb-folders-grid">
+            <div class="kb-folder-card" v-for="folder in folders" :key="folder.id"
+              @click="handleFolderClick(folder.id, folder.name)">
+              <div class="kb-folder-header">
+                <div class="kb-folder-icon-wrapper kb-default-bg">
+                  <span class="kb-icon-folder"></span>
+                </div>
+                <div class="kb-more-wrapper">
+                  <button class="kb-folder-more-btn" @click="openFolderDialog($event, folder)">
+                    <img src="@/images/more.png" class="kb-more-icon" alt="更多" />
+                  </button>
+                </div>
               </div>
-              <div class="kb-more-wrapper">
-                <button class="kb-folder-more-btn" @click="openFolderDialog($event, folder)">
-                  <img src="@/images/more.png" class="kb-more-icon" alt="更多" />
+
+              <div v-if="renamingFolder && renamingFolder.id === folder.id" class="kb-rename-input-wrapper">
+                <input ref="renameInputRef" v-model="renameInput" type="text" @keyup.enter="confirmRename"
+                  @keyup.escape="cancelRename" @blur="confirmRename" class="kb-rename-input" />
+              </div>
+
+              <h3 v-else class="kb-folder-title">{{ folder.name }}</h3>
+              <div class="kb-folder-tag">文件夹</div>
+              <div class="kb-folder-footer">
+                <span>{{ folder.folderCount + folder.fileCount }} 个项目</span>
+                <span class="kb-arrow-icon"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="files.length > 0" class="kb-files-section">
+          <h2 class="kb-section-title">文件</h2>
+          <div class="kb-files-list">
+            <div class="kb-file-item" v-for="file in files" :key="file.id">
+              <div class="kb-file-icon-wrapper">
+                <img src="@/images/chatinit-1.png" alt="" class="kb-file-img" />
+              </div>
+              <div class="kb-file-info">
+                <span class="kb-file-name">{{ file.name }}</span>
+                <span class="kb-file-meta">{{ formatFileSize(file.size) }} · {{ formatTime(file.createdAt) }}</span>
+              </div>
+              <div class="kb-file-tag-wrapper">
+                <span class="kb-file-type-tag">文件</span>
+                <span class="kb-file-size-tag">{{ formatFileSize(file.size) }}</span>
+              </div>
+              <div class="kb-file-actions">
+                <button class="kb-action-btn" @click="handleDownload(file)">
+                  <span class="kb-icon-download"></span>
+                </button>
+                <button class="kb-action-btn" @click="handleDelete(file)">
+                  <span class="kb-icon-delete"></span>
                 </button>
               </div>
             </div>
-
-            <div v-if="renamingFolder && renamingFolder.id === folder.id" class="kb-rename-input-wrapper">
-              <input
-                ref="renameInputRef"
-                v-model="renameInput"
-                type="text"
-                @keyup.enter="confirmRename"
-                @keyup.escape="cancelRename"
-                @blur="confirmRename"
-                class="kb-rename-input"
-              />
-            </div>
-
-            <h3 v-else class="kb-folder-title">{{ folder.name }}</h3>
-            <div class="kb-folder-tag">文件夹</div>
-            <div class="kb-folder-footer">
-              <span>{{ folder.folderCount + folder.fileCount }} 个项目</span>
-              <span class="kb-arrow-icon"></span>
-            </div>
           </div>
+        </div>
+
+        <div v-if="folders.length === 0 && files.length === 0 && !loading" class="kb-empty-state">
+          <p class="kb-empty-text">暂无内容</p>
+          <p class="kb-empty-hint">点击上方按钮添加文件夹或上传文件</p>
         </div>
       </div>
 
-      <div v-if="files.length > 0" class="kb-files-section">
-        <h2 class="kb-section-title">文件</h2>
-        <div class="kb-files-list">
-          <div class="kb-file-item" v-for="file in files" :key="file.id">
-            <div class="kb-file-icon-wrapper">
-              <img src="@/images/chatinit-1.png" alt="" class="kb-file-img" />
-            </div>
-            <div class="kb-file-info">
-              <span class="kb-file-name">{{ file.name }}</span>
-              <span class="kb-file-meta">{{ formatFileSize(file.size) }} · {{ formatTime(file.createdAt) }}</span>
-            </div>
-            <div class="kb-file-tag-wrapper">
-              <span class="kb-file-type-tag">文件</span>
-              <span class="kb-file-size-tag">{{ formatFileSize(file.size) }}</span>
-            </div>
-            <div class="kb-file-actions">
-              <button class="kb-action-btn" @click="handleDownload(file)">
-                <span class="kb-icon-download"></span>
-              </button>
-              <button class="kb-action-btn" @click="handleDelete(file)">
-                <span class="kb-icon-delete"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="folders.length === 0 && files.length === 0 && !loading" class="kb-empty-state">
-        <p class="kb-empty-text">暂无内容</p>
-        <p class="kb-empty-hint">点击上方按钮添加文件夹或上传文件</p>
-      </div>
+      <FolderDialog :visible="showFolderDialog" :folderId="currentDialogFolder?.id"
+        :folderName="currentDialogFolder?.name" :triggerPosition="triggerPosition" @close="closeFolderDialog"
+        @rename="handleDialogRename" @replaceIcon="handleDialogReplaceIcon" @delete="handleDialogDelete" />
     </div>
-
-    <FolderDialog
-      :visible="showFolderDialog"
-      :folderId="currentDialogFolder?.id"
-      :folderName="currentDialogFolder?.name"
-      :triggerPosition="triggerPosition"
-      @close="closeFolderDialog"
-      @rename="handleDialogRename"
-      @replaceIcon="handleDialogReplaceIcon"
-      @delete="handleDialogDelete"
-    />
   </div>
 </template>
 

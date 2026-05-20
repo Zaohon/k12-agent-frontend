@@ -162,15 +162,31 @@
           <div class="kb-ai-blur"></div>
           <img src="@/images/database2.png" class="kb-ai-bg-icon" alt="" />
           <div class="kb-ai-content">
-            <div class="kb-ai-tag">
-              <img src="@/images/star.png" class="kb-ai-dot" alt="" />
-              <span>AI 智能洞察</span>
+            <div class="kb-ai-title-row">
+              <div class="kb-ai-tag">
+                <img src="@/images/star.png" class="kb-ai-dot" alt="" />
+              </div>
+              <h3 class="kb-ai-title">如何让AI学习您的专属资料</h3>
             </div>
-            <h3 class="kb-ai-title">正在"题库"中寻找特定内容？</h3>
-            <p class="kb-ai-desc">
-              我可以根据难度级别和课程标准，自动为您新上传的 512 道题目添加标签并进行分类。
-            </p>
-            <button class="kb-ai-button">开始自动打标</button>
+            <div class="kb-ai-desc-row">
+              <span class="kb-ai-num">1</span>
+              <p class="kb-ai-desc">
+                您可以在“题库”中上传您的教案、课件或题库。
+              </p>
+            </div>
+            <div class="kb-ai-desc-row">
+              <span class="kb-ai-num">2</span>
+              <p class="kb-ai-desc">
+                前往【我的智能体】，在配置界面打开“专属知识库”开关。
+              </p>
+            </div>
+            <div class="kb-ai-desc-row">
+              <span class="kb-ai-num">3</span>
+              <p class="kb-ai-desc">
+                勾选相关文件，您的智能体即可基于这些资料进行精准问答与生成！
+              </p>
+            </div>
+            <button class="kb-ai-button" @click="goToAgentEdit">前往我的智能体</button>
           </div>
         </div>
 
@@ -301,6 +317,13 @@ const handleFolderClick = (folderId, folderName) => {
     query: {
       path: appendToPath('', folderId, folderName)
     }
+  })
+}
+
+// 前往我的智能体
+const goToAgentEdit = () => {
+  router.push({
+    name: 'AgentStudio'
   })
 }
 

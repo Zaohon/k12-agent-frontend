@@ -2,15 +2,17 @@
 
 /* 页面容器基础样式 */
 .kb-page {
+  flex: 1;
   width: 100%;
-  min-height: 100vh;
-  padding: 24px 16px;
-  background: #fff;
+  padding: 0;
+  background: #F8F9FD;
+  box-sizing: border-box;
 }
 
 /* 主内容最大宽度限制 */
 .kb-main-content {
-  max-width: 1200px;
+  height: 100%;
+  max-width: 90%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -20,11 +22,11 @@
 .kb-main-content-workspace {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100%;
   padding: 24px;
   gap: 24px;
   width: 100%;
-  max-width: 1400px;
+  max-width: 90%;
   margin: 0 auto;
 }
 
@@ -267,6 +269,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
+  max-height: 450px;
+  overflow-y: auto;
 }
 
 /* 文件夹卡片 */
@@ -309,6 +313,9 @@
   font-size: 16px;
   color: #2e3339;
   margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .kb-folder-tag {
@@ -351,7 +358,8 @@
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
-  overflow: hidden;
+  height: 25vh;
+  overflow: auto;
 }
 
 .kb-file-item {
@@ -618,38 +626,6 @@
   box-sizing: border-box;
 }
 
-/* 响应式 */
-@media (max-width: 768px) {
-  .kb-folder-grid,
-  .kb-folders-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-  }
-  
-  .kb-main-content-workspace {
-    padding: 16px;
-  }
-  
-  .kb-toolbar,
-  .kb-workspace-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .kb-search-input-wrapper {
-    justify-content: center;
-  }
-  
-  .kb-header-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .kb-action-buttons {
-    justify-content: flex-start;
-  }
-}
-
 /* 标题组 */
 .kb-title-group {
   display: flex;
@@ -755,35 +731,75 @@
 }
 
 .kb-ai-tag {
-  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  font-size: 12px;
-  white-space: nowrap;
-  width: fit-content;
 }
 
 .kb-ai-dot {
-  width: 14px;
-  height: 14px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  flex-shrink: 0;
+}
+
+.kb-ai-title-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
 }
 
 .kb-ai-title {
   font-size: 22px;
   font-weight: 500;
-  margin-top: 8px;
+  margin-top: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+.kb-ai-desc-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.kb-ai-num {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 3.5px 0px 4.5px;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 16px;
+  color: #FFFFFF;
+  flex-shrink: 0;
 }
 
 .kb-ai-desc {
   font-size: 15px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.85);
-  max-width: 460px;
+  word-break: break-word;
+  flex-shrink: 1;
 }
 
 .kb-ai-button {
@@ -877,15 +893,4 @@
 /* 隐藏文件输入框 */
 .kb-file-input {
   display: none;
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
-  .kb-ai-card {
-    min-width: 100%;
-  }
-
-  .kb-storage-card {
-    max-width: 100%;
-  }
 }
