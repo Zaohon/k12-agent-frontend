@@ -109,7 +109,8 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
     log('步骤1: 获取上传凭证')
     const policyRes = await knowledgeApi.getUploadPolicy({
       fileName: file.name,
-      fileSize: file.size
+      contentType: file.type || 'application/octet-stream',
+      folderId
     })
 
     if (!policyRes || !policyRes.success) {
@@ -117,8 +118,8 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
       return null
     }
 
-    const { uploadUrl, fileKey } = policyRes.data
-    log('获取上传凭证成功:', { uploadUrl, fileKey })
+    const { uploadUrl, key, publicUrl: policyPublicUrl } = policyRes.data
+    log('获取上传凭证成功:', { uploadUrl, key, publicUrl: policyPublicUrl })
     
     // 检查必要字段，如果 fileKey 缺失，尝试从 uploadUrl 中提取
     if (!uploadUrl) {
@@ -127,8 +128,8 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
     }
     
     // 如果 fileKey 缺失，从 uploadUrl 中提取
-    let finalFileKey = fileKey
-    let publicUrl = ''
+    let finalFileKey = key
+    let publicUrl = policyPublicUrl || ''
     if (!finalFileKey && uploadUrl) {
       log('fileKey 缺失，尝试从 uploadUrl 中提取')
       const url = new URL(uploadUrl)
@@ -165,9 +166,6 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         body: file,
-        headers: {
-          'Content-Type': file.type || 'application/octet-stream'
-        },
         mode: 'cors',
         cache: 'no-cache',
         credentials: 'omit',
