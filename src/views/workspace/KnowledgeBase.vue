@@ -211,10 +211,6 @@
   </div>
 </template>
 
-<style>
-@import '@/styles/knowledgeBase.css';
-</style>
-
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
@@ -266,8 +262,14 @@ const fetchData = async () => {
     // 获取根目录下的文件夹和文件
     const entriesRes = await knowledgeApi.getEntries()
     if (entriesRes && entriesRes.success && entriesRes.data) {
-      folders.value = entriesRes.data.folders || []
-      files.value = entriesRes.data.files || []
+      // 确保数据是数组
+      folders.value = Array.isArray(entriesRes.data.folders) ? entriesRes.data.folders : []
+      files.value = Array.isArray(entriesRes.data.files) ? entriesRes.data.files : []
+      log('数据加载成功 - 文件夹数:', folders.value.length, '文件数:', files.value.length)
+    } else {
+      folders.value = []
+      files.value = []
+      log('数据结构异常，重置为空数组')
     }
 
     // 获取存储统计
@@ -282,6 +284,8 @@ const fetchData = async () => {
     }
   } catch (err) {
     logError('数据加载失败', err)
+    folders.value = []
+    files.value = []
   } finally {
     loading.value = false
   }
@@ -415,11 +419,11 @@ const triggerFileUpload = () => {
 
 // 处理文件选择
 const handleFileSelect = async (event) => {
-  const files = event.target.files
-  if (!files || files.length === 0) return
+  const selectedFiles = event.target.files
+  if (!selectedFiles || selectedFiles.length === 0) return
 
   // 使用工具函数验证文件大小
-  const { validFiles, tooLargeFiles } = validateFileSizes(files)
+  const { validFiles, tooLargeFiles } = validateFileSizes(selectedFiles)
 
   // 显示超过大小限制的文件
   if (tooLargeFiles.length > 0) {
@@ -461,6 +465,11 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+<style>
+@import '@/styles/knowledgeBase.css';
+</style>
+
 <style scoped>
 /* KnowledgeBase 页面特有样式 - 不在公共样式中的样式 */
 

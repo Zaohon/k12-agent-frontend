@@ -70,11 +70,12 @@
 .kb-nav-path {
   font-weight: 500;
   font-size: 15px;
-  line-height: 36px;
+  line-height: 1.5;
   color: #2e3339;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .kb-nav-item {

@@ -10,8 +10,8 @@
             v-for="(item, index) in breadcrumb"
             :key="index"
             class="kb-nav-item"
-            :class="{ 'kb-nav-item-clickable': item.id !== null }"
-            @click="item.id !== null && navigateToFolder(item, index)"
+            :class="{ 'kb-nav-item-clickable': item.id !== null || index === 0 }"
+            @click="navigateToFolder(item, index)"
           >
             {{ item.name }}
             <span v-if="index < breadcrumb.length - 1" class="kb-nav-separator">/</span>
@@ -191,12 +191,19 @@ const fetchFolderData = async () => {
     log('获取文件夹内容, parentId:', numericFolderId)
     const res = await knowledgeApi.getEntries(numericFolderId ? { parentId: numericFolderId } : {})
     if (res?.success && res.data) {
-      folders.value = res.data.folders || []
-      files.value = res.data.files || []
+      // 确保数据是数组
+      folders.value = Array.isArray(res.data.folders) ? res.data.folders : []
+      files.value = Array.isArray(res.data.files) ? res.data.files : []
       log('获取到文件数:', files.value.length)
+    } else {
+      folders.value = []
+      files.value = []
+      log('数据结构异常，重置为空数组')
     }
   } catch (err) {
     console.error(err)
+    folders.value = []
+    files.value = []
   } finally {
     loading.value = false
   }
@@ -219,6 +226,7 @@ const handleFolderClick = (folderId: number, folderName: string) => {
 // 面包屑跳转
 const navigateToFolder = (item: any, index: number) => {
   if (item.id === null) {
+    // 点击知识库，跳转到知识库首页
     router.push({ name: 'KnowledgeBase' })
     return
   }
@@ -288,9 +296,9 @@ const handleCreateFolder = async () => {
 const triggerFileUpload = () => fileInputRef.value?.click()
 
 const handleFileSelect = async (e) => {
-  const files = e.target.files
-  if (!files?.length) return
-  const { validFiles } = validateFileSizes(files)
+  const selectedFiles = e.target.files
+  if (!selectedFiles?.length) return
+  const { validFiles } = validateFileSizes(selectedFiles)
   const targetFolderId = route.params.folderId ? Number(route.params.folderId) : null
   log('上传文件到文件夹:', targetFolderId)
   for (const f of validFiles) {
