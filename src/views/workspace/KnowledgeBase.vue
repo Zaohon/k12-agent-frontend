@@ -100,10 +100,10 @@
               <span class="kb-file-size-tag">{{ formatFileSize(file.size) }}</span>
             </div>
             <div class="kb-file-actions">
-              <button class="kb-action-btn" @click="handleDownload(file)">
+              <button class="kb-action-btn" @click="handleDownloadLocal(file)">
                 <span class="kb-icon-download"></span>
               </button>
-              <button class="kb-action-btn" @click="handleDelete(file)">
+              <button class="kb-action-btn" @click="handleDeleteLocal(file)">
                 <span class="kb-icon-delete"></span>
               </button>
             </div>
@@ -232,7 +232,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { knowledgeApi } from '@/api/api'
-import { formatFileSize, formatTime, generateUniqueFolderName, validateFileSizes, uploadFile, appendToPath } from '@/utils/knowledge'
+import { formatFileSize, formatTime, generateUniqueFolderName, validateFileSizes, uploadFile, appendToPath, handleDownload, handleDelete } from '@/utils/knowledge'
 import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
 
@@ -510,19 +510,15 @@ const handleFileSelect = async (e: Event) => {
   fetchData()
   target.value = ''
 }
+
 // 下载文件
-const handleDownload = (file: File) => file.url && window.open(file.url, '_blank')
+const handleDownloadLocal = (file: File) => handleDownload(file)
 
 // 删除文件
-const handleDelete = async (file: File) => {
-  if (!confirm(`确定要删除文件「${file.name}」吗？`)) return
-  try {
-    const res = await knowledgeApi.deleteFile(file.id)
-    if (res && res.success) {
-      files.value = files.value.filter(f => f.id !== file.id)
-    }
-  } catch (err) {
-    knowledgeLogError('删除文件失败', err)
+const handleDeleteLocal = async (file: File) => {
+  const success = await handleDelete(file, files)
+  if (success) {
+    await fetchData()
   }
 }
 

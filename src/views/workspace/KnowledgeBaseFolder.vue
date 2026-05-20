@@ -82,10 +82,10 @@
                 <span class="kb-file-size-tag">{{ formatFileSize(file.size) }}</span>
               </div>
               <div class="kb-file-actions">
-                <button class="kb-action-btn" @click="handleDownload(file)">
+                <button class="kb-action-btn" @click="handleDownloadLocal(file)">
                   <span class="kb-icon-download"></span>
                 </button>
-                <button class="kb-action-btn" @click="handleDelete(file)">
+                <button class="kb-action-btn" @click="handleDeleteLocal(file)">
                   <span class="kb-icon-delete"></span>
                 </button>
               </div>
@@ -115,6 +115,7 @@ import {
   formatFileSize, formatTime, generateUniqueFolderName,
   validateFileSizes, uploadFile,
   parsePath, appendToPath, getPathBeforeIndex,
+  handleDownload, handleDelete,
   type BreadcrumbItem
 } from '@/utils/knowledge'
 import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
@@ -337,17 +338,12 @@ const handleFileSelect = async (e: Event) => {
   target.value = ''
 }
 
-const handleDownload = (file: File) => file.url && window.open(file.url, '_blank')
-const handleDelete = async (file: File) => {
-  if (!confirm(`确定要删除文件「${file.name}」吗？`)) return
-  try {
-    const res = await knowledgeApi.deleteFile(file.id)
-    if (res && res.success) {
-      files.value = files.value.filter(f => f.id !== file.id)
-    }
-  } catch (err) {
-    knowledgeLogError('删除文件失败', err)
-  }
+// 下载文件
+const handleDownloadLocal = (file: File) => handleDownload(file)
+
+// 删除文件
+const handleDeleteLocal = async (file: File) => {
+  await handleDelete(file, files)
 }
 
 // 监听路由

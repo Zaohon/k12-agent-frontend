@@ -1,5 +1,34 @@
 import { MAX_FILE_SIZE } from '@/costants/costant'
 import { knowledgeLog, knowledgeLogError } from './logManage'
+// @ts-ignore
+import { knowledgeApi } from '@/api/api'
+
+/**
+ * 存储容量统计
+ */
+export interface StorageStats {
+  usedBytes: number
+  totalBytes: number
+}
+
+/**
+ * 获取存储空间统计信息
+ * @returns 存储统计信息
+ */
+export const getStorageStats = async (): Promise<StorageStats | null> => {
+  try {
+    const res = await knowledgeApi.getStorageStats()
+    if (res?.success && res.data) {
+      const { usedBytes, totalBytes } = res.data
+      knowledgeLog('存储空间 - 已用:', usedBytes, '总计:', totalBytes, '剩余:', totalBytes - usedBytes)
+      return { usedBytes, totalBytes }
+    }
+    return null
+  } catch (err) {
+    knowledgeLogError('获取存储空间信息失败', err)
+    return null
+  }
+}
 
 /**
  * 格式化文件大小
@@ -103,10 +132,6 @@ export const validateFileSizes = (
 export const uploadFile = async (file: File, folderId: string | number | null = null): Promise<any> => {
   try {
     knowledgeLog('开始上传文件:', file.name)
-
-    // 动态导入 API
-    // @ts-ignore
-    const { knowledgeApi } = await import('@/api/api')
 
     // 1. 获取上传凭证
     knowledgeLog('步骤1: 获取上传凭证')
@@ -344,6 +369,57 @@ export const getPathBeforeIndex = (
     return base64Encode(raw)
   } catch {
     return ''
+  }
+}
+
+/**
+ * 文件接口 - 与 KnowledgeBase.vue 和 KnowledgeBaseFolder.vue 中的 File 接口保持一致
+ */
+export interface KbFile {
+  id: number
+  name: string
+  size: number
+  url?: string
+  mimeType?: string
+  ossKey?: string
+  folderId?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
+ * 下载文件
+ * @param file - 文件对象
+ */
+export const handleDownload = (file: KbFile) => {
+  if (file.url) {
+    knowledgeLog('下载文件:', file.name, file.url)
+    window.open(file.url, '_blank')
+  } else {
+    knowledgeLogError('文件无下载链接:', file.name)
+  }
+}
+
+/**
+ * 删除文件
+ * @param file - 文件对象
+ * @param filesRef - 文件列表响应式引用
+ * @returns 删除是否成功
+ */
+export const handleDelete = async (file: KbFile, filesRef: { value: KbFile[] }): Promise<boolean> => {
+  if (!confirm(`确定要删除文件「${file.name}」吗？`)) return false
+  try {
+    const res = await knowledgeApi.deleteFile(file.id)
+    if (res && res.success) {
+      filesRef.value = filesRef.value.filter(f => f.id !== file.id)
+      knowledgeLog('文件删除成功:', file.name)
+      await getStorageStats()
+      return true
+    }
+    return false
+  } catch (err) {
+    knowledgeLogError('删除文件失败', err)
+    return false
   }
 }
 
