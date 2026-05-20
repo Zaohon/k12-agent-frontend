@@ -16,7 +16,7 @@
           class="org-card"
           :class="selectedOrg?.id === org.id ? 'org-card-selected' : ''"
         >
-          <div class="flex items-center space-x-3 mb-2">
+          <div class="flex items-start space-x-3 mb-2">
             <div class="org-icon-wrapper">
               <img v-if="org.id === 1" src="@/images/organization_icon.png" alt="organization" />
               <img v-else src="@/images/organization_icon_no_public.png" alt="organization" />
@@ -25,7 +25,7 @@
               <h4 class="font-bold text-sm text-gray-800 line-clamp-1">{{ org.orgName }}</h4>
               <p class="text-xs text-gray-400 mt-0.5">ID: ORG-{{ org.id }}</p>
             </div>
-            <el-tag size="small" type="success" effect="plain" v-if="org.id === 1">系统默认</el-tag>
+            <el-tag size="small" type="success" effect="plain" v-if="org.id === 1" class="self-start">系统默认</el-tag>
           </div>
           <div class="text-xs text-gray-400 mt-1 flex items-center justify-between">
             <span>用户数: {{ org._count?.users || 0 }}</span>
