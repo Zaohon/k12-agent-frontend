@@ -293,8 +293,13 @@ const handleFileSelect = async (e) => {
   const { validFiles } = validateFileSizes(files)
   const targetFolderId = route.params.folderId ? Number(route.params.folderId) : null
   log('上传文件到文件夹:', targetFolderId)
-  for (const f of validFiles) await uploadFile(f, targetFolderId)
-  fetchFolderData()
+  for (const f of validFiles) {
+    const uploadedFile = await uploadFile(f, targetFolderId)
+    if (uploadedFile) {
+      files.value.push(uploadedFile)
+    }
+  }
+  fetchFolderData() // 刷新确保数据一致
   e.target.value = ''
 }
 

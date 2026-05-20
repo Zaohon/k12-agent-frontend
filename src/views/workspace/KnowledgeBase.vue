@@ -429,9 +429,12 @@ const handleFileSelect = async (event) => {
   // 上传有效文件
   if (validFiles.length > 0) {
     for (const file of validFiles) {
-      await uploadFile(file, null)
+      const uploadedFile = await uploadFile(file, null)
+      if (uploadedFile) {
+        files.value.push(uploadedFile)
+      }
     }
-    fetchData()
+    fetchData() // 刷新确保数据一致
   }
 
   // 重置文件输入

@@ -50,6 +50,15 @@ const request = async (url, options = {}) => {
       ENABLE_LOG && console.log('[API] 响应数据:', data);
       return data;
     } else {
+      // 尝试解析错误响应
+      let errorData = null;
+      try {
+        errorData = await response.json();
+        ENABLE_LOG && console.log('[API] 错误响应数据:', errorData);
+      } catch (e) {
+        ENABLE_LOG && console.log('[API] 无法解析错误响应');
+      }
+      
       if (response.status === 401) {
         ElMessage.error('未授权，请重新登录');
         localStorage.removeItem('k12_token');
@@ -60,9 +69,15 @@ const request = async (url, options = {}) => {
       } else if (response.status === 500) {
         ElMessage.error('服务器内部错误');
       } else {
-        ElMessage.error('请求失败');
+        // 显示后端返回的错误信息
+        if (errorData && errorData.message) {
+          ElMessage.error(errorData.message);
+        } else {
+          ElMessage.error('请求失败');
+        }
       }
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // 返回错误数据，让调用方可以处理
+      return errorData || { success: false };
     }
   } catch (error) {
     ENABLE_LOG && console.error('[API] 请求异常:', error);
