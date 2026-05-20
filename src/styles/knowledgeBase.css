@@ -894,3 +894,165 @@
 .kb-file-input {
   display: none;
 }
+
+/* 文件列表表格样式 */
+.kb-file-table-bg {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #f2f4f8;
+  box-shadow: 0px 1px 5.9px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.kb-file-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.kb-table-header-row {
+  display: flex;
+  width: calc(100% - 15px);
+  height: 48px;
+  background: rgba(235, 238, 244, 0.5);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.kb-table-header-row::after {
+  content: '';
+  position: absolute;
+  right: -15px;
+  top: 0;
+  width: 15px;
+  height: 100%;
+  background: rgba(235, 238, 244, 0.5);
+}
+
+.kb-table-cell {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.kb-table-cell-1 { width: 35%; justify-content: flex-start; }
+.kb-table-cell-2 { width: 15%; justify-content: center; }
+.kb-table-cell-3 { width: 15%; justify-content: center; }
+.kb-table-cell-4 { width: 15%; justify-content: center; }
+.kb-table-cell-5 { width: 10%; justify-content: center; }
+.kb-table-cell-6 { width: 10%; justify-content: center; }
+
+.kb-cell-text {
+  font-family: "Noto Sans SC";
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #5a6066;
+}
+
+.kb-table-body {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+  max-height: 192px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.kb-table-body::-webkit-scrollbar {
+  width: 6px;
+}
+.kb-table-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.kb-table-body::-webkit-scrollbar-thumb {
+  background-color: rgba(90, 96, 102, 0.3);
+  border-radius: 3px;
+}
+.kb-table-body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(90, 96, 102, 0.5);
+}
+
+.kb-table-body-row {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  border-bottom: 1px solid rgba(222, 227, 234, 0.3);
+  width: 100%;
+  flex-shrink: 0;
+}
+.kb-table-body-row:last-child {
+  border-bottom: none;
+}
+
+.kb-table-body-row .kb-table-cell span {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: #2e3339;
+}
+
+.kb-data-name-cell {
+  gap: 12px;
+}
+
+.kb-doc-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.kb-data-name {
+  font-family: "Noto Sans SC";
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: #2e3339;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.kb-data-action {
+  gap: 8px;
+}
+
+.kb-table-action-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.kb-table-action-btn:hover {
+  background: rgba(49, 77, 226, 0.1);
+}
+
+.kb-action-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}

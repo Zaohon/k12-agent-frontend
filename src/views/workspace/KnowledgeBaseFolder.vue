@@ -66,28 +66,34 @@
           </div>
         </div>
 
-        <div v-if="files.length > 0" class="kb-files-section">
-          <h2 class="kb-section-title">文件</h2>
-          <div class="kb-files-list">
-            <div class="kb-file-item" v-for="file in files" :key="file.id">
-              <div class="kb-file-icon-wrapper">
-                <img src="@/images/chatinit-1.png" alt="" class="kb-file-img" />
-              </div>
-              <div class="kb-file-info">
-                <span class="kb-file-name">{{ file.name }}</span>
-                <span class="kb-file-meta">{{ formatFileSize(file.size) }} · {{ formatTime(file.createdAt) }}</span>
-              </div>
-              <div class="kb-file-tag-wrapper">
-                <span class="kb-file-type-tag">文件</span>
-                <span class="kb-file-size-tag">{{ formatFileSize(file.size) }}</span>
-              </div>
-              <div class="kb-file-actions">
-                <button class="kb-action-btn" @click="handleDownloadLocal(file)">
-                  <span class="kb-icon-download"></span>
-                </button>
-                <button class="kb-action-btn" @click="handleDeleteLocal(file)">
-                  <span class="kb-icon-delete"></span>
-                </button>
+        <div v-if="files.length > 0" class="kb-file-table-bg">
+          <div class="kb-file-table">
+            <div class="kb-table-header-row">
+              <div class="kb-table-cell kb-table-cell-1"><span class="kb-cell-text">名称</span></div>
+              <div class="kb-table-cell kb-table-cell-2"><span class="kb-cell-text">类型</span></div>
+              <div class="kb-table-cell kb-table-cell-3"><span class="kb-cell-text">修改时间</span></div>
+              <div class="kb-table-cell kb-table-cell-4"><span class="kb-cell-text">大小</span></div>
+              <div class="kb-table-cell kb-table-cell-5"><span class="kb-cell-text">位置</span></div>
+              <div class="kb-table-cell kb-table-cell-6"><span class="kb-cell-text">操作</span></div>
+            </div>
+            <div class="kb-table-body">
+              <div class="kb-table-body-row" v-for="file in files" :key="file.id">
+                <div class="kb-table-cell kb-table-cell-1 kb-data-name-cell">
+                  <img src="@/images/chatinit-1.png" alt="" class="kb-doc-icon" />
+                  <span class="kb-data-name">{{ file.name }}</span>
+                </div>
+                <div class="kb-table-cell kb-table-cell-2"><span>文件</span></div>
+                <div class="kb-table-cell kb-table-cell-3"><span>{{ formatTime(file.createdAt) }}</span></div>
+                <div class="kb-table-cell kb-table-cell-4"><span>{{ formatFileSize(file.size) }}</span></div>
+                <div class="kb-table-cell kb-table-cell-5"><span>{{ currentFolderName }}</span></div>
+                <div class="kb-table-cell kb-table-cell-6 kb-data-action">
+                  <button class="kb-table-action-btn" @click="handleDownloadLocal(file)" title="下载">
+                    <img src="@/images/download.png" alt="下载" class="kb-action-icon" />
+                  </button>
+                  <button class="kb-table-action-btn" @click="handleDeleteLocal(file)" title="删除">
+                    <img src="@/images/icon-delete.png" alt="删除" class="kb-action-icon" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
