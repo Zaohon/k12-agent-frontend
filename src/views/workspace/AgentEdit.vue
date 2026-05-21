@@ -263,7 +263,13 @@
               <div class="flex items-center gap-2 px-4 py-1.5">
                 <!-- <img src="@/images/link-file.png" class="w-auto h-5 preview-input-icon" alt="attach">
                 <img src="@/images/internal-grey.png" class="w-auto h-5 preview-input-icon" alt="image"> -->
-                <img src="@/images/speak.png" class="w-auto h-5 preview-input-icon" alt="link">
+                <img 
+                  src="@/images/speak.png" 
+                  :class="['w-auto h-5 preview-input-icon cursor-pointer hover:opacity-80 transition-all', isRecording ? 'animate-pulse' : '']" 
+                  :style="isRecording ? { filter: 'drop-shadow(0 0 4px #EF4444)' } : {}"
+                  alt="voice" 
+                  @click="handleVoiceClick"
+                >
               </div>
               <div class="flex items-end gap-3 px-4 pb-4">
                 <textarea 
@@ -326,7 +332,7 @@ import DropdownSelect from '../../components/DropdownSelect.vue'
 import IconPicker from '../../components/IconPicker.vue'
 import ChatMessage from '../../components/ChatMessage.vue'
 
-import { agentApi, categoryApi, knowledgeApi } from '../../api/api'
+import { agentApi, categoryApi, knowledgeApi, chatApi } from '../../api/api'
 import { OSS_LOGO_BASE } from '../../costants/costant'
 
 const route = useRoute()
@@ -371,10 +377,14 @@ const previewInput = ref('')
 const previewInputRef = ref<HTMLTextAreaElement | null>(null)
 const isPreviewInputFocused = ref(false)
 const publishVisibility = ref('ORG_VISIBLE')
+const isRecording = ref(false)
+const voiceProcessing = ref(false)
+let mediaRecorder: MediaRecorder | null = null
+let audioChunks: Blob[] = []
 
 const debugMessages = ref<Array<{ role: 'user' | 'assistant'; content: string; isThinking?: boolean }>>([])
 const debugSending = ref(false)
-const debugStatus = ref<'waiting' | 'streaming'>('waiting')
+const debugStatus = ref<'idle' | 'waiting' | 'streaming'>('waiting')
 const debugDotColor = computed(() => debugStatus.value === 'waiting' ? 'bg-[#EF4444]' : 'bg-[#10B981]')
 const chatContainerRef = ref<HTMLElement | null>(null)
 
@@ -790,6 +800,78 @@ const shareDebug = () => {
   }).catch(() => {
     ElMessage.error('复制失败，请手动复制')
   })
+}
+
+const handleVoiceClick = async () => {
+  if (voiceProcessing.value) {
+    ElMessage.warning('正在处理语音，请稍候...')
+    return
+  }
+
+  if (isRecording.value) {
+    // 停止录音
+    stopRecording()
+  } else {
+    // 开始录音
+    await startRecording()
+  }
+}
+
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaRecorder = new MediaRecorder(stream)
+    audioChunks = []
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        audioChunks.push(e.data)
+      }
+    }
+
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+      processAudio(audioBlob)
+      // 停止所有轨道
+      stream.getTracks().forEach(track => track.stop())
+    }
+
+    mediaRecorder.start()
+    isRecording.value = true
+    ElMessage.info('正在录音，再次点击停止')
+  } catch (error) {
+    console.error('获取麦克风权限失败:', error)
+    ElMessage.error('无法获取麦克风权限，请检查浏览器设置')
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder && isRecording.value) {
+    mediaRecorder.stop()
+    isRecording.value = false
+  }
+}
+
+const processAudio = async (audioBlob: Blob) => {
+  voiceProcessing.value = true
+  try {
+    ElMessage.info('正在处理语音...')
+    const res = await chatApi.voiceToText(audioBlob, 'zh') as any
+    if (res.success && res.data?.text) {
+      previewInput.value = res.data.text
+      ElMessage.success('语音转文字成功')
+      nextTick(() => {
+        previewInputRef.value?.focus()
+      })
+    } else {
+      ElMessage.error(res.message || '语音转文字失败')
+    }
+  } catch (error) {
+    console.error('语音转文字失败:', error)
+    ElMessage.error('语音转文字失败，请重试')
+  } finally {
+    voiceProcessing.value = false
+  }
 }
 
 onMounted(async () => {

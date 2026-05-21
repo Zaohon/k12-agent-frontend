@@ -116,9 +116,10 @@ export const categoryApi: {
 /**
  * 聊天相关 API 接口
  */
-export const chatApi: {
-  streamChat: (agentId: number | string, formData: { prompt: string; attachments?: any[] }) => Promise<Response>
-}
+export const chatApi = {
+  streamChat: (agentId: number | string, formData: { prompt: string; attachments?: any[] }) => Promise<Response>,
+  voiceToText: (audioBlob: File | Blob, language?: string) => Promise<ApiResponse<any>>
+};
 
 /**
  * 组织相关 API 接口

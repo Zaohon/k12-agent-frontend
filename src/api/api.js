@@ -605,6 +605,48 @@ export const chatApi = {
       const errorText = await response.text();
       throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
+  },
+
+  /**
+   * 语音转文字
+   * @param {File|Blob} audioBlob - 音频文件或 blob
+   * @param {string} [language='zh'] - 语言（可选，默认中文）
+   * @returns {Promise<any>} 转写结果 {success, data: {text, fileName, ...}}
+   */
+  voiceToText: async (audioBlob, language = 'zh') => {
+    const token = getToken();
+    if (!token) {
+      ElMessage.error('未登录或登录已过期，请重新登录');
+      throw new Error('Token is null');
+    }
+
+    const formData = new FormData();
+    const fileName = audioBlob instanceof File ? audioBlob.name : 'voice.webm';
+    formData.append('file', audioBlob, fileName);
+    formData.append('language', language);
+
+    const response = await fetch(`${API_BASE}/chat/voice`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      apiLog('语音转文字响应:', data);
+      return data;
+    } else {
+      let errorText = '';
+      try {
+        errorText = await response.text();
+        apiLog('语音转文字错误响应:', errorText);
+      } catch (e) {
+        apiLog('无法读取语音转文字错误响应');
+      }
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+    }
   }
 };
 
