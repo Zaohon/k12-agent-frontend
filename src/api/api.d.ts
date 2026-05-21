@@ -48,22 +48,43 @@ export interface File {
 }
 
 /**
+ * 存储统计接口
+ */
+export interface StorageStats {
+  usedBytes: number
+  totalBytes: number
+  folderCount: number
+  fileCount: number
+  usageRate: number
+}
+
+/**
  * 认证相关 API 接口
  */
 export const authApi: {
-  login: (username: string, password: string) => Promise<ApiResponse<{ token: string }>>
-  logout: () => Promise<ApiResponse>
+  sendSmsCode: (phone: string) => Promise<{ success: boolean; message: string }>
+  login: (phone: string, code: string) => Promise<{ success: boolean; data?: any; message?: string }>
+  passwordLogin: (account: string, password: string) => Promise<{ success: boolean; data?: any; message?: string }>
+  getProfile: () => Promise<ApiResponse>
+  updatePassword: (passwordData: { oldPassword: string; newPassword: string }) => Promise<ApiResponse>
+  register: (registerData: any) => Promise<ApiResponse>
 }
 
 /**
  * 智能体相关 API 接口
  */
 export const agentApi: {
-  getAgents: (params?: Record<string, any>) => Promise<ApiResponse<any[]>>
-  getAgentById: (agentId: number) => Promise<ApiResponse<any>>
-  createAgent: (data: any) => Promise<ApiResponse<any>>
-  updateAgent: (agentId: number, data: any) => Promise<ApiResponse<any>>
-  deleteAgent: (agentId: number) => Promise<ApiResponse>
+  getMyAgents: () => Promise<ApiResponse<any[]>>
+  getAgentById: (agentId: number | string) => Promise<ApiResponse<any>>
+  createAgent: (agentData: any) => Promise<ApiResponse<any>>
+  updateAgent: (agentId: number | string, agentData: any) => Promise<ApiResponse<any>>
+  deleteAgent: (agentId: number | string) => Promise<ApiResponse>
+  getDiscoverAgents: (categoryId?: number | string) => Promise<ApiResponse<any[]>>
+  getFeaturedAgents: () => Promise<ApiResponse<any[]>>
+  getPendingApprovals: (params?: Record<string, any>) => Promise<ApiResponse<any[]>>
+  reviewApproval: (id: number | string, data: { status: string; categoryId?: number | null; isFeatured?: boolean }) => Promise<ApiResponse>
+  optimizePrompt: (text: string) => Promise<ApiResponse<{ optimizedText: string }>>
+  debugAgent: (debugData: { systemPrompt: string; userMessage: string }) => Promise<Response>
 }
 
 /**
@@ -96,35 +117,32 @@ export const categoryApi: {
  * 聊天相关 API 接口
  */
 export const chatApi: {
-  sendMessage: (sessionId: number, content: string) => Promise<ApiResponse>
-  streamMessage: (sessionId: number, content: string) => Promise<Response>
+  streamChat: (agentId: number | string, formData: { prompt: string; attachments?: any[] }) => Promise<Response>
 }
 
 /**
  * 组织相关 API 接口
  */
 export const orgApi: {
-  getOrgs: () => Promise<ApiResponse<any[]>>
-  getOrgById: (orgId: number) => Promise<ApiResponse<any>>
+  getOrgList: () => Promise<ApiResponse<any[]>>
+  createOrg: (orgData: any) => Promise<ApiResponse<any>>
+  replaceOrgAdmin: (adminData: { orgId: number; userId: number }) => Promise<ApiResponse>
+  getOrgUsers: (orgId: number | string) => Promise<ApiResponse<any[]>>
+  batchCreateOrgUsers: (orgId: number | string, usersData: any) => Promise<ApiResponse>
+  deleteOrgUser: (orgId: number | string, userId: number | string) => Promise<ApiResponse>
 }
 
 /**
  * 审批相关 API 接口
  */
 export const approvalApi: {
-  getApprovals: (params?: Record<string, any>) => Promise<ApiResponse<any[]>>
-  approve: (id: number) => Promise<ApiResponse>
-  reject: (id: number) => Promise<ApiResponse>
+  getPendingApprovals: () => Promise<ApiResponse<any[]>>
+  reviewApproval: (id: number | string, reviewData: { status: string; categoryId?: number | null; isFeatured?: boolean }) => Promise<ApiResponse>
 }
 
 /**
  * 知识库相关 API 接口
  */
-export interface StorageStats {
-  usedBytes: number
-  totalBytes: number
-}
-
 export const knowledgeApi: {
   getFolders: (params?: Record<string, any>) => Promise<ApiResponse<Folder[]>>
   getFolderById: (folderId: number | string) => Promise<ApiResponse<Folder>>
@@ -133,15 +151,22 @@ export const knowledgeApi: {
   deleteFolder: (folderId: number | string) => Promise<ApiResponse>
   getEntries: (params?: { parentId?: number }) => Promise<ApiResponse<{ folders: Folder[]; files: File[] }>>
   getFiles: (params?: Record<string, any>) => Promise<ApiResponse<File[]>>
+  getRecentFiles: (params?: Record<string, any>) => Promise<ApiResponse<File[]>>
+  getFileById: (fileId: number | string) => Promise<ApiResponse<File>>
+  updateFile: (fileId: number | string, fileData: { name?: string; folderId?: number | null }) => Promise<ApiResponse<File>>
+  createFile: (fileData: { folderId: number; name: string; mimeType: string; size: number; ossKey: string; url: string }) => Promise<ApiResponse<File>>
   deleteFile: (fileId: number | string) => Promise<ApiResponse>
+  batchMoveFiles: (fileIds: number[], targetFolderId: number | string | null) => Promise<ApiResponse>
+  batchDeleteFiles: (fileIds: number[]) => Promise<ApiResponse>
   getUploadPolicy: (params: { fileName: string; contentType: string; folderId?: number | null }) => Promise<ApiResponse>
   getStorageStats: () => Promise<ApiResponse<StorageStats>>
+  getAgentLogos: () => Promise<ApiResponse<any[]>>
 }
 
 /**
  * 模型配置相关 API 接口
  */
 export const modelConfigApi: {
-  getConfigs: () => Promise<ApiResponse<any[]>>
-  updateConfig: (id: number, data: any) => Promise<ApiResponse<any>>
+  getModelConfig: () => Promise<ApiResponse<any>>
+  saveModelConfig: (configData: any) => Promise<ApiResponse>
 }

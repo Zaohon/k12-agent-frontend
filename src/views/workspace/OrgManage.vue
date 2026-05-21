@@ -111,11 +111,11 @@
                 {{ formatTime(scope.row.createdAt) }}
               </template>
             </el-table-column>
-            <el-table-column label="注销时间">
+            <!-- <el-table-column label="注销时间">
               <template #default="scope">
                 {{ scope.row.deletedAt ? formatTime(scope.row.deletedAt) : '-' }}
               </template>
-            </el-table-column>
+            </el-table-column> -->
             <el-table-column label="状态">
               <template #default="scope">
                 <span class="status-indicator" :class="scope.row.deletedAt ? 'status-disabled' : 'status-active'">
@@ -207,6 +207,46 @@
       </template>
     </el-dialog>
 
+    <!-- Create Organization Dialog -->
+    <el-dialog v-model="showCreateDialog" width="420px" :close-on-click-modal="false">
+      <template #header>
+        <div class="dialog-header">
+          <img src="@/images/change_admin_icon.png" class="w-5 h-auto" alt="add" />
+          <span class="dialog-header-title">新建组织</span>
+        </div>
+      </template>
+      <div class="px-2">
+        <label class="block text-sm font-medium text-gray-700 mb-2">组织名称</label>
+        <el-input
+          v-model="newOrgName"
+          placeholder="请输入组织名称"
+          clearable
+          class="create-org-input"
+        />
+      </div>
+      <template #footer>
+        <el-button class="cancel-admin-btn" @click="showCreateDialog = false">取消</el-button>
+        <el-button type="primary" class="confirm-admin-btn" @click="createOrganization" :loading="saving">确认创建</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Delete User Confirm Dialog -->
+    <el-dialog v-model="showDeleteDialog" width="420px" :close-on-click-modal="false">
+      <template #header>
+        <div class="dialog-header">
+          <img src="@/images/change_admin_icon.png" class="w-5 h-auto" alt="delete" />
+          <span class="dialog-header-title">确认注销</span>
+        </div>
+      </template>
+      <div class="px-2 py-4">
+        <p class="text-sm text-gray-600">确定要注销用户 <strong>{{ deletingUser?.username }}</strong> 吗？此操作不可恢复。</p>
+      </div>
+      <template #footer>
+        <el-button class="cancel-admin-btn" @click="showDeleteDialog = false">取消</el-button>
+        <el-button type="primary" class="confirm-admin-btn" @click="confirmDeleteUser" :loading="deleting" style="background: #DC2626; border-color: #DC2626;">确定注销</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -228,7 +268,10 @@ const batchProcessing = ref(false)
 const selectedOrg = ref<any>(null)
 const showCreateDialog = ref(false)
 const showReplaceAdminDialog = ref(false)
+const showDeleteDialog = ref(false)
 const newOrgName = ref('')
+const deletingUser = ref<any>(null)
+const deleting = ref(false)
 
 const selectedOrgAdmin = computed(() => {
   return selectedOrg.value?.users?.[0] || null
@@ -355,6 +398,12 @@ watch(showReplaceAdminDialog, (val) => {
   }
 })
 
+watch(showCreateDialog, (val) => {
+  if (val) {
+    newOrgName.value = ''
+  }
+})
+
 const getRoleText = (role: string) => {
   const map: Record<string, string> = {
     'SUPER_ADMIN': '超级管理员',
@@ -402,8 +451,29 @@ const formatTime = (time: string) => {
   return new Date(time).toLocaleDateString()
 }
 
-const handleDeleteUser = (user: any) => {
-  ElMessage.info('注销功能开发中')
+const handleDeleteUser = async (user: any) => {
+  deletingUser.value = user
+  showDeleteDialog.value = true
+}
+
+const confirmDeleteUser = async () => {
+  if (!deletingUser.value) return
+  deleting.value = true
+  try {
+    const res = await orgApi.deleteOrgUser(selectedOrg.value.id, deletingUser.value.id)
+    if (res.success) {
+      ElMessage.success('用户已注销')
+      showDeleteDialog.value = false
+      deletingUser.value = null
+      fetchOrgUsers(selectedOrg.value.id)
+    } else {
+      ElMessage.error(res.message || '注销失败')
+    }
+  } catch {
+    ElMessage.error('网络异常')
+  } finally {
+    deleting.value = false
+  }
 }
 
 const createOrganization = async () => {
@@ -634,6 +704,13 @@ onMounted(() => {
   min-height: 300px;
 }
 
+:deep(.el-overlay-dialog) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
 .dialog-header {
   display: flex;
   align-items: center;
@@ -796,6 +873,24 @@ onMounted(() => {
 :deep(.el-pagination .el-pager li.is-active:hover) {
   background: #1e40af;
   color: #ffffff;
+}
+
+.create-org-input :deep(.el-input__wrapper) {
+  height: 40px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #F8F9FD;
+  box-shadow: none;
+  border: 1px solid #ADB2B9;
+}
+
+.create-org-input :deep(.el-input__wrapper:hover) {
+  border-color: #314DE2;
+}
+
+.create-org-input :deep(.el-input__wrapper.is-focus) {
+  border-color: #314DE2;
+  box-shadow: 0 0 0 1px #314DE2;
 }
 
 .user-item {

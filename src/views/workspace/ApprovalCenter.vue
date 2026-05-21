@@ -434,7 +434,7 @@ const fetchPending = async () => {
   try {
     const res = await agentApi.getPendingApprovals()
     if (res.success) {
-      pendingList.value = res.data
+      pendingList.value = res.data || []
       console.log('审批列表数据:', res.data)
     }
   } catch (err) {
@@ -452,7 +452,7 @@ const fetchCategories = async () => {
   try {
     const res = await categoryApi.getCategoryList()
     if (res.success) {
-      categories.value = res.data
+      categories.value = res.data || []
     }
   } catch (e) {}
 }

@@ -186,6 +186,18 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(passwordData)
     });
+  },
+
+  /**
+   * 注册新用户
+   * @param {Object} registerData - 注册数据
+   * @returns {Promise<any>} 注册结果
+   */
+  register: async (registerData) => {
+    return request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(registerData)
+    });
   }
 };
 
@@ -297,6 +309,28 @@ export const agentApi = {
     return request('/agent/optimize', {
       method: 'POST',
       body: JSON.stringify({ text })
+    });
+  },
+
+  /**
+   * 调试智能体系统提示词
+   * @param {Object} debugData - 调试数据 {systemPrompt, userMessage}
+   * @returns {Promise<Response>} SSE 流响应
+   */
+  debugAgent: async (debugData) => {
+    const token = localStorage.getItem('k12_token')?.trim();
+    if (!token) {
+      ElMessage.error('未登录或登录已过期，请重新登录');
+      throw new Error('Token is null');
+    }
+
+    return fetch(`${API_BASE}/agent/debug`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(debugData)
     });
   }
 };
@@ -629,6 +663,18 @@ export const orgApi = {
     return request(`/org/${orgId}/users/batch`, {
       method: 'POST',
       body: JSON.stringify(usersData)
+    });
+  },
+
+  /**
+   * 删除组织成员
+   * @param {number|string} orgId - 组织 ID
+   * @param {number|string} userId - 用户 ID
+   * @returns {Promise<any>} 删除结果
+   */
+  deleteOrgUser: async (orgId, userId) => {
+    return request(`/org/${orgId}/users/${userId}`, {
+      method: 'DELETE'
     });
   }
 };

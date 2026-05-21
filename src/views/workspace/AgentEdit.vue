@@ -141,11 +141,12 @@
                     <textarea 
                       v-model="currentAgent.systemPrompt"
                       :class="['prompt-textarea w-full px-3 py-2.5 text-sm bg-white border rounded-xl resize-none transition-all', optimizing ? 'border-[#314DE2] border-4 ring-4 ring-[#314DE2]/30 bg-blue-50/30' : 'border-[#E2E8F0] focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2]']"
-                      rows="8"
+                      rows="5"
+                      maxlength="500"
                       placeholder="# 角色设定
 你是一位深耕教学十年的特级教师..."
                     ></textarea>
-                    <div class="absolute bottom-2 right-3 text-xs text-[#94A3B8]">0/500</div>
+                    <div class="absolute bottom-2 right-3 text-xs text-[#94A3B8]"><span :class="(currentAgent.systemPrompt || '').length >= 500 ? 'text-red-500' : ''">{{ (currentAgent.systemPrompt || '').length }}</span>/500</div>
                   </div>
                 </div>
               </div>
@@ -190,26 +191,14 @@
                 </div>
               </div>
 
-              <!-- 图标和模型选择 -->
-              <div class="grid grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-sm font-medium text-[#475569] mb-1.5">
-                    <span class="text-[#EF4444]">*</span> 模型
-                  </label>
-                  <input 
-                    v-model="currentAgent.model" 
-                    class="w-full px-3 py-2.5 text-sm bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#314DE2] focus:ring-1 focus:ring-[#314DE2]"
-                    placeholder="请输入模型名称"
-                  >
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-[#475569] mb-1.5">访问权限</label>
-                  <DropdownSelect 
-                    v-model="currentAgent.visibility"
-                    :options="visibilityOptions"
-                    direction="up"
-                  />
-                </div>
+              <!-- 访问权限 -->
+              <div class="w-[calc(50%-6px)]">
+                <label class="block text-sm font-medium text-[#475569] mb-1.5">访问权限</label>
+                <DropdownSelect 
+                  v-model="currentAgent.visibility"
+                  :options="visibilityOptions"
+                  direction="up"
+                />
               </div>
             </div>
           </div>
@@ -555,8 +544,8 @@ const createNew = () => {
 }
 
 const saveAgent = async () => {
-  if (!currentAgent.value.title || !currentAgent.value.description || !currentAgent.value.systemPrompt || !currentAgent.value.model) {
-    ElMessage.warning('智能体名称、智能体介绍、核心提示词(System Prompt)与模型为必填项！')
+  if (!currentAgent.value.title || !currentAgent.value.description || !currentAgent.value.systemPrompt) {
+    ElMessage.warning('智能体名称、智能体介绍与核心提示词(System Prompt)为必填项！')
     return
   }
   saving.value = true
@@ -568,8 +557,7 @@ const saveAgent = async () => {
       systemPrompt: currentAgent.value.systemPrompt,
       welcomeMsg: currentAgent.value.welcomeMsg,
       iconUrl: currentAgent.value.iconUrl,
-      // categoryId: currentAgent.value.categoryId,
-      model: currentAgent.value.model,
+      model: '',
       enableWebSearch: currentAgent.value.enableWebSearch || false,
       enableWebParse: currentAgent.value.enableWebParse || false,
       enableDeepThink: currentAgent.value.enableDeepThink || false,
