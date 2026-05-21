@@ -1,7 +1,7 @@
 <template>
   <div class="workspace-root">
     <!-- 顶部 -->
-    <LayoutHead />
+    <LayoutHead @open-profile="showProfile = true" />
     <div class="workspace-body">
       <LayoutSidebar />
       <div class="content-container">
@@ -11,15 +11,18 @@
         </main>
       </div>
     </div>
+    <!-- Profile 弹窗 -->
+    <Profile :visible="showProfile" @close="showProfile = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-//import { useUserStore } from '../../store/user'
+import { ref } from 'vue'
 import LayoutSidebar from '../../components/LayoutSidebar.vue'
 import LayoutHead from '../../components/LayoutHead.vue'
+import Profile from './Profile.vue'
 
-//const userStore = useUserStore()
+const showProfile = ref(false)
 </script>
 
 <style scoped>

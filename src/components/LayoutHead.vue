@@ -88,6 +88,10 @@ const userStore = useUserStore();
 const showPopover = ref(false);
 const avatarWrapperRef = ref<HTMLElement | null>(null);
 
+const emit = defineEmits<{
+  'open-profile': []
+}>();
+
 const avatarUrl = computed(() => {
   const userAvatar = userStore.userInfo?.avatarUrl;
   return userAvatar && userAvatar.trim() ? userAvatar : defaultAvatar;
@@ -115,7 +119,7 @@ const closePopover = () => {
 
 const goToProfile = () => {
   closePopover();
-  router.push('/workspace/profile');
+  emit('open-profile');
 };
 
 const handleLogout = () => {

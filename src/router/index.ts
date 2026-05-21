@@ -72,12 +72,7 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/workspace/CategoryManage.vue'),
         meta: { title: '分类管理' }
       },
-      {
-        path: 'profile',
-        name: 'Profile',
-        component: () => import('@/views/workspace/Profile.vue'),
-        meta: { title: '个人中心' }
-      },
+
       {
         path: 'model-config',
         name: 'ModelConfig',
