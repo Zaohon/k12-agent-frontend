@@ -209,15 +209,15 @@
       <div class="flex-1 h-full bg-[#F8F9FD] flex flex-col overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-[#E2E8F0] bg-white/40 backdrop-blur-md">
           <div class="flex items-center gap-3">
-            <div class="w-2 h-2 rounded-full bg-[#10B981]"></div>
+            <div class="w-2 h-2 rounded-full" :class="debugDotColor"></div>
             <span class="text-sm font-medium text-[#1E293B]">调试预览</span>
           </div>
           <div class="flex items-center gap-2">
-            <button class="flex items-center gap-1 px-3 py-1.5 text-xs text-[#475569] hover:bg-white rounded-lg transition-colors">
+            <button class="flex items-center gap-1 px-3 py-1.5 text-xs text-[#475569] hover:bg-white rounded-lg transition-colors" @click="resetDebug">
               <img src="@/images/reload.png" class="w-3 h-3" alt="reset">
               重置会话
             </button>
-            <button class="flex items-center gap-1 px-3 py-1.5 text-xs text-[#475569] hover:bg-white rounded-lg transition-colors">
+            <button class="flex items-center gap-1 px-3 py-1.5 text-xs text-[#475569] hover:bg-white rounded-lg transition-colors" @click="shareDebug">
               <img src="@/images/share.png" class="w-3 h-3" alt="share">
               分享测试
             </button>
@@ -225,35 +225,44 @@
         </div>
 
         <div class="flex-1 flex flex-col overflow-hidden">
-          <div class="flex-1 overflow-y-auto p-8 flex flex-col items-center justify-center">
-            <div class="text-center space-y-4">
-              <div class="w-[78px] h-[78px] rounded-[24px] flex items-center justify-center mx-auto overflow-hidden shadow-lg">
-                <img :src="currentIconImage" class="w-full h-full object-cover" alt="agent icon">
-              </div>
-              <div>
-                <h3 class="text-xl font-medium text-[#0F172A]">{{ currentAgent.title || '未命名智能体' }}</h3>
-                <p class="text-sm text-[#94A3B8] mt-1">正在等待您的指令...</p>
-              </div>
-              <div class="flex flex-wrap items-center gap-4 pt-8">
-                <div 
-                  v-for="capability in capabilityOptions" 
-                  :key="capability.key"
-                  v-show="currentAgent[capability.key]"
-                  class="flex items-center gap-1.5 px-4 py-2 rounded-full"
-                  :style="{ backgroundColor: capability.bgColor }"
-                >
-                  <img :src="capability.image" class="w-auto h-3" :alt="capability.alt">
-                  <span class="text-xs text-[#334155]">{{ capability.label }}</span>
+          <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="chatContainerRef">
+            <template v-if="debugMessages.length === 0">
+              <div class="h-full flex flex-col items-center justify-center text-center space-y-4">
+                <div class="w-[78px] h-[78px] rounded-[24px] flex items-center justify-center mx-auto overflow-hidden shadow-lg">
+                  <img :src="currentIconImage" class="w-full h-full object-cover" alt="agent icon">
+                </div>
+                <div>
+                  <h3 class="text-xl font-medium text-[#0F172A]">{{ currentAgent.title || '未命名智能体' }}</h3>
+                  <p class="text-sm text-[#94A3B8] mt-1">正在等待您的指令...</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 pt-8">
+                  <div 
+                    v-for="capability in capabilityOptions" 
+                    :key="capability.key"
+                    v-show="currentAgent[capability.key]"
+                    class="flex items-center gap-1.5 px-4 py-2 rounded-full"
+                    :style="{ backgroundColor: capability.bgColor }"
+                  >
+                    <img :src="capability.image" class="w-auto h-3" :alt="capability.alt">
+                    <span class="text-xs text-[#334155]">{{ capability.label }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </template>
+            <ChatMessage
+              v-for="(msg, index) in debugMessages"
+              :key="index"
+              :message="msg"
+              :show-attachments="false"
+              :thinking-text="'AI正在思考中...'"
+            />
           </div>
 
           <div class="p-6 space-y-4">
             <div :class="['bg-white border-2 rounded-2xl shadow-lg transition-all preview-input-container', isPreviewInputFocused ? 'border-[#314DE2]' : 'border-[#F1F5F9]']">
               <div class="flex items-center gap-2 px-4 py-1.5">
-                <img src="@/images/link-file.png" class="w-auto h-5 preview-input-icon" alt="attach">
-                <img src="@/images/internal-grey.png" class="w-auto h-5 preview-input-icon" alt="image">
+                <!-- <img src="@/images/link-file.png" class="w-auto h-5 preview-input-icon" alt="attach">
+                <img src="@/images/internal-grey.png" class="w-auto h-5 preview-input-icon" alt="image"> -->
                 <img src="@/images/speak.png" class="w-auto h-5 preview-input-icon" alt="link">
               </div>
               <div class="flex items-end gap-3 px-4 pb-4">
@@ -266,8 +275,10 @@
                   @input="autoResizePreviewInput"
                   @focus="isPreviewInputFocused = true"
                   @blur="isPreviewInputFocused = false"
+                  @keydown.enter.exact.prevent="sendDebugMessage"
+                  @keydown.shift.enter.exact="(e: any) => { e.stopPropagation(); }"
                 ></textarea>
-                <button class="w-10 h-10 bg-gradient-to-br from-[#314DE2] to-[#6144D3] rounded-xl flex items-center justify-center flex-shrink-0 send-button">
+                <button class="w-10 h-10 bg-gradient-to-br from-[#314DE2] to-[#6144D3] rounded-xl flex items-center justify-center flex-shrink-0 send-button" @click="sendDebugMessage" :disabled="debugSending">
                   <img src="@/images/send.png" class="w-auto h-4 transform" alt="send">
                 </button>
               </div>
@@ -307,12 +318,13 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import DropdownSelect from '../../components/DropdownSelect.vue'
 import IconPicker from '../../components/IconPicker.vue'
+import ChatMessage from '../../components/ChatMessage.vue'
 
 import { agentApi, categoryApi, knowledgeApi } from '../../api/api'
 import { OSS_LOGO_BASE } from '../../costants/costant'
@@ -356,18 +368,25 @@ const visibilityOptions = [
 const showIconPicker = ref(false)
 const searchText = ref('')
 const previewInput = ref('')
-const previewInputRef = ref(null)
+const previewInputRef = ref<HTMLTextAreaElement | null>(null)
 const isPreviewInputFocused = ref(false)
 const publishVisibility = ref('ORG_VISIBLE')
 
-const agentLogos = ref([])
+const debugMessages = ref<Array<{ role: 'user' | 'assistant'; content: string; isThinking?: boolean }>>([])
+const debugSending = ref(false)
+const debugStatus = ref<'waiting' | 'streaming'>('waiting')
+const debugDotColor = computed(() => debugStatus.value === 'waiting' ? 'bg-[#EF4444]' : 'bg-[#10B981]')
+const chatContainerRef = ref<HTMLElement | null>(null)
 
-const myAgents = ref([])
+const agentLogos = ref<any[]>([])
+
+const myAgents = ref<any[]>([])
 // const availableCategories = ref([])
-const selectedAgent = ref(null)
+const selectedAgent = ref<any>(null)
 const isEditMode = ref(false)
 
 const currentAgent = ref({
+  id: null as number | null,
   title: '',
   description: '',
   systemPrompt: '',
@@ -380,7 +399,8 @@ const currentAgent = ref({
   enableWebParse: true,
   enableDeepThink: false,
   enableFileUpload: true,
-  enableKnowledgeBase: false
+  enableKnowledgeBase: false,
+  approvalStatus: ''
 })
 
 const currentFormConfig = ref([])
@@ -427,11 +447,6 @@ const capabilityOptions = [
     alt: 'kb'
   }
 ]
-
-// const iconOptions = [
-//   'MagicStick', 'Document', 'DataAnalysis', 'ChatDotRound', 'Opportunity', 
-//   'Collection', 'Reading', 'EditPen', 'TrendCharts', 'Compass'
-// ]
 
 const currentIconImage = computed(() => {
   return currentAgent.value.iconUrl || (agentLogos.value.length > 0 ? agentLogos.value[0].src : '')
@@ -515,6 +530,7 @@ const loadAgentDetail = async (agentId) => {
 
 const selectAgent = (agent) => {
   optimizing.value = false
+  resetDebug()
   selectedAgent.value = agent
   isEditMode.value = true
   router.replace({ path: '/workspace/agent/edit', query: { id: agent.id } })
@@ -524,6 +540,7 @@ const selectAgent = (agent) => {
 const createNew = () => {
   isEditMode.value = false
   currentAgent.value = {
+    id: null,
     title: '',
     description: '',
     systemPrompt: '',
@@ -536,7 +553,8 @@ const createNew = () => {
     enableWebParse: true,
     enableDeepThink: false,
     enableFileUpload: true,
-    enableKnowledgeBase: false
+    enableKnowledgeBase: false,
+    approvalStatus: ''
   }
   currentFormConfig.value = []
   selectedAgent.value = null
@@ -569,7 +587,7 @@ const saveAgent = async () => {
 
     let res
     if (isEditMode.value) {
-      const agentId = currentAgent.value.id || route.query.id
+      const agentId = currentAgent.value.id || route.query.id as string
       res = await agentApi.updateAgent(agentId, agentData)
     } else {
       res = await agentApi.createAgent(agentData)
@@ -598,7 +616,7 @@ const publishAgent = () => {
 const confirmPublish = async () => {
   publishing.value = true
   try {
-    const agentId = currentAgent.value.id || route.query.id
+    const agentId = currentAgent.value.id || route.query.id as string
     if (!agentId) {
       ElMessage.error('请先保存智能体再发布！')
       return
@@ -647,13 +665,141 @@ const optimizePrompt = async () => {
   }
 }
 
+const sendDebugMessage = async () => {
+  const text = previewInput.value.trim()
+  if (!text || debugSending.value) return
+  if (!currentAgent.value.systemPrompt.trim()) {
+    ElMessage.warning('请先编辑提示词')
+    return
+  }
+
+  debugMessages.value = []
+  debugMessages.value.push({ role: 'user', content: text })
+  debugMessages.value.push({ role: 'assistant', content: '', isThinking: true })
+  previewInput.value = ''
+  debugSending.value = true
+  debugStatus.value = 'waiting'
+
+  nextTick(() => {
+    if (chatContainerRef.value) {
+      chatContainerRef.value.scrollTop = chatContainerRef.value.scrollHeight
+    }
+  })
+
+  try {
+    const response = await agentApi.debugAgent({
+      systemPrompt: currentAgent.value.systemPrompt,
+      userMessage: text
+    })
+
+    if (!response.ok) {
+      throw new Error('请求失败')
+    }
+
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('无法读取响应流')
+    }
+
+    const decoder = new TextDecoder()
+    let fullContent = ''
+    const thinkingMsg = debugMessages.value[1]
+    let streamDone = false
+    let lastReceiveTime = Date.now()
+
+    const heartbeatCheck = setInterval(() => {
+      if (Date.now() - lastReceiveTime > 15000) {
+        streamDone = true
+      }
+    }, 3000)
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done || streamDone) break
+
+      lastReceiveTime = Date.now()
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n')
+      for (const line of lines) {
+        if (line === 'data: [DONE]') {
+          streamDone = true
+          debugSending.value = false
+          break
+        }
+        if (line.startsWith('data: ')) {
+          try {
+            const json = JSON.parse(line.slice(6))
+            const delta = json.choices?.[0]?.delta?.content
+            if (delta) {
+              if (!fullContent) {
+                debugStatus.value = 'streaming'
+              }
+              fullContent += delta
+              thinkingMsg.content = fullContent
+              thinkingMsg.isThinking = false
+            }
+          } catch {
+            // Skip parse errors
+          }
+        }
+      }
+
+      nextTick(() => {
+        if (chatContainerRef.value) {
+          chatContainerRef.value.scrollTop = chatContainerRef.value.scrollHeight
+        }
+      })
+    }
+
+    clearInterval(heartbeatCheck)
+
+    if (!fullContent) {
+      thinkingMsg.content = '抱歉，我没有生成有效回复，请重试。'
+      thinkingMsg.isThinking = false
+      debugStatus.value = 'waiting'
+    }
+  } catch {
+    const thinkingMsg = debugMessages.value[1]
+    if (thinkingMsg) {
+      thinkingMsg.content = '网络错误，请检查后端服务是否启动。'
+      thinkingMsg.isThinking = false
+    }
+    debugStatus.value = 'waiting'
+  } finally {
+    debugSending.value = false
+  }
+}
+
+const resetDebug = () => {
+  debugMessages.value = []
+  previewInput.value = ''
+  debugSending.value = false
+  debugStatus.value = 'waiting'
+}
+
+const shareDebug = () => {
+  const userMsg = debugMessages.value.find(m => m.role === 'user')
+  const assistantMsg = debugMessages.value.find(m => m.role === 'assistant')
+  if (!userMsg || !assistantMsg) {
+    ElMessage.warning('暂无对话内容可分享')
+    return
+  }
+  const text = JSON.stringify({ question: userMsg.content, asked: assistantMsg.content })
+  navigator.clipboard.writeText(text).then(() => {
+    ElMessage.success('对话内容已复制到剪贴板')
+  }).catch(() => {
+    ElMessage.error('复制失败，请手动复制')
+  })
+}
+
 onMounted(async () => {
   optimizing.value = false
   await Promise.all([/* loadCategories(), */ loadAgents(), fetchAgentLogos()])
-  if (route.query.id) {
+  const queryId = route.query.id as string
+  if (queryId) {
     isEditMode.value = true
-    await loadAgentDetail(route.query.id)
-    const agent = myAgents.value.find(a => a.id === route.query.id)
+    await loadAgentDetail(queryId)
+    const agent = myAgents.value.find(a => a.id === queryId)
     if (agent) {
       selectedAgent.value = agent
     }
@@ -722,5 +868,10 @@ textarea.prompt-textarea:focus {
 
 .send-button {
   box-shadow: 0px 4px 6px -4px rgba(224, 231, 255, 1), 0px 10px 15px -3px rgba(224, 231, 255, 1);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
