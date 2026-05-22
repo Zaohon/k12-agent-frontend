@@ -5,13 +5,42 @@
     <div class="blur-circle top-right"></div>
     <div class="blur-circle bottom-left"></div>
 
-    <!-- 问候区域 -->
-    <div class="greeting-wrapper">
+    <!-- 问候区域 - 普通模式 -->
+    <div v-if="!agentInfo" class="greeting-wrapper">
       <h1 class="main-title">
         你好，我是
         <span class="purple-text">小龙助教</span>
       </h1>
       <p class="sub-title">今天我能帮您完成哪些教学任务？</p>
+    </div>
+    <!-- 问候区域 - 智能体模式 -->
+    <div v-else class="agent-header">
+      <div class="avatar-root">
+        <div class="avatar-bg">
+          <img v-if="agentInfo.iconUrl" :src="agentInfo.iconUrl" class="avatar-image" alt="avatar" />
+          <div v-else class="avatar-vector"></div>
+        </div>
+      </div>
+
+      <div class="info-container">
+        <div class="name-row">
+          <div class="heading3">
+            <span class="title-text">{{ agentInfo.title || '智能体' }}</span>
+          </div>
+        </div>
+
+        <div class="tag-group">
+          <template v-if="agentInfo">
+            <div v-for="item in capabilityOptions" :key="item.key" v-show="agentInfo[item.key]" class="tag-btn"
+              :class="item.colorClass">
+              <div class="tag-icon-wrapper" :style="{ backgroundColor: item.bgColor }">
+                <img :src="item.image" class="tag-img" :alt="item.alt" />
+              </div>
+              <span class="tag-text">{{ item.label }}</span>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
 
     <!-- 中央聊天输入区域 -->
@@ -19,15 +48,8 @@
       <div class="input-container" :class="{ focused: isFocused }">
         <div class="input-glow"></div>
         <div class="input-body">
-          <div
-            ref="textareaRef"
-            class="textarea"
-            contenteditable
-            placeholder="输入您的指令，例如：生成一份初中物理《重力》的教案..."
-            @keydown.enter.prevent="handleEnter"
-            @focus="isFocused = true"
-            @blur="isFocused = false"
-          ></div>
+          <div ref="textareaRef" class="textarea" contenteditable placeholder="输入您的指令，例如：生成一份初中物理《重力》的教案..."
+            @keydown.enter.prevent="handleEnter" @focus="isFocused = true" @blur="isFocused = false"></div>
           <div v-if="attachments.length > 0" class="attachments-wrapper">
             <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
               <span class="attachment-icon">{{ getAttachmentIcon(item.type) }}</span>
@@ -58,15 +80,8 @@
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-              <!--<button class="icon-btn" @click="handleImageClick">
-                <img src="@/images/chatinit-img.png" alt="图片" />
-              </button>-->
             </div>
-            <button
-              class="send-btn"
-              :disabled="isLoading"
-              @click="handleSend"
-            >
+            <button class="send-btn" :disabled="isLoading" @click="handleSend">
               {{ isLoading ? '处理中...' : '发送' }}
             </button>
           </div>
@@ -93,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import chatinit1 from '@/images/chatinit-1.png'
 import chatinit2 from '@/images/chatinit-2.png'
@@ -101,6 +116,60 @@ import chatinit3 from '@/images/chatinit-3.png'
 import chatinit4 from '@/images/chatinit-4.png'
 import { useAttachment } from '@/hooks/useAttachment'
 import { chatLogError } from '@/utils/logManage'
+
+const props = defineProps({
+  agentInfo: {
+    type: Object,
+    default: null
+  }
+})
+
+watch(() => props.agentInfo, (newVal) => {
+  console.log('[ChatInit] agentInfo changed:', newVal)
+}, { immediate: true })
+
+const capabilityOptions = [
+  {
+    key: 'enableWebSearch',
+    label: '联网搜索',
+    bgColor: '#DBEAFE',
+    colorClass: 'blue',
+    image: new URL('@/images/internal-blue.png', import.meta.url).href,
+    alt: 'web'
+  },
+  {
+    key: 'enableWebParse',
+    label: '网页解析',
+    bgColor: '#BEEBEE',
+    colorClass: 'green',
+    image: new URL('@/images/web-read.png', import.meta.url).href,
+    alt: 'parse'
+  },
+  {
+    key: 'enableDeepThink',
+    label: '深度思考',
+    bgColor: '#F3E8FF',
+    colorClass: 'purple',
+    image: new URL('@/images/think.png', import.meta.url).href,
+    alt: 'deep'
+  },
+  {
+    key: 'enableFileUpload',
+    label: '文档上传',
+    bgColor: '#FFF7ED',
+    colorClass: 'orange',
+    image: new URL('@/images/upload-file.png', import.meta.url).href,
+    alt: 'file'
+  },
+  {
+    key: 'enableKnowledgeBase',
+    label: '知识库',
+    bgColor: '#D6F7CF',
+    colorClass: 'light-green',
+    image: new URL('@/images/database-green.png', import.meta.url).href,
+    alt: 'kb'
+  }
+]
 
 const cards = ref([
   {
@@ -169,7 +238,6 @@ const clearTextarea = () => {
 
 const handleEnter = (e) => {
   if (e.ctrlKey || e.metaKey) {
-    // 允许 Ctrl+Enter 换行
     return
   }
   e.preventDefault()
@@ -184,14 +252,11 @@ const handleSend = async () => {
   }
 
   isLoading.value = true
-  
+
   try {
-    // 保存附件副本
     const currentAttachments = [...attachments.value]
-    // 通知父组件创建会话并发送消息（包含内容和附件）
     emit('sendMessage', { content, attachments: currentAttachments })
     clearTextarea()
-    // 清空附件
     clearAttachments()
   } catch (error) {
     chatLogError('发送消息失败:', error)
@@ -203,7 +268,6 @@ const handleSend = async () => {
 </script>
 
 <style scoped>
-
 * {
   margin: 0;
   padding: 0;
@@ -211,166 +275,267 @@ const handleSend = async () => {
   font-family: 'Noto Sans SC', sans-serif;
 }
 
-/* 主容器：全屏自适应 */
 .main-content-right {
   position: relative;
   width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
-  padding: clamp(60px, 12vw, 149px) 24px;
-  gap: 44px;
+  justify-content: flex-start;
+  padding: clamp(60px, 10vw, 140px) 16px;
+  gap: 40px;
   background: #f8f9fd;
   z-index: 1;
 }
 
-/* 模糊装饰 */
 .content-bg {
   position: absolute;
   inset: 0;
   background: #f8f9fd;
   z-index: -2;
 }
+
 .blur-circle {
   position: absolute;
   border-radius: 50%;
   z-index: -1;
+  opacity: 0.2;
 }
+
 .top-right {
-  width: clamp(300px, 40vw, 500px);
-  height: clamp(300px, 40vw, 500px);
+  width: clamp(200px, 35vw, 400px);
+  height: clamp(200px, 35vw, 400px);
   right: -10%;
   top: -15%;
-  background: rgba(49, 77, 226, 0.2);
+  background: #314de2;
   filter: blur(60px);
 }
+
 .bottom-left {
-  width: clamp(240px, 32vw, 400px);
-  height: clamp(240px, 32vw, 400px);
+  width: clamp(180px, 30vw, 350px);
+  height: clamp(180px, 30vw, 350px);
   left: -8%;
   bottom: -12%;
-  background: rgba(97, 68, 211, 0.2);
+  background: #6144d3;
   filter: blur(50px);
 }
 
-
-/* 标题区域 */
+/* 欢迎语 */
 .greeting-wrapper {
   width: 100%;
-  max-width: 840px;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   text-align: center;
 }
+
 .main-title {
+  font-size: clamp(26px, 5vw, 40px);
   font-weight: 700;
-  font-size: clamp(28px, 5vw, 40px);
-  line-height: 1.2;
-  letter-spacing: -1.2px;
   color: #2e3339;
   white-space: nowrap;
 }
-/* 小龙助教紫色 */
+
 .purple-text {
   color: #6144D3;
 }
+
 .sub-title {
-  font-weight: 500;
-  font-size: clamp(16px, 2.5vw, 18px);
-  line-height: 28px;
+  font-size: clamp(15px, 2.5vw, 18px);
   color: #5a6066;
 }
 
-/* 输入框区域 */
+/* 智能体头部 */
+.agent-header {
+  width: 100%;
+  max-width: 800px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 0 12px;
+}
+
+.avatar-root {
+  width: 78px;
+  height: 78px;
+  flex-shrink: 0;
+}
+
+.avatar-bg {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+.avatar-vector {
+  width: 34px;
+  height: 34px;
+  background: #ccc;
+  border-radius: 8px;
+}
+
+.info-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.heading3 {
+  display: flex;
+  align-items: center;
+}
+
+.title-text {
+  font-size: clamp(20px, 4vw, 26px);
+  font-weight: 500;
+  color: #2E3339;
+  white-space: nowrap;
+}
+
+.tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.tag-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #F1F5F9;
+  border-radius: 16px;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tag-btn.blue { background: #DBEAFE; }
+.tag-btn.orange { background: #FFF7ED; }
+.tag-btn.green { background: #BEEBEE; }
+.tag-btn.purple { background: #F3E8FF; }
+.tag-btn.light-green { background: #D6F7CF; }
+
+.tag-icon-wrapper {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.tag-img {
+  height: 10px;
+  object-fit: contain;
+}
+
+.tag-text {
+  font-size: 12px;
+  color: #334155;
+}
+
+/* 输入框 */
 .input-wrapper {
   width: 100%;
   max-width: 768px;
 }
+
 .input-container {
   position: relative;
   width: 100%;
 }
+
 .input-glow {
   position: absolute;
-  inset: -4px;
-  background: linear-gradient(90deg, #314de2 0%, #6144d3 100%);
+  inset: -3px;
+  background: linear-gradient(90deg, #314de2, #6144d3);
   opacity: 0.1;
   filter: blur(4px);
   border-radius: 16px;
-  z-index: 0;
 }
+
 .input-body {
   position: relative;
-  width: 100%;
   background: #fff;
-  border: 2px solid transparent;
   border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(49, 77, 226, 0.05),
-    0 8px 10px -6px rgba(49, 77, 226, 0.05);
+  border: 2px solid transparent;
+  box-shadow: 0 10px 20px -8px rgba(49, 77, 226, 0.1);
   overflow: hidden;
-  z-index: 1;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
 }
+
 .input-container.focused .input-body {
   border-color: #E6DEFF;
-  box-shadow: 0px 10px 25px -5px #C7D2FE, 0px 8px 10px -6px #C7D2FE;
+  box-shadow: 0 10px 25px -6px #C7D2FE;
 }
+
 .textarea {
   width: 100%;
-  min-height: 128px;
+  min-height: 120px;
   max-height: 200px;
   padding: 20px 24px;
-  font-size: 18px;
+  font-size: 16px;
   color: #2e3339;
   outline: none;
   overflow-y: auto;
-  resize: none;
 }
+
 .textarea:empty::before {
   content: attr(placeholder);
   color: rgba(90, 96, 102, 0.4);
 }
+
 .attachments-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 0 24px 12px;
 }
+
 .attachment-card {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  background: #FFFFFF;
+  padding: 8px 12px;
+  background: #fff;
   border: 1px solid #E2E8F0;
   border-radius: 8px;
   font-size: 13px;
-  color: #334155;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
 }
-.attachment-icon {
-  font-size: 16px;
-}
-.attachment-name {
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 .attachment-remove {
   cursor: pointer;
   color: #94A3B8;
-  font-size: 16px;
-  line-height: 1;
-  margin-left: 4px;
 }
-.attachment-remove:hover {
-  color: #D0435F;
-}
+
 .input-bar {
   display: flex;
   justify-content: space-between;
@@ -378,72 +543,75 @@ const handleSend = async () => {
   padding: 12px 16px;
   background: rgba(242, 244, 248, 0.3);
 }
+
 .left-icons {
   display: flex;
   gap: 8px;
 }
+
 .icon-btn {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 }
+
 .icon-btn img {
   width: 20px;
   height: 20px;
   object-fit: contain;
 }
-.recording-btn {
-  background: transparent;
-}
+
 .recording-indicator {
   width: 14px;
   height: 14px;
   background: #D0435F;
   border-radius: 2px;
 }
+
 .send-btn {
-  padding: 8px 24px;
-  background: linear-gradient(111.41deg, #314de2, #6144d3);
+  padding: 8px 20px;
+  background: linear-gradient(110deg, #314de2, #6144d3);
   border-radius: 12px;
-  border: none;
   color: #fff;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  border: none;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-/* 卡片区域 */
+/* 卡片 */
 .cards-container {
   width: 100%;
-  max-width: 860px;
+  max-width: 800px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
 }
+
 .card {
   background: #fff;
   border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 12px 40px rgba(49, 77, 226, 0.06);
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(49, 77, 226, 0.06);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .card-icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .card-icon.blue {
   background: rgba(49, 77, 226, 0.1);
 }
@@ -451,33 +619,29 @@ const handleSend = async () => {
   background: rgba(97, 68, 211, 0.1);
 }
 
-/* 图片图标 */
 .icon-img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+  width: 22px;
+  height: 22px;
 }
 
 .card-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 500;
   color: #2e3339;
-  line-height: 28px;
-}
-.card-desc {
-  font-size: 14px;
-  color: #5a6066;
-  line-height: 1.6;
 }
 
-/* 底部 */
+.card-desc {
+  font-size: 13px;
+  color: #5a6066;
+  line-height: 1.5;
+}
+
 .footer {
   width: 100%;
   max-width: 600px;
-  font-size: 10px;
-  line-height: 20px;
-  color: rgba(90, 96, 102, 0.5);
+  font-size: 11px;
+  color: rgba(90, 96, 102, 05);
   text-align: center;
-  margin-top: 20px;
+  line-height: 1.5;
 }
 </style>

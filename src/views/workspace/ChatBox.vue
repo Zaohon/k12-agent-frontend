@@ -47,7 +47,7 @@
 
     <!-- 中间窗口：动态切换 -->
     <main class="chat-main-content">
-      <ChatInit v-if="!activeSessionId" @send-message="handleChatInitSend" />
+      <ChatInit v-if="!activeSessionId" :agentInfo="agentInfo" @send-message="handleChatInitSend" />
       <Chating v-else :agentId="agentId" :agentInfo="agentInfo" :messages="messages" :isStreaming="isStreaming"
         :userInput="userInput" :activeSession="activeSession" :commonPrompts="commonPrompts" @send-message="handleSend"
         @refreshSessions="refreshSessions" @updateMessages="messages = $event"
@@ -82,15 +82,26 @@ import { chatLog, chatLogError } from '../../utils/logManage'
 import ChatInit from './ChatInit.vue'
 import Chating from './Chating.vue'
 import { DEFAULT_AGENT_ID } from '../../costants/costant'
-import { sessionApi, type Session } from '../../api/api'
+import { sessionApi, type Session, agentApi } from '../../api/api'
 
 const route = useRoute()
 //const userStore = useUserStore()
 
 const agentId = computed(() => {
+  // 从路由参数获取 agentId
   const param = route.params.agentId
+  chatLog('路由参数 agentId:', param)
   if (param && typeof param === 'string') {
     const num = Number(param)
+    chatLog('解析路由参数 num:', num, '是否非法:', isNaN(num))
+    if (!isNaN(num)) return num
+  }
+  // 从查询参数获取 agentId
+  const query = route.query.id
+  chatLog('查询参数 id:', query)
+  if (query && typeof query === 'string') {
+    const num = Number(query)
+    chatLog('解析查询参数 num:', num, '是否非法:', isNaN(num))
     return !isNaN(num) ? num : undefined
   }
   return undefined
@@ -474,14 +485,36 @@ const handleGlobalClick = (_e: MouseEvent) => {
   }
 }
 
+// 加载智能体详情
+const loadAgentInfo = async (agentId: number) => {
+  chatLog('loadAgentInfo 开始加载, agentId:', agentId)
+  try {
+    const res = await agentApi.getAgentById(agentId)
+    chatLog('getAgentById 响应:', res)
+    if (res.success && res.data) {
+      chatLog('智能体信息加载成功:', res.data)
+      agentInfo.value = res.data
+    } else {
+      chatLog('getAgentById 失败或无数据, res:', res)
+    }
+  } catch (error) {
+    chatLogError('加载智能体详情失败:', error)
+  }
+}
+
 // 监听 agentId 变化
-watch(() => route.params.agentId, (newAgentId) => {
-  if (newAgentId) {
-    // 当切换到新的智能体时，重置聊天状态
+watch(agentId, (newId) => {
+  chatLog('监听到智能体ID变化：', newId)
+
+  if (newId && !isNaN(newId)) {
     activeSessionId.value = null
     messages.value = []
+    loadAgentInfo(newId)  // 用正确的 agentId 获取信息
+  } else {
+    chatLog('无有效智能体ID，清空信息')
+    agentInfo.value = null
   }
-})
+}, { immediate: true })
 
 // 组件挂载时加载会话列表
 onMounted(() => {
