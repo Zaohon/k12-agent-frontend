@@ -131,14 +131,14 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <button class="icon-btn" @click="handleImageClick">
+          <!--<button class="icon-btn" @click="handleImageClick">
             <div class="icon-inner">
               <img src="@/images/chatinit-img.png" alt="图片" />
             </div>
             <div class="tooltip">
               <span class="tooltip-text">图片</span>
             </div>
-          </button>
+          </button>-->
           
           <!-- 深度思考按钮 -->
           <button 
