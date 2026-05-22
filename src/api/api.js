@@ -405,6 +405,9 @@ export const sessionApi = {
         })
       });
 
+      apiLog('=== sendMessage Request Body ===');
+      apiLog('prompt:', prompt);
+      apiLog('attachments:', JSON.stringify(attachments));
       apiLog('Response status:', response.status);
       apiLog('Response headers:', [...response.headers.entries()]);
 

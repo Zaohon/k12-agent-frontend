@@ -58,9 +58,9 @@
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-              <button class="icon-btn" @click="handleImageClick">
+              <!--<button class="icon-btn" @click="handleImageClick">
                 <img src="@/images/chatinit-img.png" alt="图片" />
-              </button>
+              </button>-->
             </div>
             <button
               class="send-btn"

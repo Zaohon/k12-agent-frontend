@@ -1,5 +1,7 @@
 import { ref, h } from 'vue'
 import { ElMessage } from 'element-plus'
+import { knowledgeApi } from '@/api/api'
+import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
 
 /**
  * 附件项类型
@@ -12,7 +14,9 @@ export interface AttachmentItem {
   type: 'link' | 'video' | 'image' | 'audio'
   url: string
   name?: string
-  size?: number // 文件大小（字节）
+  size?: number
+  fileId?: number
+  mimeType?: string
 }
 
 /**
@@ -149,33 +153,97 @@ export function useAttachment() {
   }
 
   /**
-   * 上传通用文件
+   * 上传通用文件到知识库
    * 打开文件选择器，不限制文件类型
+   * 按照后端API流程：获取上传策略 -> 上传到OSS -> 创建文件记录
    */
   const uploadFile = () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.multiple = true
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const target = e.target as HTMLInputElement
       if (!target.files) return
 
-      Array.from(target.files).forEach(file => {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          const result = event.target?.result as string
-          addAttachment({
-            type: 'link',
-            url: result,
-            name: file.name,
-            size: file.size
-          })
-        }
-        reader.readAsDataURL(file)
-      })
+      for (const file of Array.from(target.files)) {
+        await uploadFileToKnowledgeBase(file)
+      }
       target.value = ''
     }
     input.click()
+  }
+
+  /**
+   * 上传文件到知识库（按照后端API流程）
+   * @param file - 要上传的文件
+   */
+  const uploadFileToKnowledgeBase = async (file: File) => {
+    try {
+      knowledgeLog('开始上传文件到知识库:', file.name, '大小:', file.size)
+
+      const contentType = file.type || 'application/octet-stream'
+
+      const policyRes = await knowledgeApi.getUploadPolicy({
+        fileName: file.name,
+        contentType
+      })
+
+      if (!policyRes || !policyRes.success || !policyRes.data) {
+        knowledgeLogError('获取上传策略失败', policyRes)
+        ElMessage.error('获取上传策略失败')
+        return
+      }
+
+      const { uploadUrl, key } = policyRes.data
+      knowledgeLog('获取到上传URL:', uploadUrl, 'Key:', key)
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': contentType
+        }
+      })
+
+      if (!uploadResponse.ok) {
+        knowledgeLogError('文件上传到OSS失败', uploadResponse)
+        ElMessage.error('文件上传失败')
+        return
+      }
+
+      knowledgeLog('文件上传到OSS成功')
+
+      const createRes = await knowledgeApi.createFile({
+        name: file.name,
+        mimeType: contentType,
+        size: file.size,
+        ossKey: key,
+        url: uploadUrl.split('?')[0]
+      })
+
+      if (!createRes || !createRes.success || !createRes.data) {
+        knowledgeLogError('创建文件记录失败', createRes)
+        ElMessage.error('创建文件记录失败')
+        return
+      }
+
+      const fileId = createRes.data.id
+      knowledgeLog('文件记录创建成功, fileId:', fileId)
+
+      addAttachment({
+        type: 'link',
+        url: uploadUrl.split('?')[0],
+        name: file.name,
+        size: file.size,
+        fileId,
+        mimeType: contentType
+      })
+
+      ElMessage.success('文件上传成功')
+    } catch (error) {
+      knowledgeLogError('文件上传异常', error)
+      ElMessage.error('文件上传失败')
+    }
   }
 
   /**
