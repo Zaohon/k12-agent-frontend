@@ -76,4 +76,12 @@ const currentContentComponent = computed(() => {
   height: 100vh;
   overflow: hidden;
 }
+
+@media screen and (max-width: 768px) {
+  .category-manage-page {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+}
 </style>

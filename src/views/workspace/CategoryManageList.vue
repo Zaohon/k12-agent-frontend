@@ -309,7 +309,7 @@ defineExpose({
 </script>
 
 <style scoped>
-/* 关键修改：自适应布局，不再固定高度 */
+
 .category-aside {
   box-sizing: border-box;
   display: flex;
@@ -318,8 +318,8 @@ defineExpose({
   width: 100%;
   max-width: 345px;
   min-width: 260px;
-  height: 100%;       /* 改为 100% 自适应 */
-  max-height: 100vh;  /* 最大不超过窗口 */
+  height: 100%;
+  max-height: 100vh;
   background: rgba(255, 255, 255, 0.4);
   border-right: 1px solid rgba(173, 178, 185, 0.1);
   backdrop-filter: blur(6px);
@@ -438,10 +438,10 @@ defineExpose({
   flex-direction: column;
   padding: 16px;
   gap: 8px;
-  flex: 1;               /* 自动占满剩余空间 */
-  overflow-y: auto;      /* 内容多了自动滚动 */
+  flex: 1;
+  overflow-y: auto; 
   overflow-x: hidden;
-  min-height: 0;         /* 解决 flex 嵌套滚动失效 */
+  min-height: 0;
 }
 
 .menu-item {
@@ -558,6 +558,24 @@ defineExpose({
     min-width: 100%;
     border-right: none;
     border-bottom: 1px solid rgba(173, 178, 185, 0.1);
+    max-height: none;
+    height: auto;
+  }
+
+  .title-row {
+    max-width: 100%;
+  }
+
+  .search-input {
+    max-width: 100%;
+  }
+
+  .menu-item {
+    max-width: 100%;
+  }
+
+  .create-btn {
+    max-width: 100%;
   }
 }
 </style>
