@@ -139,7 +139,7 @@
                     >{{ label }}</span>
                   </div>
                   <div v-else class="flex items-center justify-between">
-                    <span class="text-xs text-gray-400">{{ item.usageCount || '0' }}k 使用</span>
+                    <!--<span class="text-xs text-gray-400">{{ item.usageCount || '0' }}k 使用</span> -->
                     <span class="text-xs text-gray-400">@{{ item.creatorName || '小龙老师' }}</span>
                   </div>
                 </div>
@@ -177,7 +177,7 @@
                   </div>
                   <div class="flex-1">
                     <div class="text-sm font-medium text-[#2E3339]">{{ rec.title }}</div>
-                    <div class="text-xs text-[#5A6066]">获 {{ rec.likes || rec.usageCount || 0 }}k 点赞</div>
+                    <!-- <div class="text-xs text-[#5A6066]">获 {{ rec.likes || rec.usageCount || 0 }}k 点赞</div> -->
                   </div>
                 </div>
               </div>
@@ -240,7 +240,7 @@
                   >{{ label }}</span>
                 </div>
                 <div v-else class="flex items-center justify-between">
-                  <span class="text-xs text-gray-400">{{ item.usageCount || '0' }}k 使用</span>
+                  <!-- <span class="text-xs text-gray-400">{{ item.usageCount || '0' }}k 使用</span> -->
                   <span class="text-xs text-gray-400">@{{ item.creatorName || '小龙老师' }}</span>
                 </div>
               </div>
