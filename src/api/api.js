@@ -578,36 +578,6 @@ export const categoryApi = {
  */
 export const chatApi = {
   /**
-   * 流式聊天（直接与智能体对话）
-   * @param {number|string} agentId - 智能体 ID
-   * @param {Object} formData - 表单数据 {prompt, attachments}
-   * @returns {Promise<Response>} 响应流
-   */
-  streamChat: async (agentId, formData) => {
-    const token = getToken();
-    if (!token) {
-      ElMessage.error('未登录或登录已过期，请重新登录');
-      throw new Error('Token is null');
-    }
-
-    const response = await fetch(`${API_BASE}/chat/stream/${agentId}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    });
-
-    if (response.ok) {
-      return response;
-    } else {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-    }
-  },
-
-  /**
    * 语音转文字
    * @param {File|Blob} audioBlob - 音频文件或 blob
    * @param {string} [language='zh'] - 语言（可选，默认中文）
