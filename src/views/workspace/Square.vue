@@ -140,7 +140,7 @@
                   </div>
                   <div v-else class="flex items-center justify-between">
                     <!--<span class="text-xs text-gray-400">{{ item.usageCount || '0' }}k 使用</span> -->
-                    <span class="text-xs text-gray-400">@{{ item.creatorName || '小龙老师' }}</span>
+                    <span class="text-xs text-gray-400">@ {{ item.creatorName || '小龙老师' }}</span>
                   </div>
                 </div>
               </div>
@@ -177,7 +177,7 @@
                   </div>
                   <div class="flex-1">
                     <div class="text-sm font-medium text-[#2E3339]">{{ rec.title }}</div>
-                    <!-- <div class="text-xs text-[#5A6066]">获 {{ rec.likes || rec.usageCount || 0 }}k 点赞</div> -->
+                    <div class="text-xs text-[#5A6066]">@ {{ rec.creatorName }}</div>
                   </div>
                 </div>
               </div>
@@ -275,7 +275,7 @@ import {
   User,
   ArrowDown
 } from '@element-plus/icons-vue'
-import { categoryApi, agentApi } from '@/api/api'
+import { categoryApi } from '@/api/api'
 
 export default {
   name: 'Square',
@@ -359,6 +359,8 @@ export default {
               this.loadCategoryAgents(this.currentCategoryId)
             }
           })
+          // 加载推荐页智能体
+          this.loadRecommendedAgents()
         }
       } catch (error) {
         console.error('加载分类列表失败:', error)
@@ -367,8 +369,10 @@ export default {
       }
     },
     async loadFeaturedAgents() {
+      const featuredCategory = this.categories.find((c: any) => c.name === '精选页')
+      if (!featuredCategory?.id) return
       try {
-        const response = await agentApi.getFeaturedAgents()
+        const response = await categoryApi.getCategoryAgents(featuredCategory.id)
         if (response.success && response.data) {
           this.filteredAgents = response.data
         }
@@ -377,8 +381,9 @@ export default {
       }
     },
     async loadCategoryAgents(categoryId?: number) {
+      if (categoryId === undefined) return
       try {
-        const response = await agentApi.getDiscoverAgents(categoryId)
+        const response = await categoryApi.getCategoryAgents(categoryId)
         if (response.success && response.data) {
           this.agentList = response.data
           this.currentPage = 1
@@ -388,8 +393,10 @@ export default {
       }
     },
     async loadRecommendedAgents() {
+      const recommendCategory = this.categories.find((c: any) => c.name === '推荐页')
+      if (!recommendCategory?.id) return
       try {
-        const response = await agentApi.getDiscoverAgents(15)
+        const response = await categoryApi.getCategoryAgents(recommendCategory.id)
         if (response.success && response.data) {
           this.recommendedList = response.data
         }
@@ -416,7 +423,6 @@ export default {
   },
   mounted() {
     this.loadCategories()
-    this.loadRecommendedAgents()
   },
   watch: {
     activeTab() {
