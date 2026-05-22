@@ -150,6 +150,11 @@
   font-size: 14px;
   color: #2e3339;
   background: #fff;
+  outline: none;
+}
+
+.cm-form-input:focus {
+  border: 1px solid #6144D3;
 }
 
 .cm-form-input:disabled {

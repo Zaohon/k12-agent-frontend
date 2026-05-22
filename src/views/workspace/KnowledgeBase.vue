@@ -86,16 +86,31 @@
       <!-- 文件列表 -->
       <div v-if="files.length > 0" class="kb-file-table-bg">
         <div class="kb-file-table">
-          <div class="kb-table-header-row">
-            <div class="kb-table-cell kb-table-cell-1"><span class="kb-cell-text">名称</span></div>
-            <div class="kb-table-cell kb-table-cell-2"><span class="kb-cell-text">类型</span></div>
-            <div class="kb-table-cell kb-table-cell-3"><span class="kb-cell-text">修改时间</span></div>
-            <div class="kb-table-cell kb-table-cell-4"><span class="kb-cell-text">大小</span></div>
-            <div class="kb-table-cell kb-table-cell-5"><span class="kb-cell-text">位置</span></div>
+          <div class="kb-table-header-row" :class="{ 'has-scrollbar': files.length > 4 }">
+            <div class="kb-table-cell kb-table-cell-1 kb-sortable" @click="handleSort('name')">
+              <span class="kb-cell-text">名称</span>
+              <span class="kb-sort-icon" :class="{ 'asc': sortField === 'name' && sortOrder === 'asc', 'desc': sortField === 'name' && sortOrder === 'desc' }">↑</span>
+            </div>
+            <div class="kb-table-cell kb-table-cell-2 kb-sortable" @click="handleSort('type')">
+              <span class="kb-cell-text">类型</span>
+              <span class="kb-sort-icon" :class="{ 'asc': sortField === 'type' && sortOrder === 'asc', 'desc': sortField === 'type' && sortOrder === 'desc' }">↑</span>
+            </div>
+            <div class="kb-table-cell kb-table-cell-3 kb-sortable" @click="handleSort('createdAt')">
+              <span class="kb-cell-text">修改时间</span>
+              <span class="kb-sort-icon" :class="{ 'asc': sortField === 'createdAt' && sortOrder === 'asc', 'desc': sortField === 'createdAt' && sortOrder === 'desc' }">↑</span>
+            </div>
+            <div class="kb-table-cell kb-table-cell-4 kb-sortable" @click="handleSort('size')">
+              <span class="kb-cell-text">大小</span>
+              <span class="kb-sort-icon" :class="{ 'asc': sortField === 'size' && sortOrder === 'asc', 'desc': sortField === 'size' && sortOrder === 'desc' }">↑</span>
+            </div>
+            <div class="kb-table-cell kb-table-cell-5 kb-sortable" @click="handleSort('location')">
+              <span class="kb-cell-text">位置</span>
+              <span class="kb-sort-icon" :class="{ 'asc': sortField === 'location' && sortOrder === 'asc', 'desc': sortField === 'location' && sortOrder === 'desc' }">↑</span>
+            </div>
             <div class="kb-table-cell kb-table-cell-6"><span class="kb-cell-text">操作</span></div>
           </div>
           <div class="kb-table-body">
-            <div class="kb-table-body-row" v-for="file in files" :key="file.id">
+            <div class="kb-table-body-row" v-for="file in sortedFiles" :key="file.id">
               <div class="kb-table-cell kb-table-cell-1 kb-data-name-cell">
                 <img src="@/images/chatinit-1.png" alt="" class="kb-doc-icon" />
                 <span class="kb-data-name">{{ file.name }}</span>
@@ -234,7 +249,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { knowledgeApi } from '@/api/api'
@@ -280,6 +295,10 @@ const storage = ref({
 })
 
 const loading = ref(false)
+
+// 排序相关
+const sortField = ref<string>('name')
+const sortOrder = ref<'asc' | 'desc'>('asc')
 
 // 文件夹设置 Dialog
 const showFolderDialog = ref(false)
@@ -329,6 +348,47 @@ const fetchData = async () => {
     loading.value = false
   }
 }
+
+// 文件排序
+const handleSort = (field: string) => {
+  if (sortField.value === field) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field
+    sortOrder.value = 'asc'
+  }
+}
+
+// 排序后的文件列表
+const sortedFiles = computed(() => {
+  const field = sortField.value
+  const order = sortOrder.value
+  const multiplier = order === 'asc' ? 1 : -1
+  
+  return [...files.value].sort((a, b) => {
+    let comparison = 0
+    switch (field) {
+      case 'name':
+        comparison = a.name.localeCompare(b.name, 'zh-CN')
+        break
+      case 'type':
+        comparison = '文件'.localeCompare('文件', 'zh-CN')
+        break
+      case 'createdAt':
+        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        break
+      case 'size':
+        comparison = a.size - b.size
+        break
+      case 'location':
+        comparison = '知识库'.localeCompare('知识库', 'zh-CN')
+        break
+      default:
+        comparison = a.name.localeCompare(b.name, 'zh-CN')
+    }
+    return comparison * multiplier
+  })
+})
 
 // 点击文件夹跳转
 const handleFolderClick = (folderId: number, folderName: string) => {
