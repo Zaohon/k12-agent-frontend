@@ -82,14 +82,16 @@ import { useUserStore } from '@/store/user';
 import defaultAvatar from '@/images/default-avatar.png';
 import settingIcon from '@/images/func-setting.png';
 import exitIcon from '@/images/func-exit.png';
+import { API_BASE } from '@/utils/api';
 
 const router = useRouter();
 const userStore = useUserStore();
 const showPopover = ref(false);
 const avatarWrapperRef = ref<HTMLElement | null>(null);
+const userProfile = ref<any>(null);
 
 const emit = defineEmits<{
-  'open-profile': []
+  'open-profile': [];
 }>();
 
 const avatarUrl = computed(() => {
@@ -97,13 +99,25 @@ const avatarUrl = computed(() => {
   return userAvatar && userAvatar.trim() ? userAvatar : defaultAvatar;
 });
 
-const tokenLimit = computed(() => userStore.userInfo?.tokenLimit || 50000);
-const tokenUsed = computed(() => userStore.userInfo?.consumedToken || 0);
+const tokenLimit = computed(() => userProfile.value?.tokenLimit || userStore.userInfo?.tokenLimit || 50000);
+const tokenUsed = computed(() => userProfile.value?.consumedToken || userStore.userInfo?.consumedToken || 0);
 const tokenPercent = computed(() => {
   const limit = tokenLimit.value;
   const used = tokenUsed.value;
   return Math.max(0, Math.min(100, ((limit - used) / limit) * 100));
 });
+
+const fetchProfile = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      headers: { 'Authorization': `Bearer ${userStore.token}` }
+    })
+    const data = await res.json()
+    if (res.ok && data.success) {
+      userProfile.value = data.data
+    }
+  } catch (err) {}
+}
 
 const showInviteTip = () => {
   ElMessage.warning('功能施工中');
@@ -111,6 +125,9 @@ const showInviteTip = () => {
 
 const togglePopover = () => {
   showPopover.value = !showPopover.value;
+  if (showPopover.value) {
+    fetchProfile()
+  }
 };
 
 const closePopover = () => {
