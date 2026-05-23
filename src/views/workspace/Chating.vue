@@ -109,28 +109,24 @@
               <span class="tooltip-text">上传附件</span>
             </div>
           </button>
-          <div v-if="isRecording" class="icon-btn recording-btn" @click="stopRecording">
-            <div class="icon-inner recording-indicator"></div>
-          </div>          <el-dropdown v-else trigger="click" @command="handleAudioCommand">
-            <button class="icon-btn">
+          <button 
+              class="icon-btn" 
+              :class="{ 'recording-btn': isRecording }" 
+              @click="handleVoiceClick"
+              :disabled="voiceProcessing"
+            >
               <div class="icon-inner">
-                <img src="@/images/chatinit-vedio.png" alt="音频" />
+                <img 
+                  v-if="!isRecording" 
+                  src="@/images/chatinit-vedio.png" 
+                  alt="音频" 
+                />
+                <div v-else class="recording-indicator"></div>
               </div>
               <div class="tooltip">
-                <span class="tooltip-text">音频</span>
+                <span class="tooltip-text">{{ isRecording ? '停止录音' : '录音' }}</span>
               </div>
             </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="record">
-                  <span>录音</span>
-                </el-dropdown-item>
-                <el-dropdown-item command="upload">
-                  <span>上传音频</span>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
           <!--<button class="icon-btn" @click="handleImageClick">
             <div class="icon-inner">
               <img src="@/images/chatinit-img.png" alt="图片" />
@@ -209,7 +205,7 @@
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { sessionApi } from '../../api/api'
+import { sessionApi, chatApi } from '../../api/api'
 import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
 import { chatLog, chatLogError } from '../../utils/logManage'
 import { useAttachment } from '@/hooks/useAttachment'
@@ -219,6 +215,12 @@ import internalBlueIcon from '@/images/internal-blue.png'
 import internalGreyIcon from '@/images/internal-grey.png'
 import thinkBlueIcon from '@/images/think-bule.png'
 import thinkGreyIcon from '@/images/think-grey.png'
+
+// 录音相关变量
+let mediaRecorder = null
+let audioChunks = []
+const voiceProcessing = ref(false)
+const isRecording = ref(false)
 
 const props = defineProps({
   agentId: {
@@ -328,19 +330,83 @@ const calcTextareaHeight = async () => {
   }
 }
 
-const { attachments, isRecording, uploadImage, uploadAudioFile, uploadFile, startRecording, stopRecording, removeAttachment, getAttachmentIcon } = useAttachment()
+const { attachments, uploadImage, uploadFile, removeAttachment, getAttachmentIcon } = useAttachment()
 
 const handleFileUpload = () => {
   uploadFile()
   nextTick().then(() => calcTextareaHeight())
 }
 
-const handleAudioCommand = (command) => {
-  if (command === 'record') {
-    isRecording.value ? stopRecording() : startRecording()
-  } else if (command === 'upload') {
-    uploadAudioFile()
-    nextTick().then(() => calcTextareaHeight())
+const handleVoiceClick = () => {
+  if (voiceProcessing.value) {
+    ElMessage.warning('正在处理语音，请稍候...')
+    return
+  }
+
+  if (isRecording.value) {
+    stopRecording()
+  } else {
+    startRecording()
+  }
+}
+
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaRecorder = new MediaRecorder(stream)
+    audioChunks = []
+
+    mediaRecorder.ondataavailable = function(e) {
+      if (e.data.size > 0) {
+        audioChunks.push(e.data)
+      }
+    }
+
+    mediaRecorder.onstop = function() {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+      processAudio(audioBlob)
+      stream.getTracks().forEach(function(track) {
+        track.stop()
+      })
+    }
+
+    mediaRecorder.start()
+    isRecording.value = true
+    ElMessage.info('正在录音，再次点击停止')
+  } catch (error) {
+    console.error('获取麦克风权限失败:', error)
+    ElMessage.error('无法获取麦克风权限，请检查浏览器设置')
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder && isRecording.value) {
+    mediaRecorder.stop()
+    isRecording.value = false
+  }
+}
+
+const processAudio = async (audioBlob) => {
+  voiceProcessing.value = true
+  try {
+    ElMessage.info('正在处理语音...')
+    const res = await chatApi.voiceToText(audioBlob, 'zh')
+    if (res.success && res.data && res.data.text) {
+      inputVal.value = res.data.text
+      ElMessage.success('语音转文字成功')
+      nextTick(function() {
+        if (textareaRef.value) {
+          textareaRef.value.focus()
+        }
+      })
+    } else {
+      ElMessage.error(res.message || '语音转文字失败')
+    }
+  } catch (error) {
+    console.error('语音转文字失败:', error)
+    ElMessage.error('语音转文字失败，请重试')
+  } finally {
+    voiceProcessing.value = false
   }
 }
 

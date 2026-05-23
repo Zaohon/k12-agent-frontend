@@ -62,24 +62,15 @@
               <button class="icon-btn" @click="handleFileUpload">
                 <img src="@/images/chatinit-link.png" alt="上传附件" />
               </button>
-              <div v-if="isRecording" class="icon-btn recording-btn" @click="stopRecording">
-                <div class="recording-indicator"></div>
-              </div>
-              <el-dropdown v-else trigger="click" @command="handleAudioCommand">
-                <button class="icon-btn">
-                  <img src="@/images/chatinit-vedio.png" alt="音频" />
-                </button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="record">
-                      <span>录音</span>
-                    </el-dropdown-item>
-                    <el-dropdown-item command="upload">
-                      <span>上传音频</span>
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
+              <button 
+                class="icon-btn" 
+                :class="{ 'recording-btn': isRecording }" 
+                @click="handleVoiceClick"
+                :disabled="voiceProcessing"
+              >
+                <img v-if="!isRecording" src="@/images/chatinit-vedio.png" alt="音频" />
+                <div v-else class="recording-indicator"></div>
+              </button>
             </div>
             <button class="send-btn" :disabled="isLoading" @click="handleSend">
               {{ isLoading ? '处理中...' : '发送' }}
@@ -116,6 +107,12 @@ import chatinit3 from '@/images/chatinit-3.png'
 import chatinit4 from '@/images/chatinit-4.png'
 import { useAttachment } from '@/hooks/useAttachment'
 import { chatLogError } from '@/utils/logManage'
+import { chatApi } from '@/api/api'
+
+// 录音相关变量
+let mediaRecorder = null
+let audioChunks = []
+const voiceProcessing = ref(false)
 
 const props = defineProps({
   agentInfo: {
@@ -198,7 +195,7 @@ const cards = ref([
   },
 ])
 
-const { attachments, isRecording, uploadImage, uploadVideo, uploadAudioFile, uploadFile, addLink, startRecording, stopRecording, clearAttachments, getAttachmentSummary, removeAttachment, getAttachmentIcon } = useAttachment()
+const { attachments, isRecording, uploadImage, uploadVideo, uploadFile, addLink, clearAttachments, getAttachmentSummary, removeAttachment, getAttachmentIcon } = useAttachment()
 
 const textareaRef = ref(null)
 const isLoading = ref(false)
@@ -210,15 +207,73 @@ const handleFileUpload = () => {
   uploadFile()
 }
 
-const handleAudioCommand = (command) => {
-  if (command === 'record') {
-    if (isRecording.value) {
-      stopRecording()
-    } else {
-      startRecording()
+const handleVoiceClick = () => {
+  if (voiceProcessing.value) {
+    ElMessage.warning('正在处理语音，请稍候...')
+    return
+  }
+
+  if (isRecording.value) {
+    stopRecording()
+  } else {
+    startRecording()
+  }
+}
+
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaRecorder = new MediaRecorder(stream)
+    audioChunks = []
+
+    mediaRecorder.ondataavailable = function(e) {
+      if (e.data.size > 0) {
+        audioChunks.push(e.data)
+      }
     }
-  } else if (command === 'upload') {
-    uploadAudioFile()
+
+    mediaRecorder.onstop = function() {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+      processAudio(audioBlob)
+      stream.getTracks().forEach(function(track) {
+        track.stop()
+      })
+    }
+
+    mediaRecorder.start()
+    isRecording.value = true
+    ElMessage.info('正在录音，再次点击停止')
+  } catch (error) {
+    console.error('获取麦克风权限失败:', error)
+    ElMessage.error('无法获取麦克风权限，请检查浏览器设置')
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder && isRecording.value) {
+    mediaRecorder.stop()
+    isRecording.value = false
+  }
+}
+
+const processAudio = async (audioBlob) => {
+  voiceProcessing.value = true
+  try {
+    ElMessage.info('正在处理语音...')
+    const res = await chatApi.voiceToText(audioBlob, 'zh')
+    if (res.success && res.data && res.data.text) {
+      if (textareaRef.value) {
+        textareaRef.value.innerText = res.data.text
+      }
+      ElMessage.success('语音转文字成功')
+    } else {
+      ElMessage.error(res.message || '语音转文字失败')
+    }
+  } catch (error) {
+    console.error('语音转文字失败:', error)
+    ElMessage.error('语音转文字失败，请重试')
+  } finally {
+    voiceProcessing.value = false
   }
 }
 
