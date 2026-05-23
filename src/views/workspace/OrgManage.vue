@@ -60,13 +60,22 @@
           <div class="admin-switch-wrapper">
             <div class="admin-info">
               <div class="admin-label">专属管理员</div>
-              <div class="admin-username">{{ selectedOrgAdmin ? selectedOrgAdmin.username : '未指定' }}</div>
+              <div class="admin-username">
+                <template v-if="selectedOrgAdmin">{{ selectedOrgAdmin.username }}</template>
+                <template v-else>
+                  <span class="inline-flex items-center">
+                    <img src="@/images/error.png" class="h-3.5 w-auto mr-1" alt="error" />
+                    未指定
+                  </span>
+                </template>
+              </div>
             </div>
             <div class="switch-divider"></div>
             <div class="replace-btn-wrapper">
               <el-button type="primary" size="small" class="replace-btn" @click="showReplaceAdminDialog = true">
-                <img src="@/images/switch.png" class="w-3 h-auto mr-2" alt="switch" />
-                替换
+                <img v-if="selectedOrgAdmin" src="@/images/switch.png" class="w-3 h-auto mr-1" alt="switch" />
+                <img v-else src="@/images/add-admin-icon.png" class="w-4 h-auto mr-1" alt="add" />
+                {{ selectedOrgAdmin ? '替换' : '添加' }}
               </el-button>
             </div>
           </div>
@@ -274,7 +283,7 @@ const deletingUser = ref<any>(null)
 const deleting = ref(false)
 
 const selectedOrgAdmin = computed(() => {
-  return selectedOrg.value?.users?.[0] || null
+  return orgUsers.value.find((u: any) => u.role === 'SCHOOL_ADMIN') || orgUsers.value[0] || null
 })
 
 const userPage = ref(1)
@@ -698,6 +707,7 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   color: #314DE2;
+  font-size: 16px;
 }
 
 .replace-admin-body {
