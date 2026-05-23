@@ -164,7 +164,7 @@
           <span class="hint-text">Enter 发送 / Shift+Enter 换行</span>
           <button
             class="send-btn"
-            :disabled="!inputVal.trim() || isStreaming"
+            :disabled="!inputVal.trim() || isStreaming || hasThinkingMessage"
             @click="handleSend"
           >
             <img src="@/images/chat_sendmsg.png" alt="发送" class="send-icon" />
@@ -262,6 +262,12 @@ const isStreaming = computed({
   get: () => props.isStreaming,
   set: (val) => emit('updateStreaming', val)
 })
+
+// 检查是否有消息正在思考中
+const hasThinkingMessage = computed(() => {
+  return internalMessages.value.some(msg => msg.isThinking)
+})
+
 const msgContainer = ref(null)
 const showUpdateTopicDialog = ref(false)
 
