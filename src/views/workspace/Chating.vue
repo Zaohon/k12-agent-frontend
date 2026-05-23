@@ -64,12 +64,6 @@
         :message="msg"
       />
 
-      <div v-if="isStreaming && messages.length === 0" class="streaming-box">
-        <div class="stream-avatar">
-          <el-icon><Monitor /></el-icon>
-        </div>
-        <el-tag type="info" class="stream-text">正在为您生成最优教学建议...</el-tag>
-      </div>
     </div>
 
     <!-- 底部输入 -->
@@ -264,7 +258,10 @@ watch(() => props.activeSession, (newSession, oldSession) => {
 
 const inputVal = ref('')
 const internalMessages = ref([])
-const isStreaming = ref(false)
+const isStreaming = computed({
+  get: () => props.isStreaming,
+  set: (val) => emit('updateStreaming', val)
+})
 const msgContainer = ref(null)
 const showUpdateTopicDialog = ref(false)
 
@@ -670,35 +667,9 @@ watch(() => props.activeSession, () => loadSessionHistory(), { immediate: true }
 
 // 监听外部传入的消息变化（来自 ChatInit）
 watch(() => props.messages, (newMessages) => {
-  if (!newMessages || newMessages.length === 0) return
-  
-  // 如果内部消息为空，直接使用外部消息
-  if (internalMessages.value.length === 0) {
-    internalMessages.value = [...newMessages]
-    nextTick(scrollToBottom)
-    return
-  }
-  
-  // 如果外部消息有更多内容（比如用户刚发送的消息），合并新增的消息
-  // 检查外部消息中是否有内部消息中没有的消息
-  const lastInternalMsgId = internalMessages.value.length > 0 
-    ? internalMessages.value[internalMessages.value.length - 1]?.content 
-    : null
-  
-  // 找到第一个不匹配的消息索引
-  let startIndex = 0
-  for (; startIndex < newMessages.length; startIndex++) {
-    if (startIndex >= internalMessages.value.length || 
-        newMessages[startIndex]?.content !== internalMessages.value[startIndex]?.content) {
-      break
-    }
-  }
-  
-  // 如果有新增的消息，添加到内部消息列表
-  if (startIndex < newMessages.length) {
-    internalMessages.value = [...newMessages]
-    nextTick(scrollToBottom)
-  }
+  if (!newMessages) return
+  internalMessages.value = JSON.parse(JSON.stringify(newMessages)) // 深拷贝彻底同步
+  nextTick(scrollToBottom)
 }, { immediate: true, deep: true })
 
 // 监听智能体变化
@@ -727,6 +698,7 @@ onMounted(() => {
   }
 
   resetInputHeight()
+
 })
 </script>
 

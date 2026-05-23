@@ -47,11 +47,11 @@
 
     <!-- 中间窗口：动态切换 -->
     <main class="chat-main-content">
-      <ChatInit v-if="!activeSessionId" :agentInfo="agentInfo" @send-message="handleChatInitSend" />
-      <Chating v-else :agentId="agentId" :agentInfo="agentInfo" :messages="messages" :isStreaming="isStreaming"
-        :userInput="userInput" :activeSession="activeSession" :commonPrompts="commonPrompts" @send-message="handleSend"
-        @refreshSessions="refreshSessions" @updateMessages="messages = $event"
-        @updateStreaming="isStreaming = $event" />
+      <ChatInit v-show="!activeSessionId" :agentInfo="agentInfo" @send-message="handleChatInitSend" />
+      <Chating v-show="activeSessionId" :key="activeSessionId" :agentId="agentId" :agentInfo="agentInfo"
+        :messages="messages" :isStreaming="isStreaming" :userInput="userInput" :activeSession="activeSession"
+        :commonPrompts="commonPrompts" @send-message="handleSend" @refreshSessions="refreshSessions"
+        @updateMessages="messages = $event" @updateStreaming="isStreaming = $event" />
     </main>
 
     <!-- 右侧配置 -->
@@ -515,6 +515,15 @@ watch(agentId, (newId) => {
     agentInfo.value = null
   }
 }, { immediate: true })
+
+// 会话切换 → 强制清空消息
+watch(activeSessionId, (newId, oldId) => {
+  if (newId !== oldId) {
+    messages.value = []        //清空消息
+    isStreaming.value = false  // 强制停止加载状态
+    userInput.value = ''       // 清空输入
+  }
+})
 
 // 组件挂载时加载会话列表
 onMounted(() => {
