@@ -30,9 +30,9 @@
 
 /* 头像 */
 .chat-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,20 +40,28 @@
 }
 
 .user-avatar {
-  background: linear-gradient(135deg, #314DE2, #5B6BF1);
+  background: #B4BDFF;
+  border: 4px solid #FFFFFF;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+.user-avatar-letter {
+  font-weight: 700;
+  font-size: 14px;
+  user-select: none;
+  line-height: 1;
 }
 
 .assistant-avatar {
   background: #FFFFFF;
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 4px solid #FFFFFF;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.06);
 }
 
-.chat-avatar .icon {
-  font-size: 16px;
-}
-
-.user-avatar .icon {
-  color: white;
+.assistant-avatar-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 /* 气泡 */
@@ -69,6 +77,8 @@
 .chat-bubble-wrapper {
   display: flex;
   flex-direction: column;
+  margin-top: 15px;
+  margin-bottom: 20px;
 }
 
 .align-end {

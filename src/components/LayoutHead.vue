@@ -26,18 +26,17 @@
           <div class="userid">ID: {{ userStore.userInfo?.id || '--' }}</div>
         </div>
         <div class="avatar-wrapper" ref="avatarWrapperRef">
-          <div class="avatar-bg" @click="togglePopover">
-            <img :src="avatarUrl" alt="用户头像" class="avatar-img" />
+          <div class="avatar-bg" @click="togglePopover" :style="{ backgroundColor: avatarBgColor }">
+            <span class="avatar-letter" :style="{ color: avatarTextColor }">{{ usernameFirstChar }}</span>
           </div>
           <!-- 个人信息悬浮窗 -->
           <Transition name="popover">
             <div v-if="showPopover" class="user-popover">
-              <div class="popover-arrow"></div>
               <div class="popover-content">
                 <!-- 用户头像和信息 -->
                 <div class="popover-header">
-                  <div class="popover-avatar">
-                    <img :src="avatarUrl" alt="用户头像" class="popover-avatar-img" />
+                  <div class="popover-avatar" :style="{ backgroundColor: avatarBgColor }">
+                    <span class="avatar-letter text-xl" :style="{ color: avatarTextColor }">{{ usernameFirstChar }}</span>
                   </div>
                   <div class="popover-user-info">
                     <div class="popover-username">{{ userStore.userInfo?.username || '未登录' }}</div>
@@ -97,6 +96,34 @@ const emit = defineEmits<{
 const avatarUrl = computed(() => {
   const userAvatar = userStore.userInfo?.avatarUrl;
   return userAvatar && userAvatar.trim() ? userAvatar : defaultAvatar;
+});
+
+const usernameFirstChar = computed(() => {
+  return (userStore.userInfo?.username || '?').charAt(0).toUpperCase();
+});
+
+const avatarBgColor = computed(() => {
+  const role = userStore.userInfo?.role;
+  switch (role) {
+    case 'SUPER_ADMIN': return '#F3E8FF';
+    case 'SCHOOL_ADMIN': return '#FFF7E6';
+    case 'TEACHER': return '#DBEAFE';
+    case 'STUDENT': return '#D6F7CF';
+    case 'PARENT': return '#E0F2FE';
+    default: return '#B4BDFF';
+  }
+});
+
+const avatarTextColor = computed(() => {
+  const role = userStore.userInfo?.role;
+  switch (role) {
+    case 'SUPER_ADMIN': return '#8B5CF6';
+    case 'SCHOOL_ADMIN': return '#FF9500';
+    case 'TEACHER': return '#3B82F6';
+    case 'STUDENT': return '#10B981';
+    case 'PARENT': return '#0284C7';
+    default: return '#FFFFFF';
+  }
 });
 
 const tokenLimit = computed(() => userProfile.value?.tokenLimit || userStore.userInfo?.tokenLimit || 50000);
@@ -319,18 +346,25 @@ onUnmounted(() => {
   padding: 0px;
   width: 40px;
   height: 40px;
-  background: #b4bdff;
-  border: 1px solid rgba(49, 77, 226, 0.1);
+  border: 4px solid #FFFFFF;
   border-radius: 9999px;
   flex-shrink: 0;
   cursor: pointer;
   overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.06);
 }
 
 .avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.avatar-letter {
+  font-weight: 700;
+  color: #FFFFFF;
+  user-select: none;
+  line-height: 1;
 }
 
 /* ========= 个人信息悬浮窗 ========= */
@@ -343,25 +377,27 @@ onUnmounted(() => {
   z-index: 9999;
 }
 
-.popover-arrow {
+.user-popover::after {
+  content: '';
   position: absolute;
-  width: 30px;
-  height: 17px;
-  right: 8px;
+  width: 20px;
+  height: 12px;
+  right: 12px;
   top: 0;
   background: #FFFFFF;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  z-index: 1;
 }
 
 .popover-content {
   position: absolute;
-  top: 17px;
+  top: 12px;
   left: 0;
   right: 0;
   height: 300px;
   background: #FFFFFF;
   border-radius: 12px;
-  box-shadow: 0px 5px 25px -5px rgba(226, 232, 240, 0.8);
+  box-shadow: 0px 5px 25px -5px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -384,22 +420,13 @@ onUnmounted(() => {
 .popover-avatar {
   width: 50px;
   height: 50px;
-  background: #B4BDFF;
-  border: 1px solid rgba(49, 77, 226, 0.1);
+  border: 4px solid #FFFFFF;
   border-radius: 9999px;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0px 8px 10px -6px rgba(199, 210, 254, 0.5);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.06);
   overflow: hidden;
-  flex-shrink: 0;
-}
-
-.popover-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
   flex-shrink: 0;
 }
 

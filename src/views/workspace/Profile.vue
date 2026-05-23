@@ -25,7 +25,7 @@
                     <span class="status-text">正常</span>
                   </div>
                 </div>
-                <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 mx-auto flex items-center justify-center text-white text-4xl font-bold shadow-lg mb-6 border-4 border-white">
+                <div class="w-24 h-24 rounded-full mx-auto flex items-center justify-center text-4xl font-bold mb-6 border-4 border-white" :style="{ backgroundColor: avatarBgColor, color: avatarTextColor, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.06)' }">
                   {{ userStore.userInfo?.username?.charAt(0).toUpperCase() }}
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">{{ userStore.userInfo?.username }}</h2>
@@ -154,6 +154,30 @@ const emit = defineEmits<{
 
 const userStore = useUserStore()
 const userProfile = ref<any>(null)
+
+const avatarBgColor = computed(() => {
+  const role = userStore.userInfo?.role
+  switch (role) {
+    case 'SUPER_ADMIN': return '#F3E8FF'
+    case 'SCHOOL_ADMIN': return '#FFF7E6'
+    case 'TEACHER': return '#DBEAFE'
+    case 'STUDENT': return '#D6F7CF'
+    case 'PARENT': return '#E0F2FE'
+    default: return '#B4BDFF'
+  }
+})
+
+const avatarTextColor = computed(() => {
+  const role = userStore.userInfo?.role
+  switch (role) {
+    case 'SUPER_ADMIN': return '#8B5CF6'
+    case 'SCHOOL_ADMIN': return '#FF9500'
+    case 'TEACHER': return '#3B82F6'
+    case 'STUDENT': return '#10B981'
+    case 'PARENT': return '#0284C7'
+    default: return '#FFFFFF'
+  }
+})
 
 const pwdForm = ref({
   oldPassword: '',

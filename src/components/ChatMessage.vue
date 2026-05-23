@@ -1,13 +1,9 @@
 <template>
   <div class="chat-message-row" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
     <div class="chat-message-box" :class="message.role === 'user' ? 'flex-row-reverse' : 'flex-row'">
-      <div class="chat-avatar" :class="message.role === 'user' ? 'user-avatar' : 'assistant-avatar'">
-        <el-icon class="icon" v-if="message.role === 'user'">
-          <component :is="userIconComponent" />
-        </el-icon>
-        <el-icon class="icon" v-else>
-          <component :is="assistantIconComponent" />
-        </el-icon>
+      <div class="chat-avatar" :class="message.role === 'user' ? 'user-avatar' : 'assistant-avatar'" :style="message.role === 'user' ? { background: userAvatarBg } : {}">
+        <span v-if="message.role === 'user'" class="user-avatar-letter" :style="{ color: userAvatarColor }">{{ userAvatarFirstChar }}</span>
+        <img v-else src="@/images/longqi-logo.png" class="assistant-avatar-img" alt="assistant" />
       </div>
       <div class="chat-bubble-wrapper" :class="message.role === 'user' ? 'align-end' : 'align-start'">
         <div class="chat-bubble" :class="message.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
@@ -54,8 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { User, Monitor } from '@element-plus/icons-vue'
 import { computed, watch } from 'vue'
+import { useUserStore } from '@/store/user'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -70,20 +66,46 @@ interface Message {
 
 const props = withDefaults(defineProps<{
   message: Message
-  userIcon?: any
-  assistantIcon?: any
   thinkingText?: string
   showAttachments?: boolean
   attachmentStatus?: string
 }>(), {
-  userIcon: User,
-  assistantIcon: Monitor,
   thinkingText: '正在思考中...',
   showAttachments: true,
   attachmentStatus: '解析完成'
 })
 
 import { chatLog as log } from '@/utils/logManage'
+
+const userStore = useUserStore()
+
+const userAvatarFirstChar = computed(() => {
+  return (userStore.userInfo?.username || '?').charAt(0).toUpperCase()
+})
+
+const userAvatarBg = computed(() => {
+  const role = userStore.userInfo?.role
+  switch (role) {
+    case 'SUPER_ADMIN': return '#F3E8FF'
+    case 'SCHOOL_ADMIN': return '#FFF7E6'
+    case 'TEACHER': return '#DBEAFE'
+    case 'STUDENT': return '#D6F7CF'
+    case 'PARENT': return '#E0F2FE'
+    default: return '#B4BDFF'
+  }
+})
+
+const userAvatarColor = computed(() => {
+  const role = userStore.userInfo?.role
+  switch (role) {
+    case 'SUPER_ADMIN': return '#8B5CF6'
+    case 'SCHOOL_ADMIN': return '#FF9500'
+    case 'TEACHER': return '#3B82F6'
+    case 'STUDENT': return '#10B981'
+    case 'PARENT': return '#0284C7'
+    default: return '#FFFFFF'
+  }
+})
 
 // 监听message变化
 watch(() => props.message, (newMsg) => {
@@ -93,14 +115,6 @@ watch(() => props.message, (newMsg) => {
     isThinking: newMsg.isThinking
   })
 }, { deep: true, immediate: true })
-
-const userIconComponent = computed(() => {
-  return props.userIcon
-})
-
-const assistantIconComponent = computed(() => {
-  return props.assistantIcon
-})
 
 // 复制消息内容
 import { ElMessage } from 'element-plus'
