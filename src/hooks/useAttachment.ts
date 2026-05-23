@@ -2,6 +2,7 @@ import { ref, h } from 'vue'
 import { ElMessage } from 'element-plus'
 import { knowledgeApi } from '@/api/api'
 import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
+import { GOBAL_FILE_TYPE, ALLOWED_FILE_TYPES } from '@/costants/costant'
 
 /**
  * 附件项类型
@@ -154,18 +155,29 @@ export function useAttachment() {
 
   /**
    * 上传通用文件到知识库
-   * 打开文件选择器，不限制文件类型
+   * 根据 GOBAL_FILE_TYPE 配置决定是否限制文件类型
    * 按照后端API流程：获取上传策略 -> 上传到OSS -> 创建文件记录
    */
   const uploadFile = () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.multiple = true
+
+    const acceptExts = ALLOWED_FILE_TYPES.map(ext => `.${ext}`).join(',')
+    input.accept = GOBAL_FILE_TYPE ? acceptExts : ''
+
     input.onchange = async (e) => {
       const target = e.target as HTMLInputElement
       if (!target.files) return
 
       for (const file of Array.from(target.files)) {
+        if (GOBAL_FILE_TYPE) {
+          const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+          if (!ext || !ALLOWED_FILE_TYPES.includes(ext)) {
+            ElMessage.warning(`仅支持 ${ALLOWED_FILE_TYPES.join('、')} 格式的文件`)
+            continue
+          }
+        }
         await uploadFileToKnowledgeBase(file)
       }
       target.value = ''
