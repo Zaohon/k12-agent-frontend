@@ -30,9 +30,9 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
-        </el-dropdown>
-      </div>
-    </header>-->
+</el-dropdown>
+</div>
+</header>-->
 
     <!-- 消息区域 -->
     <div class="chat-message-wrap" ref="msgContainer" :style="{ paddingBottom: dynamicPaddingBottom + 'px' }">
@@ -42,7 +42,9 @@
       </div>-->
       <div v-if="agentId && messages.length === 0" class="welcome-card">
         <div class="welcome-icon">
-          <el-icon><component :is="agentInfo?.iconUrl || 'MagicStick'" /></el-icon>
+          <el-icon>
+            <component :is="agentInfo?.iconUrl || 'MagicStick'" />
+          </el-icon>
         </div>
         <h1 class="welcome-title">{{ agentInfo?.title }}</h1>
         <p class="welcome-desc">{{ agentInfo?.description || '暂无详细介绍' }}</p>
@@ -52,17 +54,14 @@
       </div>
 
       <div v-if="showMessages.length === 0" class="empty-chat-tip">
-        <el-icon :size="80" class="empty-icon"><ChatDotSquare /></el-icon>
+        <el-icon :size="80" class="empty-icon">
+          <ChatDotSquare />
+        </el-icon>
         <p class="empty-text">输入您想问的任何教育问题</p>
       </div>
 
       <!-- 有消息时显示对话 -->
-      <ChatMessage
-        v-else
-        v-for="(msg, idx) in showMessages"
-        :key="idx"
-        :message="msg"
-      />
+      <ChatMessage v-else v-for="(msg, idx) in showMessages" :key="idx" :message="msg" />
 
     </div>
 
@@ -72,15 +71,9 @@
         <div class="textarea-wrap">
           <div class="flex-col" style="width: 100%;">
             <!-- 文字输入区 -->
-            <textarea
-              v-model="inputVal"
-              ref="textareaRef"
-              placeholder="输入您的问题或指令，按 Enter 发送。"
-              class="chat-textarea-native"
-              @focus="() => { isFocused = true }"
-              @blur="() => { isFocused = false }"
-              @keydown.enter.prevent="handleSend"
-            />
+            <textarea v-model="inputVal" ref="textareaRef" placeholder="输入您的问题或指令，按 Enter 发送。"
+              class="chat-textarea-native" @focus="() => { isFocused = true }" @blur="() => { isFocused = false }"
+              @keydown.enter.prevent="handleSend" />
 
             <!-- 附件卡片显示 -->
             <div v-if="attachments.length > 0" class="attachments-wrapper">
@@ -103,24 +96,24 @@
               <span class="tooltip-text">上传附件</span>
             </div>
           </button>
-          <button 
-              class="icon-btn" 
-              :class="{ 'recording-btn': isRecording }" 
-              @click="handleVoiceClick"
-              :disabled="voiceProcessing"
-            >
-              <div class="icon-inner">
-                <img 
-                  v-if="!isRecording" 
-                  src="@/images/chatinit-vedio.png" 
-                  alt="音频" 
-                />
-                <div v-else class="recording-indicator"></div>
-              </div>
-              <div class="tooltip">
-                <span class="tooltip-text">{{ isRecording ? '停止录音' : '录音' }}</span>
-              </div>
-            </button>
+          <button class="icon-btn" @click="handleKnowledgeLink">
+            <div class="icon-inner">
+              <img src="@/images/sidebar-db.png" alt="知识库" />
+            </div>
+            <div class="tooltip">
+              <span class="tooltip-text">知识库</span>
+            </div>
+          </button>
+          <button class="icon-btn" :class="{ 'recording-btn': isRecording }" @click="handleVoiceClick"
+            :disabled="voiceProcessing">
+            <div class="icon-inner">
+              <img v-if="!isRecording" src="@/images/chatinit-vedio.png" alt="音频" />
+              <div v-else class="recording-indicator"></div>
+            </div>
+            <div class="tooltip">
+              <span class="tooltip-text">{{ isRecording ? '停止录音' : '录音' }}</span>
+            </div>
+          </button>
           <!--<button class="icon-btn" @click="handleImageClick">
             <div class="icon-inner">
               <img src="@/images/chatinit-img.png" alt="图片" />
@@ -129,49 +122,30 @@
               <span class="tooltip-text">图片</span>
             </div>
           </button>-->
-          
+
           <!-- 深度思考按钮 -->
-          <button 
-            class="chat-toggle-btn" 
-            :class="{ active: enableDeepThinking }"
-            @click="toggleDeepThinking"
-          >
-            <img 
-              :src="enableDeepThinking ? thinkBlueIcon : thinkGreyIcon" 
-              class="chat-toggle-icon" 
-              alt="深度思考"
-            />
+          <button class="chat-toggle-btn" :class="{ active: enableDeepThinking }" @click="toggleDeepThinking">
+            <img :src="enableDeepThinking ? thinkBlueIcon : thinkGreyIcon" class="chat-toggle-icon" alt="深度思考" />
             <span class="chat-toggle-text">深度思考</span>
           </button>
-          
+
           <!-- 联网搜索按钮 -->
-          <button 
-            class="chat-toggle-btn" 
-            :class="{ active: enableWebSearch }"
-            @click="toggleWebSearch"
-          >
-            <img 
-              :src="enableWebSearch ? internalBlueIcon : internalGreyIcon" 
-              class="chat-toggle-icon" 
-              alt="联网搜索"
-            />
+          <button class="chat-toggle-btn" :class="{ active: enableWebSearch }" @click="toggleWebSearch">
+            <img :src="enableWebSearch ? internalBlueIcon : internalGreyIcon" class="chat-toggle-icon" alt="联网搜索" />
             <span class="chat-toggle-text">联网搜索</span>
           </button>
         </div>
-        
+
         <!-- 右下角底部栏 -->
         <div class="bottom-right-bar">
           <span class="hint-text">Enter 发送 / Shift+Enter 换行</span>
-          <button
-            class="send-btn"
-            :disabled="!inputVal.trim() || isStreaming || hasThinkingMessage"
-            @click="handleSend"
-          >
+          <button class="send-btn" :disabled="!inputVal.trim() || isStreaming || hasThinkingMessage"
+            @click="handleSend">
             <img src="@/images/chat_sendmsg.png" alt="发送" class="send-icon" />
           </button>
         </div>
       </div>
-      
+
       <!-- 提示文字 -->
       <div class="hint-container">
         <span class="hint-text-bottom">AI生成的内容可能存在错误，请甄别核实。</span>
@@ -179,11 +153,7 @@
     </footer>
 
     <!-- 修改会话标题弹窗 -->
-    <el-dialog
-      v-model="showUpdateTopicDialog"
-      title="修改会话标题"
-      width="400px"
-    >
+    <el-dialog v-model="showUpdateTopicDialog" title="修改会话标题" width="400px">
       <el-input v-model="newTopic" placeholder="请输入新的会话标题" />
       <template #footer>
         <span class="dialog-footer">
@@ -192,6 +162,9 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 知识库链接弹窗 -->
+    <KnowledgeLink v-if="showKnowledgeLink" @close="showKnowledgeLink = false" @confirm="handleKnowledgeConfirm" />
   </div>
 </template>
 
@@ -205,6 +178,7 @@ import { chatLog, chatLogError } from '../../utils/logManage'
 import { useAttachment } from '@/hooks/useAttachment'
 import { largeChatData } from '@/mock/large-chat-data'
 import ChatMessage from '@/components/ChatMessage.vue'
+import KnowledgeLink from '@/views/dialog/KnowledgeLink.vue'
 import internalBlueIcon from '@/images/internal-blue.png'
 import internalGreyIcon from '@/images/internal-grey.png'
 import thinkBlueIcon from '@/images/think-bule.png'
@@ -275,6 +249,9 @@ const showUpdateTopicDialog = ref(false)
 const enableDeepThinking = ref(false)
 const enableWebSearch = ref(false)
 
+// 知识库弹窗
+const showKnowledgeLink = ref(false)
+
 // 切换深度思考
 const toggleDeepThinking = () => {
   enableDeepThinking.value = !enableDeepThinking.value
@@ -291,6 +268,8 @@ const textareaRef = ref(null)
 const footerRef = ref(null)
 const initialFooterHeight = ref(0)
 const dynamicPaddingBottom = ref(DEFAULT_PADDING)
+
+let lastSessionId = null
 
 // 动态调整textarea高度
 const resetInputHeight = () => {
@@ -340,6 +319,28 @@ const handleFileUpload = () => {
   nextTick().then(() => calcTextareaHeight())
 }
 
+const handleKnowledgeLink = () => {
+  showKnowledgeLink.value = true
+}
+
+const handleKnowledgeConfirm = (files) => {
+  showKnowledgeLink.value = false
+  // 将选中的知识库文件添加到附件
+  if (files && files.length > 0) {
+    files.forEach(file => {
+      attachments.value.push({
+        name: file.name,
+        type: 'link',
+        url: file.url,
+        fileId: file.id,
+        size: file.size
+      })
+    })
+    nextTick().then(() => calcTextareaHeight())
+    ElMessage.success(`已添加 ${files.length} 个知识库文件`)
+  }
+}
+
 const handleVoiceClick = () => {
   if (voiceProcessing.value) {
     ElMessage.warning('正在处理语音，请稍候...')
@@ -359,16 +360,16 @@ const startRecording = async () => {
     mediaRecorder = new MediaRecorder(stream)
     audioChunks = []
 
-    mediaRecorder.ondataavailable = function(e) {
+    mediaRecorder.ondataavailable = function (e) {
       if (e.data.size > 0) {
         audioChunks.push(e.data)
       }
     }
 
-    mediaRecorder.onstop = function() {
+    mediaRecorder.onstop = function () {
       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
       processAudio(audioBlob)
-      stream.getTracks().forEach(function(track) {
+      stream.getTracks().forEach(function (track) {
         track.stop()
       })
     }
@@ -397,7 +398,7 @@ const processAudio = async (audioBlob) => {
     if (res.success && res.data && res.data.text) {
       inputVal.value = res.data.text
       ElMessage.success('语音转文字成功')
-      nextTick(function() {
+      nextTick(function () {
         if (textareaRef.value) {
           textareaRef.value.focus()
         }
@@ -431,14 +432,14 @@ const showMessages = computed(() => {
 // 加载会话历史
 const loadSessionHistory = async () => {
   if (!props.activeSession?.id) return
-  
+
   // 如果外部传入了消息且有内容（来自 ChatInit），合并到内部消息列表
   if (props.messages && props.messages.length > 0) {
     internalMessages.value = [...props.messages]
     nextTick(scrollToBottom)
     return
   }
-  
+
   const { data } = await sessionApi.getSessionHistory(props.activeSession.id)
   internalMessages.value = data || []
   nextTick(scrollToBottom)
@@ -449,13 +450,13 @@ const handleSend = async () => {
   chatLog('handleSend called')
   chatLog('inputVal:', inputVal.value)
   chatLog('activeSession:', props.activeSession)
-  
+
   if (!inputVal.value.trim() && attachments.value.length === 0) return
   if (!props.activeSession?.id) return
-  
+
   const content = inputVal.value.trim()
   inputVal.value = ''
-  
+
   // 保存附件副本，然后清空附件
   const currentAttachments = [...attachments.value]
   attachments.value = []
@@ -482,14 +483,14 @@ const handleSend = async () => {
   const updateMessage = async (content, thinking) => {
     currentContent = content
     isThinkingState = thinking
-    // 替换整个消息对象以确保响应式更新
-    internalMessages.value[internalMessages.value.length - 1] = {
+    // 仅修改最后一条，不整数组刷新
+    const lastIdx = internalMessages.value.length - 1
+    internalMessages.value[lastIdx] = {
       role: 'assistant',
       content: currentContent,
       isThinking: isThinkingState
     }
-    internalMessages.value = [...internalMessages.value]
-    emit('updateMessages', [...internalMessages.value])
+    // 仅流结束后再统一emit，分段不频繁通知父级
     await nextTick()
     scrollToBottom()
   }
@@ -498,14 +499,14 @@ const handleSend = async () => {
     chatLog('Calling sessionApi.sendMessage...')
     const response = await sessionApi.sendMessage(props.activeSession.id, content, currentAttachments)
     chatLog('Response received:', response)
-    
+
     const contentType = response.headers.get('content-type') || ''
     chatLog('Content-Type:', contentType)
-    
+
     if (contentType.includes('application/json')) {
       const result = await response.json()
       chatLog('JSON response:', result)
-      
+
       let responseContent = ''
       if (result.success && result.data) {
         responseContent = typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
@@ -530,14 +531,14 @@ const handleSend = async () => {
       let buffer = ''
       let receivedContent = false
       let hasStartedThinking = true
-      
+
       while (true) {
         const { done, value } = await reader.read()
-        
+
         if (value) {
           buffer += decoder.decode(value, { stream: true })
         }
-        
+
         if (done) {
           if (buffer.trim()) {
             try {
@@ -558,22 +559,22 @@ const handleSend = async () => {
           }
           break
         }
-        
+
         const lines = buffer.split('\n')
         for (let i = 0; i < lines.length - 1; i++) {
           const line = lines[i].trim()
           if (!line) continue
-          
+
           const tempMsg = { content: currentContent }
           const result = processSSELine(line, tempMsg)
-          
+
           if (result.shouldStop) {
             receivedContent = true
             reader.releaseLock()
             await updateMessage(tempMsg.content, false)
             break
           }
-          
+
           if (result.hasNewContent) {
             // 保持思考状态直到流结束，即时更新内容
             if (hasStartedThinking) {
@@ -586,7 +587,7 @@ const handleSend = async () => {
         }
         buffer = lines[lines.length - 1]
       }
-      
+
       if (!receivedContent && !currentContent) {
         await updateMessage('抱歉，服务器没有返回有效内容，请稍后重试。', false)
       }
@@ -671,13 +672,6 @@ const loadTestData = () => {
 // 监听会话变化
 watch(() => props.activeSession, () => loadSessionHistory(), { immediate: true })
 
-// 监听外部传入的消息变化（来自 ChatInit）
-watch(() => props.messages, (newMessages) => {
-  if (!newMessages) return
-  internalMessages.value = JSON.parse(JSON.stringify(newMessages)) // 深拷贝彻底同步
-  nextTick(scrollToBottom)
-}, { immediate: true, deep: true })
-
 // 监听智能体变化
 watch(() => props.agentId, (newAgentId, oldAgentId) => {
   if (newAgentId && newAgentId !== oldAgentId) {
@@ -694,6 +688,16 @@ watch(inputVal, () => {
 watch(attachments, () => {
   calcTextareaHeight()
 }, { deep: true })
+
+// 监听会话变化，清空消息
+watch(() => props.activeSession, (newSession) => {
+  const currId = newSession?.id
+  if (currId && currId !== lastSessionId) {
+    lastSessionId = currId
+    internalMessages.value = []
+    loadSessionHistory()
+  }
+}, { immediate: true })
 
 // 初始化
 onMounted(() => {
@@ -728,12 +732,12 @@ onMounted(() => {
 .chat-header {
   height: 68px;
   padding: 0 32px;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);
   z-index: 10;
 }
@@ -799,7 +803,7 @@ onMounted(() => {
   height: 72px;
   margin: 0 auto 20px;
   border-radius: 20px;
-  background: rgba(49,77,226,0.08);
+  background: rgba(49, 77, 226, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -827,8 +831,8 @@ onMounted(() => {
   border-radius: 16px;
   font-size: 14px;
   color: #5A6066;
-  border: 1px solid rgba(0,0,0,0.05);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 /* 空状态 */
@@ -885,7 +889,7 @@ onMounted(() => {
 }
 
 .tag-item:hover {
-  background: rgba(49,77,226,0.08);
+  background: rgba(49, 77, 226, 0.08);
   border-color: #314DE2;
 }
 

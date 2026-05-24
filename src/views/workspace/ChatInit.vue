@@ -62,6 +62,9 @@
               <button class="icon-btn" @click="handleFileUpload">
                 <img src="@/images/chatinit-link.png" alt="上传附件" />
               </button>
+              <button class="icon-btn" @click="handleKnowledgeLink">
+                <img src="@/images/sidebar-db.png" alt="知识库" />
+              </button>
               <button 
                 class="icon-btn" 
                 :class="{ 'recording-btn': isRecording }" 
@@ -95,6 +98,9 @@
     <div class="footer">
       生成的所有内容均由人工智能模型生成，其生成内容的准确性和完整性无法保证，不代表我们的态度或观点。
     </div>
+
+    <!-- 知识库链接弹窗 -->
+    <KnowledgeLink v-if="showKnowledgeLink" @close="showKnowledgeLink = false" @confirm="handleKnowledgeConfirm" />
   </div>
 </template>
 
@@ -108,6 +114,7 @@ import chatinit4 from '@/images/chatinit-4.png'
 import { useAttachment } from '@/hooks/useAttachment'
 import { chatLogError } from '@/utils/logManage'
 import { chatApi } from '@/api/api'
+import KnowledgeLink from '@/views/dialog/KnowledgeLink.vue'
 
 // 录音相关变量
 let mediaRecorder = null
@@ -200,11 +207,32 @@ const { attachments, isRecording, uploadImage, uploadVideo, uploadFile, addLink,
 const textareaRef = ref(null)
 const isLoading = ref(false)
 const isFocused = ref(false)
+const showKnowledgeLink = ref(false)
 
 const emit = defineEmits(['sendMessage'])
 
 const handleFileUpload = () => {
   uploadFile()
+}
+
+const handleKnowledgeLink = () => {
+  showKnowledgeLink.value = true
+}
+
+const handleKnowledgeConfirm = (files) => {
+  showKnowledgeLink.value = false
+  if (files && files.length > 0) {
+    files.forEach(file => {
+      attachments.value.push({
+        name: file.name,
+        type: 'link',
+        url: file.url,
+        fileId: file.id,
+        size: file.size
+      })
+    })
+    ElMessage.success(`已添加 ${files.length} 个知识库文件`)
+  }
 }
 
 const handleVoiceClick = () => {

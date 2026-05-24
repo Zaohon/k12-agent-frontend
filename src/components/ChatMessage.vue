@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-message-row" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
+  <div v-if="message" class="chat-message-row" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
     <div class="chat-message-box" :class="message.role === 'user' ? 'flex-row-reverse' : 'flex-row'">
       <div class="chat-avatar" :class="message.role === 'user' ? 'user-avatar' : 'assistant-avatar'" :style="message.role === 'user' ? { background: userAvatarBg } : {}">
         <span v-if="message.role === 'user'" class="user-avatar-letter" :style="{ color: userAvatarColor }">{{ userAvatarFirstChar }}</span>
@@ -65,11 +65,12 @@ interface Message {
 }
 
 const props = withDefaults(defineProps<{
-  message: Message
+  message?: Message
   thinkingText?: string
   showAttachments?: boolean
   attachmentStatus?: string
 }>(), {
+  message: undefined,
   thinkingText: '正在思考中...',
   showAttachments: true,
   attachmentStatus: '解析完成'
@@ -109,6 +110,7 @@ const userAvatarColor = computed(() => {
 
 // 监听message变化
 watch(() => props.message, (newMsg) => {
+  if (!newMsg) return
   log('收到新message:', {
     role: newMsg.role,
     content: newMsg.content,

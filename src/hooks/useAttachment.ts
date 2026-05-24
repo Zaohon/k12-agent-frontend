@@ -31,6 +31,21 @@ let mediaRecorder: MediaRecorder | null = null
 let audioChunks: Blob[] = []
 
 /**
+ * 验证文件类型是否符合全局配置
+ * @param fileName - 文件名
+ * @returns 是否通过验证
+ */
+export const validateFileType = (fileName: string): boolean => {
+  if (!GOBAL_FILE_TYPE) return true
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
+  if (!ext || !ALLOWED_FILE_TYPES.includes(ext)) {
+    ElMessage.warning(`仅支持 ${ALLOWED_FILE_TYPES.join('、')} 格式的文件`)
+    return false
+  }
+  return true
+}
+
+/**
  * 格式化文件大小
  * @param bytes - 文件大小（字节）
  * @returns 格式化后的文件大小字符串（如 1.2MB）
@@ -171,12 +186,8 @@ export function useAttachment() {
       if (!target.files) return
 
       for (const file of Array.from(target.files)) {
-        if (GOBAL_FILE_TYPE) {
-          const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-          if (!ext || !ALLOWED_FILE_TYPES.includes(ext)) {
-            ElMessage.warning(`仅支持 ${ALLOWED_FILE_TYPES.join('、')} 格式的文件`)
-            continue
-          }
+        if (!validateFileType(file.name)) {
+          continue
         }
         await uploadFileToKnowledgeBase(file)
       }
