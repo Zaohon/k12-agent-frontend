@@ -483,13 +483,13 @@ const handleSend = async () => {
   const updateMessage = async (content, thinking) => {
     currentContent = content
     isThinkingState = thinking
-    // 仅修改最后一条，不整数组刷新
+    // 使用 splice 确保响应式更新
     const lastIdx = internalMessages.value.length - 1
-    internalMessages.value[lastIdx] = {
+    internalMessages.value.splice(lastIdx, 1, {
       role: 'assistant',
       content: currentContent,
       isThinking: isThinkingState
-    }
+    })
     // 仅流结束后再统一emit，分段不频繁通知父级
     await nextTick()
     scrollToBottom()
