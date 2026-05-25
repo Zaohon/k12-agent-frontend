@@ -43,7 +43,7 @@
     </aside>
 
     <!-- Right: Organization Details & Management -->
-    <main class="flex-1 overflow-y-auto p-8 bg-[#F2F4F8]">
+    <main class="flex-1 overflow-y-auto p-8 bg-[#F2F4F8] flex flex-col">
       <div v-if="selectedOrg" class="main-content-wrapper">
         <!-- Stats Header -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex items-center justify-between">
@@ -107,7 +107,8 @@
               </el-upload>
             </div>
           </div>
-          <el-table :data="pagedOrgUsers" style="width: 100%" v-loading="loadingUsers" class="account-table">
+          <div class="flex-1 min-h-0 overflow-hidden">
+            <el-table :data="pagedOrgUsers" style="width: 100%" height="100%" v-loading="loadingUsers" class="account-table">
             <el-table-column prop="id" label="账号ID" />
             <el-table-column prop="username" label="用户名" />
             <el-table-column label="角色">
@@ -145,7 +146,8 @@
               </template>
             </el-table-column>
           </el-table>
-          <div class="flex items-center justify-between p-4 bg-[#F8F9FD]" v-if="orgUsers.length > 0">
+          </div>
+          <div class="flex items-center justify-between p-4 h-16 bg-[#F8F9FD]" v-if="orgUsers.length > 0">
             <span class="text-sm text-gray-500">第 {{ userPage }} 页，共 {{ Math.ceil(orgUsers.length / userPageSize) }} 页</span>
             <el-pagination
               :current-page="userPage"
@@ -648,11 +650,13 @@ onMounted(() => {
 }
 
 .main-content-wrapper {
-  width: 95%;
+  width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  flex: 1;
+  min-height: 0;
 }
 
 .admin-switch-wrapper {
@@ -767,26 +771,24 @@ onMounted(() => {
 }
 
 .account-management-wrapper {
-  width: 1280px;
+  width: 100%;
   border-radius: 12px;
   background: #FFFFFF;
   border: 1px solid #ADB2B94D;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .account-table {
   width: 100%;
-  table-layout: auto;
-  height: 572px;
-}
-
-.account-table :deep(.el-table__body-wrapper) {
-  overflow-y: auto;
 }
 
 .account-table :deep(.el-table__cell) {
   white-space: nowrap;
-  height: 52px;
+  height: 48px;
   text-align: center;
 }
 
@@ -797,6 +799,7 @@ onMounted(() => {
 
 .account-table :deep(.el-table__body .el-table__row) {
   background: #FFFFFF;
+  height: 54px;
 }
 
 .status-indicator {

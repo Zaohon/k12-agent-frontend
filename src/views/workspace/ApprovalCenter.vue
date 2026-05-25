@@ -1,7 +1,7 @@
 <template>
   <div class="h-full w-full bg-gray-50 flex overflow-hidden">
-    <main class="flex-1 overflow-y-auto p-12 bg-gray-50 mx-auto w-[95%]">
-      <div class="flex justify-between items-center p-6 rounded-xl header-container">
+    <main class="flex-1 overflow-y-auto p-6 bg-gray-50 mx-auto w-[95%] flex flex-col">
+      <div class="flex justify-between items-center p-6 rounded-xl header-container shrink-0">
          <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl flex items-center justify-center icon-wrapper">
               <img src="../../images/approval.png" class="w-6 h-auto" alt="approval" />
@@ -17,7 +17,7 @@
          </el-button> -->
       </div>
 
-     <div class="bg-white flex flex-col h-[calc(100vh-272px)] mt-[30px] rounded-xl overflow-hidden shadow-sm" v-loading="loading">
+     <div class="bg-white flex flex-col flex-1 min-h-0 mt-[20px] rounded-xl overflow-hidden shadow-sm" v-loading="loading">
         <!-- 搜索筛选栏 -->
         <div class="flex items-center justify-between px-8 pt-6 pb-4 border-b border-gray-100 shrink-0">
           <div class="flex items-center gap-4 flex-1">
@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div class="flex-1">
+        <div class="flex-1 min-h-0 overflow-hidden">
           <el-table :data="pagedList" class="custom-table full-width-table" empty-text="当前全部处理完毕，无新的上架申请 🎉" height="100%">
             <el-table-column label="应用标识" width="240">
               <template #default="scope">
@@ -68,7 +68,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="description" label="能力描述" width="500" show-overflow-tooltip />
+            <el-table-column prop="description" label="能力描述" min-width="200" show-overflow-tooltip />
 
             <el-table-column label="申请人" width="240">
               <template #default="scope">
@@ -121,7 +121,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" fixed="right" align="center">
+            <el-table-column label="操作" fixed="right" align="center" width="180">
               <template #default="scope">
                 <div class="flex space-x-2 justify-center">
                   <template v-if="scope.row.approvalStatus === 'PENDING'">
@@ -139,7 +139,7 @@
             </el-table-column>
           </el-table>
         </div>
-        <div class="flex items-center justify-between px-8 py-4 border-t border-gray-100 shrink-0">
+        <div class="flex items-center justify-between px-6 py-3 border-t border-gray-100 shrink-0" style="height: 56px;">
           <span class="text-sm text-gray-500">第 {{ currentPage }} 页，共 {{ Math.ceil(filteredList.length / pageSize) }} 页</span>
           <el-pagination
             :current-page="currentPage"
@@ -625,7 +625,7 @@ onMounted(() => {
   color: #6b7280;
   font-weight: 600;
   text-align: center;
-  height: 60px;
+  height: 48px;
 }
 
 .custom-table :deep(.el-table__header-wrapper th .cell) {
@@ -642,8 +642,8 @@ onMounted(() => {
 
 /* 2. 设置每一行的高度和对齐 - 通过调整单元格内边距 */
 .custom-table :deep(.el-table__cell) {
-  padding-top: 4px;    /* 调整上下内边距来控制行高 */
-  padding-bottom: 4px;
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 
 .first-col {
