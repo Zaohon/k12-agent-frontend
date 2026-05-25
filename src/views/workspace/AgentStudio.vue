@@ -224,14 +224,12 @@ const filteredAgents = computed(() => {
 })
 
 const getVisibilityIcon = (agent) => {
-  if (agent.visibility === 'PUBLIC') return new URL('@/images/earth.png', import.meta.url).href
   if (agent.visibility === 'ORG_VISIBLE') return new URL('@/images/humans.png', import.meta.url).href
   return new URL('@/images/lock.png', import.meta.url).href
 }
 
 const getVisibilityText = (agent) => {
   if (!agent.visibility || agent.visibility === 'PRIVATE') return '仅自己可见'
-  if (agent.visibility === 'PUBLIC') return '所有人可使用'
   if (agent.visibility === 'ORG_VISIBLE') return '组织内可见'
   return '私有'
 }

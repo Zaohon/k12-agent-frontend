@@ -80,6 +80,7 @@ export const agentApi: {
   updateAgent: (agentId: number | string, agentData: any) => Promise<ApiResponse<any>>
   deleteAgent: (agentId: number | string) => Promise<ApiResponse>
   getDiscoverAgents: (categoryId?: number | string) => Promise<ApiResponse<any[]>>
+  getOrgAgents: (orgId?: number | string) => Promise<ApiResponse<any[]>>
   getFeaturedAgents: () => Promise<ApiResponse<any[]>>
   getPendingApprovals: (params?: Record<string, any>) => Promise<ApiResponse<any[]>>
   reviewApproval: (id: number | string, data: { status: string; categoryId?: number | null; isFeatured?: boolean }) => Promise<ApiResponse>

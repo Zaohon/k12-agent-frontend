@@ -316,7 +316,6 @@ const selectIcon = new URL('../../images/select-icon.png', import.meta.url).href
 const noSelectIcon = new URL('../../images/no-select-icon.png', import.meta.url).href
 
 const visibilityMap: Record<string, string> = {
-  'PUBLIC': '公开·所有人可使用',
   'ORG_VISIBLE': '组织·组织内可见',
   'PRIVATE': '私有·仅自己可见'
 }

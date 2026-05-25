@@ -50,7 +50,7 @@ export const saveCategoryAgents = async (
 
 export const loadAvailableAgents = async (): Promise<Agent[]> => {
   try {
-    const response = await agentApi.getDiscoverAgents()
+    const response = await agentApi.getOrgAgents()
     if (response.success && response.data) {
       return response.data.map((agent: any) => ({
         id: agent.id,

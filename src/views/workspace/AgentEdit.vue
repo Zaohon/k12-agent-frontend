@@ -349,11 +349,6 @@ const optimizing = ref(false)
 const showPublishDialog = ref(false)
 const visibilityOptions = [
   {
-    value: 'PUBLIC',
-    label: '公开·所有人可使用',
-    icon: new URL('@/images/earth.png', import.meta.url).href
-  },
-  {
     value: 'ORG_VISIBLE',
     label: '组织·组织内可见',
     icon: new URL('@/images/humans.png', import.meta.url).href

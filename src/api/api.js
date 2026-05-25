@@ -268,6 +268,11 @@ export const agentApi = {
     return request(url);
   },
 
+  getOrgAgents: async (orgId) => {
+    const url = orgId ? `/agent/org?orgId=${orgId}` : '/agent/org';
+    return request(url);
+  },
+
   /**
    * 获取精选智能体列表
    * @returns {Promise<any>} 精选智能体列表
