@@ -305,6 +305,7 @@ watch(() => props.visible, (newVal) => {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   justify-items: center;
+  align-content: start;
 }
 
 .agent-card {
