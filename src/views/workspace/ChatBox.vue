@@ -184,7 +184,7 @@ const commonPrompts = ref(['生成一份教案', '批改一段作业', '帮我�
 
 const createNewSession = async () => {
   try {
-    const data = await sessionApi.createSession(agentId.value ?? Number(DEFAULT_AGENT_ID))
+    const data = await sessionApi.createSession(agentId.value ?? DEFAULT_AGENT_ID)
     if (data.success && data.data) {
       await loadSessions()
       activeSessionId.value = data.data.id
@@ -286,7 +286,7 @@ const updateMessages = () => {
 const handleChatInitSend = async ({ content, attachments }: { content: string; attachments?: any[] }) => {
   try {
     // 1. 新建会话
-    const sessionResult = await sessionApi.createSession(agentId.value ?? Number(DEFAULT_AGENT_ID))
+    const sessionResult = await sessionApi.createSession(agentId.value ?? DEFAULT_AGENT_ID)
     if (!sessionResult.success || !sessionResult.data) {
       ElMessage.error('创建会话失败')
       return

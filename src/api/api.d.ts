@@ -93,7 +93,7 @@ export const agentApi: {
  */
 export const sessionApi: {
   getSessionList: () => Promise<ApiResponse<Session[]>>
-  createSession: (agentId?: number) => Promise<ApiResponse<{ id: number; name: string; topic: string }>>
+  createSession: (agentId?: number | null) => Promise<ApiResponse<{ id: number; name: string; topic: string }>>
   getSessionHistory: (sessionId: number | string) => Promise<ApiResponse<any[]>>
   sendMessage: (sessionId: number | string, prompt: string, attachments?: any[]) => Promise<Response>
   updateSessionTopic: (sessionId: number | string, topic: string) => Promise<ApiResponse>

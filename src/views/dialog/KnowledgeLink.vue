@@ -85,7 +85,7 @@
                   @click.stop="handleFileCheckbox(file)"
                 />
                 <div class="file-info" @click="handleFileCheckbox(file)">
-                  <div class="file-icon" :class="getFileIconClass(file.name)"></div>
+                  <img :src="getFileIconPath(file.name)" class="file-icon" />
                   <span>{{ file.name }}</span>
                 </div>
                 <span class="file-size">{{ formatFileSize(file.size) }}</span>
@@ -105,7 +105,7 @@
             </div>
             <div class="selected-list">
               <div v-for="file in selectedFilesData" :key="file.id" class="selected-item">
-                <div class="selected-icon" :class="getFileIconClass(file.name)"></div>
+                <img :src="getFileIconPath(file.name)" class="selected-icon" />
                 <span>{{ file.name }}</span>
                 <button class="delete-btn" @click="removeSelectedFile(file.id)">
                   <div class="delete-icon"></div>
@@ -304,24 +304,24 @@ const navigateToFolder = (item: { id: number; name: string }, index: number) => 
 // ==============================================
 // 文件列表
 // ==============================================
-const getFileIconClass = (fileName: string) => {
+const getFileIconPath = (fileName: string) => {
   const ext = fileName.split('.').pop()?.toLowerCase()
   switch (ext) {
     case 'pdf':
-      return 'file-icon-pdf'
+      return new URL('@/images/file-pdf.png', import.meta.url).href
     case 'docx':
     case 'doc':
-      return 'file-icon-doc'
+      return new URL('@/images/file-doc.png', import.meta.url).href
     case 'xlsx':
     case 'xls':
-      return 'file-icon-excel'
+      return new URL('@/images/file-xls.png', import.meta.url).href
     case 'pptx':
     case 'ppt':
-      return 'file-icon-ppt'
+      return new URL('@/images/file-ppt.png', import.meta.url).href
     case 'txt':
-      return 'file-icon-txt'
+      return new URL('@/images/file-txt.png', import.meta.url).href
     default:
-      return 'file-icon-default'
+      return new URL('@/images/file-null.png', import.meta.url).href
   }
 }
 
@@ -842,6 +842,7 @@ onUnmounted(() => {
   width: 16px;
   height: 20px;
   flex-shrink: 0;
+  object-fit: contain;
 }
 
 .file-icon-pdf {
@@ -953,6 +954,7 @@ onUnmounted(() => {
   width: 12px;
   height: 14px;
   flex-shrink: 0;
+  object-fit: contain;
 }
 
 .selected-item span {

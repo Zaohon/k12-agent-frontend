@@ -1,4 +1,4 @@
-export const DEFAULT_AGENT_ID = '59'
+export const DEFAULT_AGENT_ID = null
 
 export const API_BASE = '/api'
 
