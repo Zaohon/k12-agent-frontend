@@ -155,7 +155,7 @@ export const knowledgeApi: {
   getRecentFiles: (params?: Record<string, any>) => Promise<ApiResponse<File[]>>
   getFileById: (fileId: number | string) => Promise<ApiResponse<File>>
   updateFile: (fileId: number | string, fileData: { name?: string; folderId?: number | null }) => Promise<ApiResponse<File>>
-  createFile: (fileData: { folderId?: number; name: string; mimeType: string; size: number; ossKey: string; url: string }) => Promise<ApiResponse<File>>
+  createFile: (fileData: { folderId?: number | null; name: string; mimeType: string; size: number; ossKey: string; url: string }) => Promise<ApiResponse<File>>
   deleteFile: (fileId: number | string) => Promise<ApiResponse>
   batchMoveFiles: (fileIds: number[], targetFolderId: number | string | null) => Promise<ApiResponse>
   batchDeleteFiles: (fileIds: number[]) => Promise<ApiResponse>
