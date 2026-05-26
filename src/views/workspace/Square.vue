@@ -289,7 +289,8 @@ export default {
       ArrowDown,
       tabs: [] as string[],
       categories: [] as any[],
-      activeTab: 0,
+      recommendedId: null,
+      activeTab: 0,  
       underlineLeft: 0,
       underlineWidth: 0,
       labelColors: [
@@ -337,6 +338,7 @@ export default {
     handleTabClick(index: number) {
       this.activeTab = index
       this.currentPage = 1
+      this.loadCategoryAgents(this.categories[index].id)
     },
     handlePageChange(page: number) {
       this.currentPage = page
@@ -347,8 +349,12 @@ export default {
         if (response.success && response.data) {
           this.categories = response.data
           const categoryNames = response.data.map((item: any) => item.name)
+          //赋值推荐页
+          this.recommendedId = this.categories.find((c: any) => c.name === '推荐页')?.id || null
           // 过滤掉"推荐页"，然后在前面添加"精选"和"全部应用"
           const filteredNames = categoryNames.filter((name: string) => name !== '推荐页')
+          // 过滤掉"推荐页"
+          this.categories = this.categories.filter((c: any) => c.name !== '推荐页')
           this.tabs = [...filteredNames]
           
           // 根据当前 activeTab 加载对应数据
@@ -393,10 +399,10 @@ export default {
       }
     },
     async loadRecommendedAgents() {
-      const recommendCategory = this.categories.find((c: any) => c.name === '推荐页')
-      if (!recommendCategory?.id) return
+      const recommendCategoryId = this.recommendedId
+      if (!recommendCategoryId) return
       try {
-        const response = await categoryApi.getCategoryAgents(recommendCategory.id)
+        const response = await categoryApi.getCategoryAgents(recommendCategoryId) 
         if (response.success && response.data) {
           this.recommendedList = response.data
         }
