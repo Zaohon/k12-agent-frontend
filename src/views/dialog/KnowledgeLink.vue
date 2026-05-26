@@ -77,14 +77,15 @@
                 v-for="file in filteredFiles"
                 :key="file.id"
                 class="file-item"
-                :class="{ selected: isFileSelected(file.id) }"
+                :class="{ selected: isFileSelected(file.id), disabled: !isFileTypeAllowed(file.name) }"
               >
                 <input
                   type="checkbox"
                   :checked="isFileSelected(file.id)"
+                  :disabled="!isFileTypeAllowed(file.name)"
                   @click.stop="handleFileCheckbox(file)"
                 />
-                <div class="file-info" @click="handleFileCheckbox(file)">
+                <div class="file-info" :class="{ disabled: !isFileTypeAllowed(file.name) }" @click="handleFileCheckbox(file)">
                   <img :src="getFileIconPath(file.name)" class="file-icon" />
                   <span>{{ file.name }}</span>
                 </div>
@@ -134,7 +135,7 @@ import { ref, shallowRef, computed, onMounted, watch, onUnmounted } from 'vue'
 import { knowledgeApi } from '@/api/api'
 import { formatFileSize, formatTime } from '@/utils/knowledge'
 import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
-import { validateFileType } from '@/hooks/useAttachment'
+import { validateFileType, isFileTypeAllowed } from '@/hooks/useAttachment'
 
 interface Folder {
   id: number
@@ -387,21 +388,25 @@ const selectedFilesData = computed(() => {
   return allFilesData.value.filter((file) => selectedFiles.value.includes(file.id))
 })
 
+const allowedFiles = computed(() => {
+  return filteredFiles.value.filter(file => isFileTypeAllowed(file.name))
+})
+
 const allChecked = computed(() => {
-  return filteredFiles.value.length > 0 &&
-    filteredFiles.value.every((file) => selectedFiles.value.includes(file.id))
+  return allowedFiles.value.length > 0 &&
+    allowedFiles.value.every((file) => selectedFiles.value.includes(file.id))
 })
 
 const toggleCheckAll = () => {
   if (allChecked.value) {
-    filteredFiles.value.forEach((file) => {
+    allowedFiles.value.forEach((file) => {
       const index = selectedFiles.value.indexOf(file.id)
       if (index >= 0) {
         selectedFiles.value.splice(index, 1)
       }
     })
   } else {
-    filteredFiles.value.forEach((file) => {
+    allowedFiles.value.forEach((file) => {
       if (!selectedFiles.value.includes(file.id)) {
         selectedFiles.value.push(file.id)
       }
@@ -814,6 +819,23 @@ onUnmounted(() => {
 
 .file-item.selected {
   background: rgba(180, 189, 255, 0.1);
+}
+
+.file-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.file-item.disabled:hover {
+  background: transparent;
+}
+
+.file-item.disabled input {
+  cursor: not-allowed;
+}
+
+.file-info.disabled {
+  pointer-events: none;
 }
 
 .file-item input {

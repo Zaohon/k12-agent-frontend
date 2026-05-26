@@ -2,7 +2,7 @@ import { ref, h } from 'vue'
 import { ElMessage } from 'element-plus'
 import { knowledgeApi } from '@/api/api'
 import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
-import { GOBAL_FILE_TYPE, ALLOWED_FILE_TYPES } from '@/costants/costant'
+import { GLOBAL_FILE_TYPE, ALLOWED_FILE_TYPES } from '@/costants/costant'
 
 /**
  * 附件项类型
@@ -31,12 +31,23 @@ let mediaRecorder: MediaRecorder | null = null
 let audioChunks: Blob[] = []
 
 /**
- * 验证文件类型是否符合全局配置
+ * 检查文件类型是否在允许列表中（不弹出提示）
+ * @param fileName - 文件名
+ * @returns 是否允许
+ */
+export const isFileTypeAllowed = (fileName: string): boolean => {
+  if (!GLOBAL_FILE_TYPE) return true
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
+  return !!ext && ALLOWED_FILE_TYPES.includes(ext)
+}
+
+/**
+ * 验证文件类型是否符合全局配置（带提示）
  * @param fileName - 文件名
  * @returns 是否通过验证
  */
 export const validateFileType = (fileName: string): boolean => {
-  if (!GOBAL_FILE_TYPE) return true
+  if (!GLOBAL_FILE_TYPE) return true
   const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
   if (!ext || !ALLOWED_FILE_TYPES.includes(ext)) {
     ElMessage.warning(`仅支持 ${ALLOWED_FILE_TYPES.join('、')} 格式的文件`)
@@ -179,7 +190,7 @@ export function useAttachment() {
     input.multiple = true
 
     const acceptExts = ALLOWED_FILE_TYPES.map(ext => `.${ext}`).join(',')
-    input.accept = GOBAL_FILE_TYPE ? acceptExts : ''
+    input.accept = GLOBAL_FILE_TYPE ? acceptExts : ''
 
     input.onchange = async (e) => {
       const target = e.target as HTMLInputElement
