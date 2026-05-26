@@ -11,7 +11,7 @@ export const MAX_FILE_SIZE = null
 export const GLOBAL_FILE_TYPE = true
 
 // 允许上传的文件类型数组（当 GOBAL_FILE_TYPE 为 true 时生效）
-export const ALLOWED_FILE_TYPES = ['txt', 'md']
+export const ALLOWED_FILE_TYPES = ['txt', 'md', 'markdown', 'csv', 'tsv', 'json', 'js', 'ts', 'html', 'htm', 'xml', 'yml', 'yaml']
 
 // 日志总开关 - 设置为 false 可关闭所有日志
 export const ENABLE_ALL_LOG = true
