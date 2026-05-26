@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   frontend:
-    image: ${IMAGE_REGISTRY:-ghcr.io}/zaohon/k12-agent-frontend:latest
+    image: ghcr.nju.edu.cn/zaohon/k12-agent-frontend:latest
     container_name: k12-frontend
     ports:
       - "80:80"
