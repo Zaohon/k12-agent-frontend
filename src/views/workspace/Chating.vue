@@ -699,6 +699,24 @@ watch(attachments, () => {
   calcTextareaHeight()
 }, { deep: true })
 
+// 监听外部消息变化（用于 ChatInit → Chating 切换时的实时更新）
+watch(() => props.messages, (newMessages) => {
+  if (!newMessages || newMessages.length === 0) return
+  
+  const lastIdx = internalMessages.value.length - 1
+  const lastInternalMsg = internalMessages.value[lastIdx]
+  
+  if (lastInternalMsg?.isThinking) {
+    const lastExternalMsg = newMessages[newMessages.length - 1]
+    if (lastExternalMsg && lastExternalMsg.content !== lastInternalMsg.content) {
+      internalMessages.value.splice(lastIdx, 1, {
+        ...lastExternalMsg,
+        isThinking: lastExternalMsg.isThinking !== undefined ? lastExternalMsg.isThinking : false
+      })
+    }
+  }
+}, { deep: true })
+
 // 监听会话变化，清空消息
 watch(() => props.activeSession, (newSession) => {
   const currId = newSession?.id
