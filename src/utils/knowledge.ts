@@ -227,11 +227,8 @@ export const uploadFile = async (file: File, folderId: string | number | null = 
       ossKey: finalFileKey,
       size: file.size,
       mimeType: file.type || 'application/octet-stream',
-      url: publicUrl
-    }
-    // 只有当 folderId 有值时才添加，避免传递 null
-    if (folderId !== null && folderId !== undefined) {
-      fileData.folderId = folderId
+      url: publicUrl,
+      folderId
     }
 
     knowledgeLog('创建文件记录数据:', fileData)
