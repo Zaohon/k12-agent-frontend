@@ -12,6 +12,33 @@ const getToken = () => {
   return token ? token.trim() : null;
 };
 
+const errorHandlers = {
+  401: () => {
+    ElMessage.error('未授权，请重新登录');
+    localStorage.removeItem('k12_token');
+    localStorage.removeItem('k12_user');
+    window.dispatchEvent(new CustomEvent('unauthorized'));
+  },
+  403: (errorData) => {
+    if (errorData?.message) {
+      ElMessage.error(errorData.message);
+    }
+    else {
+      ElMessage.error('访问被拒绝，无权限');
+    }
+  },
+  404: () => {
+    ElMessage.error('资源不存在');
+  },
+  500: () => {
+    ElMessage.error('服务器内部错误');
+  },
+  // 默认
+  default: (errorData) => {
+    ElMessage.error(errorData?.message || '请求失败，请稍后重试');
+  }
+};
+
 /**
  * 统一的请求封装函数
  * @param {string} url - 请求路径
@@ -21,18 +48,18 @@ const getToken = () => {
 const request = async (url, options = {}) => {
   const token = getToken();
   const fullUrl = `${API_BASE}${url}`;
-  
+
+  // 日志输出
   apiLog('请求 URL:', fullUrl);
   apiLog('请求方法:', options.method || 'GET');
-  if (options.body) {
-    apiLog('请求体:', options.body);
-  }
-  apiLog('是否有 token:', !!token);
+  options.body && apiLog('请求体:', options.body);
+  apiLog('是否携带 Token:', !!token);
 
+  // 请求配置
   const config = {
     ...options,
     headers: {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': token ? `Bearer ${token}` : '', // 防 token 为空报错
       'Content-Type': 'application/json',
       ...options.headers
     }
@@ -40,45 +67,31 @@ const request = async (url, options = {}) => {
 
   try {
     const response = await fetch(fullUrl, config);
-    
-    apiLog('响应状态:', response.status);
-    apiLog('响应状态文本:', response.statusText);
+    apiLog('响应状态码:', response.status);
 
+    // 请求成功
     if (response.ok) {
       const data = await response.json();
       apiLog('响应数据:', data);
       return data;
-    } else {
-      // 尝试解析错误响应
-      let errorData = null;
-      try {
-        errorData = await response.json();
-        apiLog('错误响应数据:', errorData);
-      } catch (e) {
-        apiLog('无法解析错误响应');
-      }
-      
-      if (response.status === 401) {
-        ElMessage.error('未授权，请重新登录');
-        localStorage.removeItem('k12_token');
-        localStorage.removeItem('k12_user');
-        window.dispatchEvent(new CustomEvent('unauthorized'));
-      } else if (response.status === 404) {
-        ElMessage.error('资源不存在');
-      } else if (response.status === 500) {
-        ElMessage.error('服务器内部错误');
-      } else {
-        // 显示后端返回的错误信息
-        if (errorData && errorData.message) {
-          ElMessage.error(errorData.message);
-        } else {
-          ElMessage.error('请求失败');
-        }
-      }
-      // 返回错误数据，让调用方可以处理
-      return errorData || { success: false };
     }
+
+    let errorData = null;
+    try {
+      errorData = await response.json();
+      apiLog('错误响应数据:', errorData);
+    } catch (e) {
+      apiLog('错误响应非 JSON 格式');
+    }
+
+    const status = response.status;
+    const handler = errorHandlers[status] || errorHandlers.default;
+    handler(errorData);
+
+    return errorData || { success: false };
+
   } catch (error) {
+    // 网络异常
     ENABLE_LOG && console.error('[API] 请求异常:', error);
     ElMessage.error('网络错误，请检查后端服务是否启动');
     throw error;
@@ -382,81 +395,13 @@ export const sessionApi = {
    * @returns {Promise<Response>} 响应流
    */
   sendMessage: async (sessionId, prompt, attachments = []) => {
-    const token = getToken();
-    
-    apiLog('=== sendMessage Debug ===');
-    apiLog('Token from localStorage:', token);
-    apiLog('Token length:', token ? token.length : 0);
-    apiLog('Token preview:', token ? token.substring(0, 20) + '...' : 'null');
-    
-    if (!token) {
-      ElMessage.error('未登录或登录已过期，请重新登录');
-      throw new Error('Token is null');
-    }
-
-    try {
-      apiLog('Sending request to:', `${API_BASE}/session/chat/${sessionId}`);
-      apiLog('Authorization header:', `Bearer ${token}`);
-      
-      const response = await fetch(`${API_BASE}/session/chat/${sessionId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          prompt,
-          attachments
-        })
-      });
-
-      apiLog('=== sendMessage Request Body ===');
-      apiLog('prompt:', prompt);
-      apiLog('attachments:', JSON.stringify(attachments));
-      apiLog('Response status:', response.status);
-      apiLog('Response headers:', [...response.headers.entries()]);
-
-      if (response.ok) {
-        return response;
-      } else {
-        let errorText = '';
-        try {
-          errorText = await response.text();
-          apiLog('Error response body:', errorText);
-          
-          try {
-            const errorJson = JSON.parse(errorText);
-            apiLog('Parsed error JSON:', errorJson);
-            
-            if (errorJson.error && errorJson.error.code) {
-              apiLog('AI API Error:', errorJson.error.code, errorJson.error.message);
-              ElMessage.error(translateAIError(errorJson.error.code, errorJson.error.message));
-            } else if (errorJson.code && errorJson.message) {
-              apiLog('API Error:', errorJson.code, errorJson.message);
-              ElMessage.error(translateAIError(errorJson.code, errorJson.message));
-            }
-          } catch (parseError) {
-            apiLog('Error response is not JSON:', errorText);
-          }
-        } catch (e) {
-          apiLog('Failed to read error response:', e);
-        }
-        
-        if (response.status === 401) {
-          ElMessage.error('未授权，请重新登录');
-        } else if (response.status === 404) {
-          ElMessage.error('会话不存在');
-        } else if (response.status === 500) {
-          ElMessage.error('服务器内部错误');
-        } else {
-          ElMessage.error('发送消息失败');
-        }
-        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-      }
-    } catch (error) {
-      ElMessage.error('网络错误，请检查后端服务是否启动');
-      throw error;
-    }
+    return request(`/session/chat/${sessionId}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        prompt,
+        attachments
+      })
+    })
   },
 
   /**

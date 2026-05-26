@@ -112,7 +112,7 @@
           <div class="kb-table-body">
             <div class="kb-table-body-row" v-for="file in sortedFiles" :key="file.id">
               <div class="kb-table-cell kb-table-cell-1 kb-data-name-cell">
-                <img src="@/images/chatinit-1.png" alt="" class="kb-doc-icon" />
+                <img :src="getFileIcon(file.name)" alt="" class="kb-doc-icon" />
                 <span class="kb-data-name">{{ file.name }}</span>
               </div>
               <div class="kb-table-cell kb-table-cell-2"><span>文件</span></div>
@@ -256,6 +256,29 @@ import { knowledgeApi } from '@/api/api'
 import { formatFileSize, formatTime, generateUniqueFolderName, validateFileSizes, uploadFile, appendToPath, handleDownload, handleDelete } from '@/utils/knowledge'
 import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
 import FolderDialog from '@/views/dialog/FolderDialog.vue'
+import fileNull from '@/images/file-null.png'
+import filePdf from '@/images/file-pdf.png'
+import fileDoc from '@/images/file-doc.png'
+import fileXls from '@/images/file-xls.png'
+import filePpt from '@/images/file-ppt.png'
+import fileTxt from '@/images/file-txt.png'
+
+const fileIconMap: Record<string, string> = {
+  'pdf': filePdf,
+  'doc': fileDoc,
+  'docx': fileDoc,
+  'xls': fileXls,
+  'xlsx': fileXls,
+  'ppt': filePpt,
+  'pptx': filePpt,
+  'txt': fileTxt
+}
+
+const getFileIcon = (fileName: string): string => {
+  if (!fileName) return fileNull
+  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  return fileIconMap[ext] || fileNull
+}
 
 const router = useRouter()
 const route = useRoute()
