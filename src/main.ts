@@ -1,3 +1,4 @@
+// CI/CD pipeline test - 2026-05-26
 import { createApp } from 'vue'
 import './style.css'
 import './styles/chat-bubble.css'
