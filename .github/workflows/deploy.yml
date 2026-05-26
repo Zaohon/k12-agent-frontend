@@ -32,6 +32,8 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
     steps:
       - name: SSH Remote Deploy
         uses: appleboy/ssh-action@master
@@ -39,9 +41,14 @@ jobs:
           host: ${{ secrets.REMOTE_IP }}
           username: ${{ secrets.REMOTE_USER }}
           password: ${{ secrets.REMOTE_PASSWORD }}
-          timeout: 5m
-          command_timeout: 5m
+          timeout: 10m
+          command_timeout: 10m
           script: |
             cd /root/K12AgentWeb
-            docker compose pull frontend
-            docker compose up -d
+            COMPOSE="docker-compose"
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE="docker compose"
+            fi
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            $COMPOSE pull frontend
+            $COMPOSE up -d frontend
