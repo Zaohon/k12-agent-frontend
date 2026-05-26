@@ -51,4 +51,4 @@ jobs:
             fi
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             $COMPOSE pull frontend
-            $COMPOSE up -d frontend
+            $COMPOSE up -d --no-deps frontend
