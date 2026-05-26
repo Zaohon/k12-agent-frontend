@@ -1023,11 +1023,11 @@ onUnmounted(() => {
 }
 
 .delete-icon::before {
-  transform: rotate(45deg);
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .delete-icon::after {
-  transform: rotate(-45deg);
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .empty-selected {

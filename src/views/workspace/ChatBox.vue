@@ -518,7 +518,7 @@ watch(agentId, (newId) => {
 
 // 会话切换 → 强制清空消息
 watch(activeSessionId, (newId, oldId) => {
-  if (newId !== oldId) {
+  if (oldId && newId !== oldId) {
     messages.value = []        //清空消息
     isStreaming.value = false  // 强制停止加载状态
     userInput.value = ''       // 清空输入
