@@ -81,7 +81,7 @@
             <!-- 附件卡片显示 -->
             <div v-if="attachments.length > 0" class="attachments-wrapper">
               <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
-                <span class="attachment-icon">{{ getAttachmentIcon(item.type) }}</span>
+                <img class="attachment-icon" :src="getAttachmentIcon(item.name)" alt="file" />
                 <span class="attachment-name">{{ item.name || '附件' }}</span>
                 <span class="attachment-remove" @click="handleRemoveAttachment(index)">×</span>
               </div>
@@ -1225,7 +1225,9 @@ onMounted(() => {
 }
 
 .attachment-icon {
-  font-size: 16px;
+  width: 16px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .attachment-name {

@@ -3,6 +3,23 @@ import { ElMessage } from 'element-plus'
 import { knowledgeApi } from '@/api/api'
 import { knowledgeLog, knowledgeLogError } from '@/utils/logManage'
 import { GLOBAL_FILE_TYPE, ALLOWED_FILE_TYPES } from '@/costants/costant'
+import fileNull from '@/images/file-null.png'
+import filePdf from '@/images/file-pdf.png'
+import fileDoc from '@/images/file-doc.png'
+import fileXls from '@/images/file-xls.png'
+import filePpt from '@/images/file-ppt.png'
+import fileTxt from '@/images/file-txt.png'
+
+const fileIconMap: Record<string, string> = {
+  'pdf': filePdf,
+  'doc': fileDoc,
+  'docx': fileDoc,
+  'xls': fileXls,
+  'xlsx': fileXls,
+  'ppt': filePpt,
+  'pptx': filePpt,
+  'txt': fileTxt
+}
 
 /**
  * 附件项类型
@@ -70,15 +87,12 @@ export const formatFileSize = (bytes: number): string => {
 }
 
 /**
- * 根据附件类型获取图标
+ * 根据文件名获取对应的文件图标
  */
-const getAttachmentIcon = (type: string): string => {
-  switch (type) {
-    case 'image': return ''
-    case 'video': return ''
-    case 'audio': return ''
-    default: return ''
-  }
+const getAttachmentIcon = (fileName: string): string => {
+  if (!fileName) return fileNull
+  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  return fileIconMap[ext] || fileNull
 }
 
 /**
@@ -94,7 +108,7 @@ export const renderAttachmentCards = (
       class: 'attachment-card',
       key: index
     }, [
-      h('span', { class: 'attachment-icon' }, getAttachmentIcon(item.type)),
+      h('img', { class: 'attachment-icon', src: getAttachmentIcon(item.name), alt: 'file' }),
       h('span', { class: 'attachment-name' }, item.name || '附件'),
       h('span', {
         class: 'attachment-remove',

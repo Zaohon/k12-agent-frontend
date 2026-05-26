@@ -25,7 +25,7 @@
           <div v-for="(item, index) in message.attachments" :key="index" class="message-attachment-card">
             <div class="attachment-card-background">
               <div class="attachment-card-icon-container">
-                <div class="attachment-card-icon">{{ getAttachmentIcon(item.type) }}</div>
+                <img class="attachment-card-icon" :src="getAttachmentIcon(item.name)" alt="file" />
               </div>
             </div>
             <div class="attachment-card-content">
@@ -52,6 +52,23 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useUserStore } from '@/store/user'
+import fileNull from '@/images/file-null.png'
+import filePdf from '@/images/file-pdf.png'
+import fileDoc from '@/images/file-doc.png'
+import fileXls from '@/images/file-xls.png'
+import filePpt from '@/images/file-ppt.png'
+import fileTxt from '@/images/file-txt.png'
+
+const fileIconMap: Record<string, string> = {
+  'pdf': filePdf,
+  'doc': fileDoc,
+  'docx': fileDoc,
+  'xls': fileXls,
+  'xlsx': fileXls,
+  'ppt': filePpt,
+  'pptx': filePpt,
+  'txt': fileTxt
+}
 
 interface Message {
   role: 'user' | 'assistant'
@@ -157,32 +174,10 @@ const copyMessage = async () => {
   }
 }
 
-const getAttachmentIcon = (type: string): string => {
-  const icons: Record<string, string> = {
-    pdf: '📄',
-    doc: '📝',
-    docx: '📝',
-    xls: '📊',
-    xlsx: '📊',
-    ppt: '📽️',
-    pptx: '📽️',
-    image: '🖼️',
-    img: '🖼️',
-    jpg: '🖼️',
-    jpeg: '🖼️',
-    png: '🖼️',
-    gif: '🖼️',
-    video: '🎥',
-    mp4: '🎥',
-    avi: '🎥',
-    audio: '🎵',
-    mp3: '🎵',
-    wav: '🎵',
-    zip: '📦',
-    rar: '📦',
-    '7z': '📦'
-  }
-  return icons[type?.toLowerCase()] || '📎'
+const getAttachmentIcon = (fileName: string): string => {
+  if (!fileName) return fileNull
+  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  return fileIconMap[ext] || fileNull
 }
 
 const formatFileSize = (bytes: number): string => {

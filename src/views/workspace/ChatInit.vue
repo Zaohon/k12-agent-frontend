@@ -52,7 +52,7 @@
             @keydown.enter.prevent="handleEnter" @focus="isFocused = true" @blur="isFocused = false"></div>
           <div v-if="attachments.length > 0" class="attachments-wrapper">
             <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
-              <span class="attachment-icon">{{ getAttachmentIcon(item.type) }}</span>
+              <img class="attachment-icon" :src="getAttachmentIcon(item.name)" alt="file" />
               <span class="attachment-name">{{ item.name || '附件' }}</span>
               <span class="attachment-remove" @click="removeAttachment(index)">×</span>
             </div>
@@ -628,6 +628,12 @@ const handleSend = async () => {
 .attachment-remove {
   cursor: pointer;
   color: #94A3B8;
+}
+
+.attachment-icon {
+  width: 16px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .input-bar {
