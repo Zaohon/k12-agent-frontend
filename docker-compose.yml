@@ -1,0 +1,9 @@
+version: "3.8"
+
+services:
+  frontend:
+    image: ghcr.io/zaohon/k12-agent-frontend:latest
+    container_name: k12-frontend
+    ports:
+      - "80:80"
+    restart: unless-stopped
