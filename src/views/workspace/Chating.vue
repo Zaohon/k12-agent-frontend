@@ -42,8 +42,11 @@
       </div>-->
       <div v-if="agentId && messages.length === 0" class="welcome-card">
         <div class="welcome-icon">
-          <el-icon>
-            <component :is="agentInfo?.iconUrl || 'MagicStick'" />
+          <img v-if="agentInfo?.iconUrl" :src="agentInfo.iconUrl"
+            style="width:24px;height:24px;object-fit:cover;border-radius:4px"
+            @error="() => (this.style.display = 'none')" />
+          <el-icon v-else>
+            <MagicStick />
           </el-icon>
         </div>
         <h1 class="welcome-title">{{ agentInfo?.title }}</h1>
@@ -447,9 +450,16 @@ const loadSessionHistory = async () => {
 
 // 发送消息
 const handleSend = async () => {
-  chatLog('handleSend called')
-  chatLog('inputVal:', inputVal.value)
-  chatLog('activeSession:', props.activeSession)
+
+  const val = (inputVal.value || '').trim()
+  if (isStreaming.value || (!val && attachments.value.length === 0)) {
+    chatLog('无内容 或 发送中，不发送')
+    return
+  }
+
+  chatLog('调用发送消息函数')
+  chatLog('输入值:', inputVal.value)
+  chatLog('当前会话:', props.activeSession)
 
   if (!inputVal.value.trim() && attachments.value.length === 0) return
   if (!props.activeSession?.id) return
@@ -496,16 +506,16 @@ const handleSend = async () => {
   }
 
   try {
-    chatLog('Calling sessionApi.sendMessage...')
+    chatLog('正在调用 sessionApi.sendMessage...')
     const response = await sessionApi.sendMessage(props.activeSession.id, content, currentAttachments)
-    chatLog('Response received:', response)
+    chatLog('收到响应:', response)
 
     const contentType = response.headers.get('content-type') || ''
-    chatLog('Content-Type:', contentType)
+    chatLog('内容类型:', contentType)
 
     if (contentType.includes('application/json')) {
       const result = await response.json()
-      chatLog('JSON response:', result)
+      chatLog('JSON 响应:', result)
 
       let responseContent = ''
       if (result.success && result.data) {
@@ -525,7 +535,7 @@ const handleSend = async () => {
       }
       await updateMessage(responseContent, false)
     } else if (contentType.includes('text/event-stream')) {
-      chatLog('Processing SSE stream...')
+      chatLog('正在处理 SSE 流...')
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
@@ -596,7 +606,7 @@ const handleSend = async () => {
       await updateMessage(text, false)
     }
   } catch (error) {
-    chatLogError('Send message error:', error)
+    chatLogError('发送消息错误:', error)
     await updateMessage('抱歉，服务器暂时无法响应，请稍后重试。', false)
   } finally {
     isStreaming.value = false

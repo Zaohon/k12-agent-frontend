@@ -48,7 +48,7 @@
       <div class="input-container" :class="{ focused: isFocused }">
         <div class="input-glow"></div>
         <div class="input-body">
-          <div ref="textareaRef" class="textarea" contenteditable placeholder="输入您的指令，例如：生成一份初中物理《重力》的教案..."
+          <div ref="textareaRef" class="textarea" contenteditable :placeholder="agentInfo?.welcomeMsg || '输入您的指令，例如：生成一份初中物理《重力》的教案...'"
             @keydown.enter.prevent="handleEnter" @focus="isFocused = true" @blur="isFocused = false"></div>
           <div v-if="attachments.length > 0" class="attachments-wrapper">
             <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
@@ -323,11 +323,22 @@ const handleEnter = (e) => {
   if (e.ctrlKey || e.metaKey) {
     return
   }
+
+  if (isLoading.value) {
+    chatLog('拒绝发送')
+    return
+  }
+
   e.preventDefault()
   handleSend()
 }
 
 const handleSend = async () => {
+  if (isLoading.value) {
+    chatLog('拒绝发送')
+    return
+  }
+
   const content = getTextareaContent()
   if (!content && attachments.value.length === 0) {
     ElMessage.warning('请输入内容或上传附件')

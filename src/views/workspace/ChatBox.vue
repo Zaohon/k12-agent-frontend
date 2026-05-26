@@ -2,7 +2,7 @@
   <div class="chat-page-container">
 
     <!-- 左侧侧边栏 -->
-    <aside v-if="!agentId" class="secondary-sidebar">
+    <aside class="secondary-sidebar">
       <div class="horizontal-border">
         <el-button class="new-chat-btn" @click="createNewSession">
           <span>+&nbsp;&nbsp;&nbsp;&nbsp;新建对话</span>
@@ -285,30 +285,24 @@ const updateMessages = () => {
 // 处理 ChatInit 发送消息（与 Chating 发送逻辑一致）
 const handleChatInitSend = async ({ content, attachments }: { content: string; attachments?: any[] }) => {
   try {
-    // 1. 新建会话
+    // 新建会话
     const sessionResult = await sessionApi.createSession(agentId.value ?? DEFAULT_AGENT_ID)
     if (!sessionResult.success || !sessionResult.data) {
       ElMessage.error('创建会话失败')
       return
     }
-
     const sessionId = sessionResult.data.id
 
-    // 2. 添加用户消息到 messages（包含附件信息）
     messages.value.push({ role: 'user', content, attachments })
-
-    // 3. 创建一个空的 AI 消息（用于显示"思考中"状态）
     const aiMsgIndex = messages.value.length
     messages.value.push({ role: 'assistant', content: '', isThinking: true })
-    updateMessages() // 触发响应式更新
-
+    updateMessages()
     isStreaming.value = true
 
-    // 4. 加载会话列表并切换到新会话
+    // 3. 加载会话列表
     await loadSessions()
-    activeSessionId.value = sessionId
 
-    // 5. 等待 Chating 组件渲染
+    activeSessionId.value = sessionId
     await nextTick()
 
     try {
