@@ -1,7 +1,7 @@
 import { ElMessage } from 'element-plus';
 import { translateAIError } from '../utils/error';
 import { API_BASE } from '../costants/costant';
-import { apiLog } from '../utils/logManage';
+import { apiLog, apiLogError } from '../utils/logManage';
 
 /**
  * 从 localStorage 获取认证 token
@@ -92,7 +92,7 @@ const request = async (url, options = {}) => {
 
   } catch (error) {
     // 网络异常
-    ENABLE_LOG && console.error('[API] 请求异常:', error);
+    apiLogError('请求异常:', error);
     ElMessage.error('网络错误，请检查后端服务是否启动');
     throw error;
   }
