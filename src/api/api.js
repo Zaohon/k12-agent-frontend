@@ -395,13 +395,18 @@ export const sessionApi = {
    * @returns {Promise<Response>} 响应流
    */
   sendMessage: async (sessionId, prompt, attachments = []) => {
-    return request(`/session/chat/${sessionId}`, {
+    const token = getToken();
+    return fetch(`${API_BASE}/session/chat/${sessionId}`, {
       method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         prompt,
         attachments
       })
-    })
+    });
   },
 
   /**
