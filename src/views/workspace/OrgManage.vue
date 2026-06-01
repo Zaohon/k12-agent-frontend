@@ -121,11 +121,18 @@
                 {{ formatTime(scope.row.createdAt) }}
               </template>
             </el-table-column>
-            <!-- <el-table-column label="注销时间">
+            <el-table-column label="算力额度">
               <template #default="scope">
-                {{ scope.row.deletedAt ? formatTime(scope.row.deletedAt) : '-' }}
+                <template v-if="scope.row.remainingTokens !== undefined && scope.row.tokenLimit">
+                  <span :style="getComputingPowerColor(scope.row.remainingTokens, scope.row.tokenLimit)">
+                    {{ formatNumber(scope.row.remainingTokens) }}
+                  </span>
+                  <span>/</span>
+                  <span>{{ formatNumber(scope.row.tokenLimit) }}</span>
+                </template>
+                <template v-else>-/-</template>
               </template>
-            </el-table-column> -->
+            </el-table-column>
             <el-table-column label="状态">
               <template #default="scope">
                 <span class="status-indicator" :class="scope.row.deletedAt ? 'status-disabled' : 'status-active'">
@@ -387,6 +394,8 @@ const fetchOrgUsers = async (orgId: number) => {
   loadingUsers.value = true
   try {
     const res = await orgApi.getOrgUsers(orgId)
+    console.log(res)
+    
     if (res.success) {
       orgUsers.value = (res.data || []).sort((a: any, b: any) => a.id - b.id)
     }
@@ -460,6 +469,21 @@ const getAvatarStyle = (role: string) => {
 const formatTime = (time: string) => {
   if (!time) return '-'
   return new Date(time).toLocaleDateString()
+}
+
+const getComputingPowerColor = (current: number, limit: number) => {
+  const percentage = (current / limit) * 100
+  if (current <= 0) {
+    return { color: '#DC2626' }
+  } else if (percentage <= 5) {
+    return { color: '#F59E0B' }
+  }
+  return {}
+}
+
+const formatNumber = (num: number) => {
+  if (num === null || num === undefined) return '-'
+  return num.toLocaleString('zh-CN')
 }
 
 const handleDeleteUser = async (user: any) => {
