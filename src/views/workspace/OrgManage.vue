@@ -479,7 +479,7 @@ const getComputingPowerColor = (current: number, limit: number) => {
     return { color: '#F59E0B' }
   }
   return {}
-}
+} 
 
 const formatNumber = (num: number) => {
   if (num === null || num === undefined) return '-'
