@@ -1,20 +1,33 @@
 <template>
   <div class="chat-content-container">
     <!-- 头部 -->
-    <!--<header class="chat-header">
-      <div class="header-left">
-        <div v-if="agentInfo" class="agent-avatar">
-          <el-icon><component :is="agentInfo.iconUrl || 'MagicStick'" /></el-icon>
+    <header class="chat-header">
+      <!-- 智能体模式 -->
+      <div v-if="localAgentInfo" class="agent-header">
+        <div class="avatar-root">
+          <img v-if="localAgentInfo.iconUrl" :src="localAgentInfo.iconUrl" class="avatar-image" alt="avatar" />
+          <div v-else class="avatar-vector"></div>
         </div>
-        <div v-else class="agent-avatar default-avatar">
-          <el-icon><Cpu /></el-icon>
+        <div class="info-container">
+          <div class="name-row">
+            <div class="heading3">
+              <span class="title-text">{{ (localAgentInfo.title || '智能体').length > 20 ? (localAgentInfo.title || '智能体').slice(0, 20) + '...' : (localAgentInfo.title || '智能体') }}</span>
+            </div>
+          </div>
+          <div class="tag-group">
+            <div v-for="item in capabilityOptions" :key="item.key" v-show="localAgentInfo[item.key]" class="tag-btn"
+              :class="item.colorClass">
+              <div class="tag-icon-wrapper" :style="{ backgroundColor: item.bgColor }">
+                <img :src="item.image" class="tag-img" :alt="item.alt" />
+              </div>
+              <span class="tag-text">{{ item.label }}</span>
+            </div>
+          </div>
         </div>
-        <h2 class="header-title">
-          {{ agentId ? (agentInfo?.title || '正在加载智能体...') : (activeSession?.topic || '通用智能问答') }}
-        </h2>
       </div>
+
       <div class="header-right">
-        <el-dropdown>
+        <!--<el-dropdown>
           <el-button type="text" class="header-action">
             <el-icon><More /></el-icon>
           </el-button>
@@ -30,9 +43,9 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
-</el-dropdown>
-</div>
-</header>-->
+        </el-dropdown>-->
+      </div>
+    </header>
 
     <!-- 消息区域 -->
     <div class="chat-message-wrap" ref="msgContainer" :style="{ paddingBottom: dynamicPaddingBottom + 'px' }">
@@ -40,21 +53,7 @@
       <!--<div v-if="!useTestData && messages.length === 0" style="position: absolute; top: 10px; right: 10px; z-index: 100;">
         <el-button type="primary" size="small" @click="loadTestData">加载200条测试对话</el-button>
       </div>-->
-      <div v-if="agentId && messages.length === 0" class="welcome-card">
-        <div class="welcome-icon">
-          <img v-if="agentInfo?.iconUrl" :src="agentInfo.iconUrl"
-            style="width:24px;height:24px;object-fit:cover;border-radius:4px"
-            @error="() => (this.style.display = 'none')" />
-          <el-icon v-else>
-            <MagicStick />
-          </el-icon>
-        </div>
-        <h1 class="welcome-title">{{ agentInfo?.title }}</h1>
-        <p class="welcome-desc">{{ agentInfo?.description || '暂无详细介绍' }}</p>
-        <div class="welcome-msg">
-          {{ agentInfo?.welcomeMsg || '您好，我是您的专属辅教助手。' }}
-        </div>
-      </div>
+
 
       <div v-if="showMessages.length === 0" class="empty-chat-tip">
         <el-icon :size="80" class="empty-icon">
@@ -175,7 +174,7 @@
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { Cpu, User, Monitor, MagicStick, ChatDotSquare, More, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { sessionApi, chatApi } from '../../api/api'
+import { sessionApi, chatApi, agentApi } from '../../api/api'
 import { processSSELine, processSSEBuffer } from '../../utils/chatSSE'
 import { chatLog, chatLogError } from '../../utils/logManage'
 import { useAttachment } from '@/hooks/useAttachment'
@@ -186,6 +185,10 @@ import internalBlueIcon from '@/images/internal-blue.png'
 import internalGreyIcon from '@/images/internal-grey.png'
 import thinkBlueIcon from '@/images/think-bule.png'
 import thinkGreyIcon from '@/images/think-grey.png'
+import webReadIcon from '@/images/web-read.png'
+import thinkIcon from '@/images/think.png'
+import uploadFileIcon from '@/images/upload-file.png'
+import databaseGreenIcon from '@/images/database-green.png'
 
 // 录音相关变量
 let mediaRecorder = null
@@ -221,6 +224,80 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['sendMessage', 'refreshSessions', 'updateMessages', 'updateStreaming'])
+
+const localAgentInfo = ref(null)
+
+const loadAgentInfo = async (agentId) => {
+  if (!agentId) {
+    localAgentInfo.value = null
+    return
+  }
+  try {
+    const res = await agentApi.getAgentById(agentId)
+    if (res.success && res.data) {
+      localAgentInfo.value = res.data
+    }
+  } catch (error) {
+    chatLogError('获取智能体信息失败:', error)
+  }
+}
+
+onMounted(() => {
+  if (props.activeSession?.agentId) {
+    loadAgentInfo(props.activeSession.agentId)
+  }
+})
+
+watch(() => props.activeSession, (newSession) => {
+  if (newSession?.agentId) {
+    loadAgentInfo(newSession.agentId)
+  } else {
+    localAgentInfo.value = null
+  }
+}, { immediate: true })
+
+const capabilityOptions = [
+  {
+    key: 'enableWebSearch',
+    label: '联网搜索',
+    bgColor: '#DBEAFE',
+    colorClass: 'blue',
+    image: internalBlueIcon,
+    alt: 'web'
+  },
+  {
+    key: 'enableWebParse',
+    label: '网页解析',
+    bgColor: '#BEEBEE',
+    colorClass: 'green',
+    image: webReadIcon,
+    alt: 'parse'
+  },
+  {
+    key: 'enableDeepThink',
+    label: '深度思考',
+    bgColor: '#F3E8FF',
+    colorClass: 'purple',
+    image: thinkIcon,
+    alt: 'deep'
+  },
+  {
+    key: 'enableFileUpload',
+    label: '文档上传',
+    bgColor: '#FFF7ED',
+    colorClass: 'orange',
+    image: uploadFileIcon,
+    alt: 'file'
+  },
+  {
+    key: 'enableKnowledgeBase',
+    label: '知识库',
+    bgColor: '#D6F7CF',
+    colorClass: 'light-green',
+    image: databaseGreenIcon,
+    alt: 'kb'
+  }
+]
 
 const DEFAULT_PADDING = 140
 
@@ -381,7 +458,7 @@ const startRecording = async () => {
     isRecording.value = true
     ElMessage.info('正在录音，再次点击停止')
   } catch (error) {
-    console.error('获取麦克风权限失败:', error)
+    chatLogError('获取麦克风权限失败:', error)
     ElMessage.error('无法获取麦克风权限，请检查浏览器设置')
   }
 }
@@ -410,7 +487,7 @@ const processAudio = async (audioBlob) => {
       ElMessage.error(res.message || '语音转文字失败')
     }
   } catch (error) {
-    console.error('语音转文字失败:', error)
+    chatLogError('语音转文字失败:', error)
     ElMessage.error('语音转文字失败，请重试')
   } finally {
     voiceProcessing.value = false
@@ -758,8 +835,8 @@ onMounted(() => {
 
 /* 头部 */
 .chat-header {
-  height: 68px;
-  padding: 0 32px;
+  height: auto;
+  width: 100%;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
@@ -768,12 +845,6 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);
   z-index: 10;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .header-right {
@@ -785,29 +856,6 @@ onMounted(() => {
   color: #5A6066;
 }
 
-.agent-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #314DE2, #6144D3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 18px;
-}
-
-.default-avatar {
-  background: #5B6BF1;
-}
-
-.header-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: #2E3339;
-  margin: 0;
-}
-
 /* 消息区域 */
 .chat-message-wrap {
   flex: 1;
@@ -817,50 +865,6 @@ onMounted(() => {
   box-sizing: border-box;
   min-height: 0;
   position: relative;
-}
-
-/* 欢迎卡片 */
-.welcome-card {
-  max-width: 720px;
-  margin: 40px auto;
-  text-align: center;
-}
-
-.welcome-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 20px;
-  border-radius: 20px;
-  background: rgba(49, 77, 226, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  color: #314DE2;
-}
-
-.welcome-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #2E3339;
-  margin-bottom: 10px;
-}
-
-.welcome-desc {
-  font-size: 15px;
-  color: #5A6066;
-  margin-bottom: 24px;
-  line-height: 1.6;
-}
-
-.welcome-msg {
-  padding: 20px;
-  background: white;
-  border-radius: 16px;
-  font-size: 14px;
-  color: #5A6066;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 /* 空状态 */
@@ -1415,5 +1419,133 @@ onMounted(() => {
 
 .chat-toggle-btn.active .chat-toggle-text {
   color: #314DE2;
+}
+
+.agent-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px;
+  gap: 10px;
+  min-height: 86px;
+  width: 100%;
+  background: #F8F9FD;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+}
+
+/* 头像外层容器 */
+.avatar-root {
+  width: 78px;
+  height: 78px;
+  flex: none;
+  flex-grow: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-image {
+  width: 78px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 24px;
+}
+.avatar-vector {
+  width: 78px;
+  height: 78px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
+}
+
+/* 右侧标题+标签容器 */
+.info-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10px;
+  gap: 10px;
+  flex: none;
+  height: 88px;
+}
+
+/* 标题行 */
+.name-row {
+  height: 28px;
+}
+.heading3 {
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+.title-text {
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 28px;
+  color: #2E3339;
+}
+
+/* 标签按钮组 */
+.tag-group {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: 30px;
+}
+.tag-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 18px;
+  gap: 5px;
+  width: 84px;
+  height: 30px;
+  border-radius: 16px;
+  border: 1px solid #F1F5F9;
+  flex: none;
+  cursor: default;
+}
+/* 按钮配色 */
+.tag-btn.blue {
+  background: #DBEAFE;
+}
+.tag-btn.orange {
+  background: #FFEDD5;
+}
+.tag-btn.green {
+  background: #BEEBEE;
+}
+.tag-btn.purple {
+  background: #F3E8FF;
+}
+.tag-btn.light-green {
+  background: #D6F7CF;
+}
+
+.tag-icon-wrapper {
+  width: 15px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.tag-img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+.tag-text {
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 20px;
+  color: #334155;
+  flex: none;
 }
 </style>
