@@ -17,10 +17,38 @@
       </div>
 
       <div class="session-container">
-        <div class="session-list-section">
+        <!-- 最近对话（一周内） -->
+        <div v-if="recentSessions.length > 0" class="session-list-section">
           <div class="section-title">最近对话</div>
           <div class="session-items">
-            <div v-for="s in filteredSessions" :key="s.id" class="session-item"
+            <div v-for="s in recentSessions" :key="s.id" class="session-item"
+              :class="activeSessionId === s.id ? 'active' : ''" @click="selectSession(s.id)">
+              <img class="session-icon" :src="activeSessionId === s.id
+                ? '@/images/chatbox-selected.png'
+                : '@/images/chatbox-unselected.png'" />
+              <input v-if="editingSessionId === s.id" v-model="editSessionName" class="common-edit-input"
+                @blur="confirmEditSession" @keydown.enter.prevent="confirmEditSession" @click.stop ref="editInputRef" />
+              <div v-else class="session-text">{{ s.topic ? (s.topic.length > 12 ? s.topic.slice(0, 12) + '...' :
+                s.topic) : '新对话' }}</div>
+              <div v-if="editingSessionId !== s.id" class="common-edit-btn" @click.stop="openEditDialog(s)">
+                <el-icon>
+                  <Edit />
+                </el-icon>
+              </div>
+              <div class="common-delete-btn" @click.stop="deleteSession(s.id)">
+                <el-icon>
+                  <Delete />
+                </el-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 一周之前 -->
+        <div v-if="oldSessions.length > 0" class="session-list-section">
+          <div class="section-title">一周之前</div>
+          <div class="session-items">
+            <div v-for="s in oldSessions" :key="s.id" class="session-item"
               :class="activeSessionId === s.id ? 'active' : ''" @click="selectSession(s.id)">
               <img class="session-icon" :src="activeSessionId === s.id
                 ? '@/images/chatbox-selected.png'
@@ -177,6 +205,34 @@ const refreshSessions = () => {
 const filteredSessions = computed(() => {
   if (!sessionSearch.value) return sessions.value
   return sessions.value.filter(s => s.topic?.includes(sessionSearch.value))
+})
+
+// 获取一周前的时间戳（毫秒）
+const getWeekAgoTimestamp = () => {
+  const now = new Date()
+  return now.getTime() - 7 * 24 * 60 * 60 * 1000
+}
+
+// 最近对话（一周内）
+const recentSessions = computed(() => {
+  const weekAgo = getWeekAgoTimestamp()
+  return filteredSessions.value.filter(session => {
+    const updateTime = session.updatedAt ? new Date(session.updatedAt).getTime() : 0
+    const createTime = session.createdAt ? new Date(session.createdAt).getTime() : 0
+    const time = Math.max(updateTime, createTime)
+    return time >= weekAgo
+  })
+})
+
+// 一周之前
+const oldSessions = computed(() => {
+  const weekAgo = getWeekAgoTimestamp()
+  return filteredSessions.value.filter(session => {
+    const updateTime = session.updatedAt ? new Date(session.updatedAt).getTime() : 0
+    const createTime = session.createdAt ? new Date(session.createdAt).getTime() : 0
+    const time = Math.max(updateTime, createTime)
+    return time < weekAgo
+  })
 })
 
 const activeSession = computed(() => sessions.value.find(s => s.id === activeSessionId.value))
