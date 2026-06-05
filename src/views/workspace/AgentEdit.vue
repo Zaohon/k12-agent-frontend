@@ -678,12 +678,10 @@ const sendDebugMessage = async () => {
     return
   }
 
-  debugMessages.value = []
   debugMessages.value.push({ role: 'user', content: text })
   debugMessages.value.push({ role: 'assistant', content: '', isThinking: true })
   previewInput.value = ''
   debugSending.value = true
-  debugStatus.value = 'waiting'
 
   nextTick(() => {
     if (chatContainerRef.value) {
@@ -692,8 +690,13 @@ const sendDebugMessage = async () => {
   })
 
   try {
+    const messages = debugMessages.value
+      .filter(m => m.role !== 'assistant' || (m.content && !m.isThinking))
+      .map(({ role, content }) => ({ role, content }))
+
     const response = await agentApi.debugAgent({
       systemPrompt: currentAgent.value.systemPrompt,
+      messages,
       userMessage: text
     })
 
@@ -708,7 +711,7 @@ const sendDebugMessage = async () => {
 
     const decoder = new TextDecoder()
     let fullContent = ''
-    const thinkingMsg = debugMessages.value[1]
+    const thinkingMsg = debugMessages.value[debugMessages.value.length - 1]
     let streamDone = false
     let lastReceiveTime = Date.now()
 
@@ -764,7 +767,7 @@ const sendDebugMessage = async () => {
       debugStatus.value = 'waiting'
     }
   } catch {
-    const thinkingMsg = debugMessages.value[1]
+    const thinkingMsg = debugMessages.value[debugMessages.value.length - 1]
     if (thinkingMsg) {
       thinkingMsg.content = '网络错误，请检查后端服务是否启动。'
       thinkingMsg.isThinking = false

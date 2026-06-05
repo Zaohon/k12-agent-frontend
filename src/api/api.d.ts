@@ -85,7 +85,7 @@ export const agentApi: {
   getPendingApprovals: (params?: Record<string, any>) => Promise<ApiResponse<any[]>>
   reviewApproval: (id: number | string, data: { status: string; categoryId?: number | null; isFeatured?: boolean }) => Promise<ApiResponse>
   optimizePrompt: (text: string) => Promise<ApiResponse<{ optimizedText: string }>>
-  debugAgent: (debugData: { systemPrompt: string; userMessage: string }) => Promise<Response>
+  debugAgent: (debugData: { systemPrompt: string; messages?: Array<{ role: string; content: string }>; userMessage: string }) => Promise<Response>
 }
 
 /**
