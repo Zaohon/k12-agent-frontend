@@ -49,7 +49,7 @@
         <div class="input-glow"></div>
         <div class="input-body">
           <div ref="textareaRef" class="textarea" contenteditable :placeholder="agentInfo?.welcomeMsg || '输入您的指令，例如：生成一份初中物理《重力》的教案...'"
-            @keydown.enter.prevent="handleEnter" @focus="isFocused = true" @blur="isFocused = false"></div>
+            @keydown.enter="handleEnter" @focus="isFocused = true" @blur="isFocused = false"></div>
           <div v-if="attachments.length > 0" class="attachments-wrapper">
             <div v-for="(item, index) in attachments" :key="index" class="attachment-card">
               <img class="attachment-icon" :src="getAttachmentIcon(item.name)" alt="file" />
@@ -350,6 +350,12 @@ const clearTextarea = () => {
 }
 
 const handleEnter = (e) => {
+  // Shift+Enter 换行，不阻止默认行为
+  if (e.shiftKey) {
+    return
+  }
+
+  // Ctrl+Enter 或 Meta+Enter 也不阻止
   if (e.ctrlKey || e.metaKey) {
     return
   }

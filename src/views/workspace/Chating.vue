@@ -75,7 +75,7 @@
             <!-- 文字输入区 -->
             <textarea v-model="inputVal" ref="textareaRef" placeholder="输入您的问题或指令，按 Enter 发送。"
               class="chat-textarea-native" @focus="() => { isFocused = true }" @blur="() => { isFocused = false }"
-              @keydown.enter.prevent="handleSend" />
+              @keydown.enter="handleEnterKey" />
 
             <!-- 附件卡片显示 -->
             <div v-if="attachments.length > 0" class="attachments-wrapper">
@@ -502,6 +502,23 @@ const handleImageClick = () => {
 const handleRemoveAttachment = (index) => {
   removeAttachment(index)
   nextTick().then(() => calcTextareaHeight())
+}
+
+// 处理 Enter 键
+const handleEnterKey = (e) => {
+  // Shift+Enter 换行，不阻止默认行为
+  if (e.shiftKey) {
+    return
+  }
+
+  // Ctrl+Enter 或 Meta+Enter 也不阻止
+  if (e.ctrlKey || e.metaKey) {
+    return
+  }
+
+  // 其他情况阻止默认行为并发送
+  e.preventDefault()
+  handleSend()
 }
 
 // 计算显示的消息（使用内部消息列表）
