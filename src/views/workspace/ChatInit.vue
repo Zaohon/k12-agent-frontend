@@ -74,6 +74,18 @@
                 <img v-if="!isRecording" src="@/images/chatinit-vedio.png" alt="音频" />
                 <div v-else class="recording-indicator"></div>
               </button>
+
+              <!-- 深度思考按钮 -->
+              <button class="chat-toggle-btn" :class="{ active: enableDeepThinking }" @click="toggleDeepThinking">
+                <img :src="enableDeepThinking ? thinkBlueIcon : thinkGreyIcon" class="chat-toggle-icon" alt="深度思考" />
+                <span class="chat-toggle-text">深度思考</span>
+              </button>
+
+              <!-- 联网搜索按钮 -->
+              <button class="chat-toggle-btn" :class="{ active: enableWebSearch }" @click="toggleWebSearch">
+                <img :src="enableWebSearch ? internalBlueIcon : internalGreyIcon" class="chat-toggle-icon" alt="联网搜索" />
+                <span class="chat-toggle-text">联网搜索</span>
+              </button>
             </div>
             <button class="send-btn" :disabled="isLoading" @click="handleSend">
               {{ isLoading ? '处理中...' : '发送' }}
@@ -111,6 +123,10 @@ import chatinit1 from '@/images/chatinit-1.png'
 import chatinit2 from '@/images/chatinit-2.png'
 import chatinit3 from '@/images/chatinit-3.png'
 import chatinit4 from '@/images/chatinit-4.png'
+import internalBlueIcon from '@/images/internal-blue.png'
+import internalGreyIcon from '@/images/internal-grey.png'
+import thinkBlueIcon from '@/images/think-bule.png'
+import thinkGreyIcon from '@/images/think-grey.png'
 import { useAttachment } from '@/hooks/useAttachment'
 import { chatLogError } from '@/utils/logManage'
 import { chatApi } from '@/api/api'
@@ -208,6 +224,20 @@ const textareaRef = ref(null)
 const isLoading = ref(false)
 const isFocused = ref(false)
 const showKnowledgeLink = ref(false)
+
+// 深度思考和联网搜索开关
+const enableDeepThinking = ref(false)
+const enableWebSearch = ref(false)
+
+// 切换深度思考
+const toggleDeepThinking = () => {
+  enableDeepThinking.value = !enableDeepThinking.value
+}
+
+// 切换联网搜索
+const toggleWebSearch = () => {
+  enableWebSearch.value = !enableWebSearch.value
+}
 
 const emit = defineEmits(['sendMessage'])
 
@@ -647,6 +677,7 @@ const handleSend = async () => {
 .left-icons {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .icon-btn {

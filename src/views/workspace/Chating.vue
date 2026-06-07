@@ -1360,67 +1360,6 @@ onMounted(() => {
   flex-grow: 0;
 }
 
-/* 深度思考和联网搜索按钮 */
-.chat-toggle-btn {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 18px;
-  gap: 5px;
-  width: 84px;
-  height: 30px;
-  background: #F1F5F9;
-  border: 1px solid #DEE3EA;
-  border-radius: 16px;
-  flex: none;
-  order: 4;
-  flex-grow: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.chat-toggle-btn:hover {
-  background: #E2E8F0;
-}
-
-.chat-toggle-btn.active {
-  background: #E0E7FF;
-  border-color: #B4BDFF;
-}
-
-.chat-toggle-icon {
-  width: 15px;
-  height: 15px;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-  object-fit: contain;
-}
-
-
-
-.chat-toggle-text {
-  width: 40px;
-  height: 20px;
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 10px;
-  line-height: 20px;
-  display: flex;
-  align-items: center;
-  color: #334155;
-  flex: none;
-  order: 1;
-  flex-grow: 0;
-}
-
-.chat-toggle-btn.active .chat-toggle-text {
-  color: #314DE2;
-}
-
 .agent-header {
   display: flex;
   flex-direction: row;
