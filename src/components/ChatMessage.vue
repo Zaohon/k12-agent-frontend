@@ -7,6 +7,10 @@
       </div>
       <div class="chat-bubble-wrapper" :class="message.role === 'user' ? 'align-end' : 'align-start'">
         <div class="chat-bubble" :class="message.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
+          <details v-if="message.role === 'assistant' && message.reasoningContent" class="reasoning-panel">
+            <summary class="reasoning-title">思考过程</summary>
+            <div class="reasoning-content">{{ message.reasoningContent }}</div>
+          </details>
           <!-- 如果有内容，优先显示内容，思考状态只在没有内容时显示 -->
           <div v-if="message.content" class="message-content">{{ message.content }}</div>
           <div v-else-if="message.isThinking" class="thinking-card">
@@ -73,6 +77,7 @@ const fileIconMap: Record<string, string> = {
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  reasoningContent?: string
   isThinking?: boolean
   attachments?: Array<{
     type: string

@@ -159,6 +159,7 @@ const agentInfo = ref<AgentInfo | null>(null)
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  reasoningContent?: string
   isThinking?: boolean
   attachments?: any[]
   [key: string]: any
@@ -417,6 +418,7 @@ const handleChatInitSend = async ({ content, attachments }: { content: string; a
         let buffer = ''
         let receivedContent = false
         let currentContent = ''
+        let currentReasoningContent = ''
 
         while (true) {
           const { done, value } = await reader.read()
@@ -436,9 +438,10 @@ const handleChatInitSend = async ({ content, attachments }: { content: string; a
                   currentContent = '错误：' + (parsed.error.message || '服务器错误')
                 } else {
                   // 尝试处理为普通内容
-                  const tempMsg = { content: currentContent }
+                  const tempMsg = { content: currentContent, reasoningContent: currentReasoningContent }
                   processSSEBuffer(buffer, tempMsg)
                   currentContent = tempMsg.content
+                  currentReasoningContent = tempMsg.reasoningContent || ''
                 }
               } catch (e) {
                 // 不是JSON，直接显示
@@ -467,14 +470,16 @@ const handleChatInitSend = async ({ content, attachments }: { content: string; a
               } catch (e) { }
             }
 
-            const tempMsg = { content: currentContent }
+            const tempMsg = { content: currentContent, reasoningContent: currentReasoningContent }
             processSSELine(lines[i], tempMsg)
             currentContent = tempMsg.content
+            currentReasoningContent = tempMsg.reasoningContent || ''
 
             // 实时更新消息
             messages.value[aiMsgIndex] = {
               role: 'assistant',
               content: currentContent,
+              reasoningContent: currentReasoningContent,
               isThinking: true
             }
             updateMessages()
@@ -485,7 +490,7 @@ const handleChatInitSend = async ({ content, attachments }: { content: string; a
         }
 
         // 如果没有收到任何内容，显示错误提示
-        if (!receivedContent && !currentContent) {
+        if (!receivedContent && !currentContent && !currentReasoningContent) {
           currentContent = '抱歉，服务器没有返回有效内容，请稍后重试。'
         }
 
@@ -493,6 +498,7 @@ const handleChatInitSend = async ({ content, attachments }: { content: string; a
         messages.value[aiMsgIndex] = {
           role: 'assistant',
           content: currentContent,
+          reasoningContent: currentReasoningContent,
           isThinking: false
         }
         updateMessages()

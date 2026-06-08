@@ -2,6 +2,7 @@ import { translateAIError, parseAIError } from './error';
 
 export interface AIMessage {
   content: string;
+  reasoningContent?: string;
 }
 
 export interface ProcessSSEResult {
@@ -29,6 +30,11 @@ export const processSSELine = (line: string, aiMsg: AIMessage): ProcessSSEResult
     try {
       const data = JSON.parse(dataStr);
       console.log('Received SSE data:', data);
+
+      if (data.type === 'reasoning_delta' && data.delta) {
+        aiMsg.reasoningContent = (aiMsg.reasoningContent || '') + data.delta;
+        return { shouldStop: false, hasNewContent: true };
+      }
       
       // 检查是否为 AI 服务错误
       const errorInfo = parseAIError(data);

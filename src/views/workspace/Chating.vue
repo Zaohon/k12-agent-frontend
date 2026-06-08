@@ -576,6 +576,7 @@ const handleSend = async () => {
 
   // 2. 创建一个空的 AI 消息（用于写入）
   let currentContent = ''
+  let currentReasoningContent = ''
   let isThinkingState = true
   internalMessages.value.push({ role: 'assistant', content: '', isThinking: true })
   isStreaming.value = true
@@ -584,14 +585,16 @@ const handleSend = async () => {
   scrollToBottom()
 
   // 辅助函数：更新消息
-  const updateMessage = async (content, thinking) => {
+  const updateMessage = async (content, thinking, reasoningContent = currentReasoningContent) => {
     currentContent = content
+    currentReasoningContent = reasoningContent
     isThinkingState = thinking
     // 使用 splice 确保响应式更新
     const lastIdx = internalMessages.value.length - 1
     internalMessages.value.splice(lastIdx, 1, {
       role: 'assistant',
       content: currentContent,
+      reasoningContent: currentReasoningContent,
       isThinking: isThinkingState
     })
     // 仅流结束后再统一emit，分段不频繁通知父级
@@ -651,10 +654,10 @@ const handleSend = async () => {
                 await updateMessage('错误：' + (parsed.error.message || '服务器错误'), false)
               } else {
                 // 直接处理缓冲区
-                const tempMsg = { content: currentContent }
+                const tempMsg = { content: currentContent, reasoningContent: currentReasoningContent }
                 const result = processSSEBuffer(buffer, tempMsg)
                 if (result.hasNewContent) {
-                  await updateMessage(tempMsg.content, false)
+                  await updateMessage(tempMsg.content, false, tempMsg.reasoningContent)
                 }
               }
             } catch (e) {
@@ -669,13 +672,13 @@ const handleSend = async () => {
           const line = lines[i].trim()
           if (!line) continue
 
-          const tempMsg = { content: currentContent }
+          const tempMsg = { content: currentContent, reasoningContent: currentReasoningContent }
           const result = processSSELine(line, tempMsg)
 
           if (result.shouldStop) {
             receivedContent = true
             reader.releaseLock()
-            await updateMessage(tempMsg.content, false)
+            await updateMessage(tempMsg.content, false, tempMsg.reasoningContent)
             break
           }
 
@@ -686,13 +689,13 @@ const handleSend = async () => {
               hasStartedThinking = false
             }
             // 保持 isThinking 为 true，直到流完全结束
-            await updateMessage(tempMsg.content, true)
+            await updateMessage(tempMsg.content, true, tempMsg.reasoningContent)
           }
         }
         buffer = lines[lines.length - 1]
       }
 
-      if (!receivedContent && !currentContent) {
+      if (!receivedContent && !currentContent && !currentReasoningContent) {
         await updateMessage('抱歉，服务器没有返回有效内容，请稍后重试。', false)
       }
     } else {
