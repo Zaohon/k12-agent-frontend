@@ -21,6 +21,13 @@ const fileIconMap: Record<string, string> = {
   'txt': fileTxt
 }
 
+const IMAGE_FILE_TYPES = new Set(['jpg', 'jpeg', 'png', 'webp'])
+
+const isImageFile = (fileName: string, mimeType?: string): boolean => {
+  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  return IMAGE_FILE_TYPES.has(ext) || ['image/jpeg', 'image/png', 'image/webp'].includes(String(mimeType || '').toLowerCase())
+}
+
 /**
  * 附件项类型
  * - link: 文件/链接类型
@@ -162,9 +169,20 @@ export function useAttachment() {
   const uploadImage = () => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'image/*'
+    input.accept = '.jpg,.jpeg,.png,.webp'
     input.multiple = true
-    input.onchange = (e) => handleFileSelect(e, 'image')
+    input.onchange = async (e) => {
+      const target = e.target as HTMLInputElement
+      if (!target.files) return
+
+      for (const file of Array.from(target.files)) {
+        if (!validateFileType(file.name)) {
+          continue
+        }
+        await uploadFileToKnowledgeBase(file)
+      }
+      target.value = ''
+    }
     input.click()
   }
 
@@ -279,7 +297,7 @@ export function useAttachment() {
       knowledgeLog('文件记录创建成功, fileId:', fileId)
 
       addAttachment({
-        type: 'link',
+        type: isImageFile(file.name, contentType) ? 'image' : 'link',
         url: uploadUrl.split('?')[0],
         name: file.name,
         size: file.size,
