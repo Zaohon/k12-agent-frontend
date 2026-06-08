@@ -7,7 +7,11 @@
       </div>
       <div class="chat-bubble-wrapper" :class="message.role === 'user' ? 'align-end' : 'align-start'">
         <div class="chat-bubble" :class="message.role === 'user' ? 'user-bubble' : 'assistant-bubble'">
-          <details v-if="message.role === 'assistant' && message.reasoningContent" class="reasoning-panel">
+          <details
+            v-if="message.role === 'assistant' && message.reasoningContent"
+            class="reasoning-panel"
+            :open="message.isThinking"
+          >
             <summary class="reasoning-title">思考过程</summary>
             <div class="reasoning-content">{{ message.reasoningContent }}</div>
           </details>
