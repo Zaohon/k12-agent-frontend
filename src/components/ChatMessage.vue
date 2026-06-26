@@ -16,7 +16,7 @@
             <div class="reasoning-content">{{ message.reasoningContent }}</div>
           </details>
           <!-- 如果有内容，优先显示内容，思考状态只在没有内容时显示 -->
-          <div v-if="message.content" class="message-content">{{ message.content }}</div>
+          <div v-if="message.content" class="message-content markdown-body" v-html="renderedContent"></div>
           <div v-else-if="message.isThinking" class="thinking-card">
             <span class="thinking-text">{{ thinkingText }}</span>
           </div>
@@ -60,12 +60,20 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useUserStore } from '@/store/user'
+import MarkdownIt from 'markdown-it'
 import fileNull from '@/images/file-null.png'
 import filePdf from '@/images/file-pdf.png'
 import fileDoc from '@/images/file-doc.png'
 import fileXls from '@/images/file-xls.png'
 import filePpt from '@/images/file-ppt.png'
 import fileTxt from '@/images/file-txt.png'
+
+// 初始化 markdown-it，支持表格
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true
+})
 
 const fileIconMap: Record<string, string> = {
   'pdf': filePdf,
@@ -77,6 +85,12 @@ const fileIconMap: Record<string, string> = {
   'pptx': filePpt,
   'txt': fileTxt
 }
+
+// 渲染 Markdown 内容
+const renderedContent = computed(() => {
+  if (!props.message?.content) return ''
+  return md.render(props.message.content)
+})
 
 interface Message {
   role: 'user' | 'assistant'
