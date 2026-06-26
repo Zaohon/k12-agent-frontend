@@ -29,6 +29,7 @@
                   {{ userStore.userInfo?.username?.charAt(0).toUpperCase() }}
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">{{ userStore.userInfo?.username }}</h2>
+                <p class="text-sm text-gray-400 mt-1">ID: {{ userStore.userInfo?.id || '--' }}</p>
                 <p class="text-sm text-gray-400 mt-1 capitalize">{{ userStore.userInfo?.role }}</p>
                 
                 <div class="mt-8 pt-8">

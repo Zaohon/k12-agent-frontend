@@ -95,6 +95,16 @@
       </div>
 
       <div class="bottom-divider"></div>
+      <!-- 个人中心 -->
+      <div class="bottom-item" @click="openProfile">
+        <el-icon class="sidebar-icon"><User /></el-icon>
+        <span>个人中心</span>
+      </div>
+      <!-- 帮助 -->
+      <div class="bottom-item" @click="openHelp">
+        <el-icon class="sidebar-icon"><QuestionFilled /></el-icon>
+        <span>帮助</span>
+      </div>
       <!-- 交流群 -->
       <div class="bottom-item-wrapper">
         <div class="bottom-item" @click="toggleWeichatPopup">
@@ -151,7 +161,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Menu, ChatDotSquare, Cpu,
-  Setting, QuestionFilled
+  Setting, QuestionFilled, User
 } from '@element-plus/icons-vue'
 import { useUserStore } from '../store/user'
 import FeedbackPopup from '@/views/dialog/FeedbackPopup.vue'
@@ -176,6 +186,11 @@ import supportQr from '@/images/barcode-support.png'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+const emit = defineEmits<{
+  'open-profile': [];
+  'open-help': [];
+}>()
 
 const showWeichatPopup = ref(false)
 const showSupportPopup = ref(false)
@@ -228,6 +243,14 @@ const toggleFeedbackPopup = () => {
     showWeichatPopup.value = false
     showSupportPopup.value = false
   }
+}
+
+const openHelp = () => {
+  emit('open-help')
+}
+
+const openProfile = () => {
+  emit('open-profile')
 }
 
 const handleFeedbackSubmit = (data: { type: string; description: string; contact: string }) => {
@@ -551,6 +574,18 @@ onUnmounted(() => {
   flex: none;
   order: 0;
   flex-grow: 0;
+}
+
+/* Element Plus 图标适配 */
+.sidebar-icon.el-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-icon.el-icon svg {
+  width: 22px;
+  height: 20px;
 }
 
 /* 管理员标题样式 */

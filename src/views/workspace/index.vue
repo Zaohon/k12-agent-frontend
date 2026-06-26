@@ -3,7 +3,7 @@
     <!-- 顶部 -->
     <LayoutHead @open-profile="showProfile = true" />
     <div class="workspace-body">
-      <LayoutSidebar />
+      <LayoutSidebar @open-profile="showProfile = true" @open-help="showHelp = true" />
       <div class="content-container">
         <!-- 子页面 -->
         <main class="page-content">
@@ -13,6 +13,8 @@
     </div>
     <!-- Profile 弹窗 -->
     <Profile :visible="showProfile" @close="showProfile = false" />
+    <!-- Help 弹窗 -->
+    <Help :visible="showHelp" @update:visible="showHelp = $event" />
   </div>
 </template>
 
@@ -21,8 +23,10 @@ import { ref } from 'vue'
 import LayoutSidebar from '../../components/LayoutSidebar.vue'
 import LayoutHead from '../../components/LayoutHead.vue'
 import Profile from './Profile.vue'
+import Help from '../dialog/Help.vue'
 
 const showProfile = ref(false)
+const showHelp = ref(false)
 </script>
 
 <style scoped>
