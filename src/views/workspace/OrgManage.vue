@@ -613,7 +613,7 @@ const handleUpload = (file: any) => {
         fetchOrgUsers(selectedOrg.value.id)
         fetchOrgs()
       } else {
-        ElMessage.error(res.message || '上传处理失败')
+        ElMessage.error('上传处理失败')
       }
     } catch (err) {
       ElMessage.error('网络通讯异常')
