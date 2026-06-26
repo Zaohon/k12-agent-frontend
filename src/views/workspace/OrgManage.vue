@@ -87,7 +87,16 @@
             <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
               <img src="@/images/change_admin_icon.png" class="w-5 h-atuo" alt="change_admin" />
               账号管理
+              <el-select v-model="roleFilter" placeholder="筛选身份" popper-class="filter-select-popper" class="filter-select" @change="onRoleFilterChange">
+                <el-option label="全部" value="" />
+                <el-option v-if="selectedOrg?.id === 1" label="超级管理员" value="SUPER_ADMIN" />
+                <el-option label="组织管理员" value="SCHOOL_ADMIN" />
+                <el-option label="老师" value="TEACHER" />
+                <el-option label="学生" value="STUDENT" />
+                <el-option label="家长" value="PARENT" />
+              </el-select>
             </h3>
+            <div></div>
             <div class="flex items-center gap-3">
               <el-button size="small" class="download-template-btn" @click="downloadTemplate">
                 <img src="@/images/download-black.png" class="w-3 h-auto mr-[10px]" alt="download" />
@@ -297,10 +306,19 @@ const selectedOrgAdmin = computed(() => {
 
 const userPage = ref(1)
 const userPageSize = ref(10)
+const roleFilter = ref('')
+
+const onRoleFilterChange = () => {
+  userPage.value = 1
+}
 
 const pagedOrgUsers = computed(() => {
+  let filtered = orgUsers.value
+  if (roleFilter.value) {
+    filtered = filtered.filter((u: any) => u.role === roleFilter.value)
+  }
   const start = (userPage.value - 1) * userPageSize.value
-  return orgUsers.value.slice(start, start + userPageSize.value)
+  return filtered.slice(start, start + userPageSize.value)
 })
 
 const replaceAdminUsers = ref<any[]>([])
@@ -578,7 +596,7 @@ const handleUpload = (file: any) => {
         fetchOrgUsers(selectedOrg.value.id)
         fetchOrgs()
       } else {
-        ElMessage.error('上传处理失败')
+        ElMessage.error(res.message || '上传处理失败')
       }
     } catch (err) {
       ElMessage.error('网络通讯异常')
@@ -1072,5 +1090,56 @@ onMounted(() => {
   background: linear-gradient(135deg, #314DE2 0%, #6144D3 100%);
   box-shadow: 0px 1px 2px 0px #0000000D;
   border: none;
+}
+
+.filter-select {
+  width: 130px;
+  margin-left: 20px;
+}
+
+.filter-select :deep(.el-select__wrapper) {
+  height: 38px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #ADB2B9;
+  background: #F8F9FD;
+  box-shadow: none;
+}
+
+.filter-select :deep(.el-select__caret) {
+  background: url('../../images/arrow-grey.png') no-repeat center;
+  background-size: contain;
+  font-size: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.filter-select :deep(.el-select__caret.is-reverse) {
+  transform: rotate(90deg);
+}
+
+.filter-select :deep(.el-select__caret::before) {
+  content: none;
+}
+
+.filter-select :deep(.el-select__suffix) {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.filter-select :deep(.el-select__placeholder) {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #6B7280;
+}
+
+.filter-select-popper {
+  font-family: 'Noto Sans SC';
+  font-weight: 500;
+  font-size: 14px;
 }
 </style>
