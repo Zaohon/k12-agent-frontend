@@ -556,7 +556,6 @@ const downloadTemplate = () => {
     ['student001', '123456', '学生'],
     ['teacher001', '123456', '老师'],
     ['parent001', '123456', '家长'],
-    ['admin001', '123456', '管理员'],
   ]
   const ws = XLSX.utils.aoa_to_sheet(data)
   const wb = XLSX.utils.book_new()
@@ -582,6 +581,24 @@ const handleUpload = (file: any) => {
 
     if (users.length === 0) {
       return ElMessage.warning('未检测到有效的账户数据')
+    }
+
+    const usernameCounts = new Map<string, number>()
+    users.forEach((u: any) => {
+      const username = String(u.username || '').trim()
+      usernameCounts.set(username, (usernameCounts.get(username) || 0) + 1)
+    })
+    const duplicatedUsernames = Array.from(usernameCounts.entries())
+      .filter(([, count]) => count > 1)
+      .map(([username]) => username)
+    if (duplicatedUsernames.length > 0) {
+      return ElMessage.warning(`Excel 内存在重复用户名：${duplicatedUsernames.join(', ')}`)
+    }
+
+    const forbiddenRoles = new Set(['管理员', '组织管理员', '超级管理员', 'SCHOOL_ADMIN', 'SUPER_ADMIN'])
+    const invalidUser = users.find((u: any) => forbiddenRoles.has(String(u.role || '').trim()))
+    if (invalidUser) {
+      return ElMessage.warning('批量导入不允许创建组织管理员或超级管理员，请通过“指定机构管理员”功能单独设置')
     }
 
     batchProcessing.value = true
